@@ -10,10 +10,17 @@ import psycopg
 
 
 # фукнция post создания встречи
+# Несколько этапов:
+# 1 - создаем саму встречу
+# 2 - создаем запись в meeting_categories_table_11
+# 3 - создаем записи в meeting_warnings_table_21
+# 4 - создаем запись в notifications_table_4
+# 5 - создаем записи в notification_photos_table_6
 def MEETINGS_post_creation(
     creator_user_id : int,
     title : str,
     description : str,
+    description_for_notific : str,
     max_people : int,
     address : str,
     district : str,
@@ -21,25 +28,100 @@ def MEETINGS_post_creation(
     start_at : str,
     end_at : str,
     list_of_photos : list[str],
+    list_of_warnings : list[str],
+    list_of_categories : list[int],
     city : str = 'Moscow',
 ):
-    pass
+    try:
+        with psycopg.connect(DSN) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+
+                INSERT INTO meeting_table_2
+                (creator_user_id, title, description, max_people, address, district, adults_only, 
+                start_at, end_at)
+                VALUES
+                (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING meeting_id;
+                
+                """, (creator_user_id, title, description, max_people, address, district, adults_only, 
+                      start_at, end_at))
+                
+                meeting_id = cur.fetchone()[0]
+                # conn.commit()
+
+                for category in list_of_categories:
+
+                    cur.execute("""
+
+                    INSERT INTO meeting_categories_table_11 
+                    (meeting_id, category_id, category_value)
+                    VALUES
+                    (%s, %s, 10);
+
+                    """, (meeting_id, category))
+
+                for warning in list_of_warnings:
+
+                    cur.execute("""
+
+                    INSERT INTO meeting_warnings_table_21 
+                    (meeting_id, warning_id)
+                    VALUES
+                    (%s, %s);
+
+                    """, (meeting_id, warning))   
+
+                cur.execute("""
+
+                INSERT INTO notifications_table_4
+                (meeting_id, notification_type, notification_text)
+                VALUES
+                (%s, 'Встреча', %s)
+                RETURNING notification_id;
+            
+                """, (meeting_id, description_for_notific))   
+
+                notification_id = cur.fetchone()[0]
+
+                for photo in list_of_photos:
+
+                    cur.execute("""
+
+                    INSERT INTO notification_photos_table_6
+                    (notification_id, photo_url)
+                    VALUES
+                    (%s, %s);
+
+                    """, (notification_id, photo))
+
+                conn.commit()    
 
 
+        return {
+            "answer": "meeting_creating - ok",
+            "meeting": {
+                "meeting_id" : meeting_id,
+                "notification_id" : notification_id, 
+                "creator_user_id" : creator_user_id,
+                "title" : title,
+                "description" : description,
+                "max_people" : max_people,
+                "address" : address,
+                "district" : district,
+                "adults_only" : adults_only,
+                "start_at" : start_at,
+                "end_at" : end_at,
+                "list_of_photos" : list_of_photos,
+                "list_of_warnings" : list_of_warnings,
+                "list_of_categories" : list_of_categories,
+                "city" : city,
+            }
+        }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+    except Exception as error:
+        return (False, error, "MEETINGS_post_creation")
 
 
 #------------------------------------------------------------------------------------------------------
@@ -48,6 +130,9 @@ def MEETINGS_post_creation(
 
 
 # post создание пользователя - регистрация. Одновременно должна быть вызвана функции отправки уведомления о регистрации.
+# 1 - создаем пользователя
+# 2 - высылаем уведомление о прохождении верификации - пусть уведомление о прохождении
+# верификации уже создано и его id = 11
 def USERS_post_registration(
     first_name: str,
     last_name: str,
@@ -106,10 +191,19 @@ def USERS_post_registration(
                         email,
                         password_hash,
                         city,
-                        district,
+                        district
                     ),
                 )
                 new_id = cur.fetchone()[0]
+
+                cur.execute("""
+
+                INSERT INTO user_notifications_table_5
+                (notification_id, user_id)
+                VALUES
+                (11, %s)
+
+                """, (new_id,))
             conn.commit()
 
         return {
@@ -163,7 +257,7 @@ def SUPPORT_post_add_photos_to_ticket(ticket_id : str|int, photos_url : list[str
                 for url in photos_url:
                     cur.execute("""
                                 
-                        INSERT INTO support_photos_table_17 (ticket_id, photo_url)
+                        INSERT INTO support_photos_table_22 (ticket_id, photo_url)
                         VALUES (%s, %s)
                         RETURNING photo_url
                                 
@@ -172,13 +266,15 @@ def SUPPORT_post_add_photos_to_ticket(ticket_id : str|int, photos_url : list[str
                     added_photo_urls.append(cur.fetchone()[0])
                 
                 conn.commit()   
-                return {
-                    "ticket_id": ticket_int,
-                    "added_count": len(added_photo_urls),
-                    "photo_urls": added_photo_urls
+                return {"answer" : "photos added - ok",
+                        "ticket": {
+                            "ticket_id": ticket_int,
+                            "added_count": len(added_photo_urls),
+                            "photo_urls": added_photo_urls
+                        }
                 }
     except Exception as error:
-        return error
+        return (False, error, "SUPPORT_post_add_photos_to_ticket")
 #print(SUPPORT_post_add_photos_to_ticket(28, ["http://127.0.0.1:9000/allphotos/no.jpg", "http://127.0.0.1:9000/allphotos/no.jpg"]))
 
 
@@ -187,17 +283,6 @@ def SUPPORT_post_add_photos_to_ticket(ticket_id : str|int, photos_url : list[str
 def SUPPORT_post_create_ticket_by_user(requester_user_id : str|int,
                                        category : str, message_text : str, 
                                        photos_url : list[str]):
-    
-    #проверка всех аргументов
-    answer_by_check = CHECK_PAR_INT_OR_STR(requester_user_id, "Error with requester_user_id at SUPPORT_post_create_ticket_by_user")
-    if isinstance(answer_by_check, list):
-        return answer_by_check
-    
-    if not isinstance(category, str):
-        return "Error with category at SUPPORT_post_create_ticket_by_user"
-    
-    if not isinstance(message_text, str):
-        return "Error with SUPPORT_post_create_ticket_by_user at SUPPORT_post_create_ticket_by_user"
 
     requester_user_id_int = int(requester_user_id)
 
@@ -208,7 +293,7 @@ def SUPPORT_post_create_ticket_by_user(requester_user_id : str|int,
             with conn.cursor() as cur:
                 cur.execute("""
 
-                INSERT INTO support_table_22 (
+                INSERT INTO support_table_17 (
                 requester_user_id,
                 category,
                 message_text
@@ -223,14 +308,22 @@ def SUPPORT_post_create_ticket_by_user(requester_user_id : str|int,
 
                 result_of_additing_photos = SUPPORT_post_add_photos_to_ticket(id_of_created_ticket, photos_url)
 
-                return {"ticket_id"  : id_of_created_ticket, 
-                       "category" : category, 
-                       "part_message_text" : message_text[:200],
-                       "photos_answer" : result_of_additing_photos}
+                if isinstance(result_of_additing_photos, tuple) and result_of_additing_photos[0] is False: 
+                    return result_of_additing_photos
+
+                return {"answer" : "ticket created - ok",
+                        "ticket" : {
+                            "ticket_id"  : id_of_created_ticket, 
+                            "requester_user_id" : requester_user_id_int,
+                            "category" : category, 
+                            "message_text" : message_text[:200],
+                            "photos_url" : result_of_additing_photos["ticket"]["photo_urls"]
+                                    }
+                        }
 
 
     except Exception as error:
-        return error 
+        return (False, error, "SUPPORT_post_create_ticket_by_user") 
 # arr = ["1", "баг", "текст обращения №29 проверка создания заявки с фото", ["http://127.0.0.1:9000/allphotos/no.jpg", 
 #                                                                     "http://127.0.0.1:9000/allphotos/no.jpg"]]
 # arr = ["1", "баг", "текст обращения №28 проверка создания заявки без фото", []]
