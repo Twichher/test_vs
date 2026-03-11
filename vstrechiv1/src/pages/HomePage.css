@@ -1,0 +1,231 @@
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.logo {
+  color: #5dbea3;
+  font-weight: bold;
+  font-size: 20px;
+  text-decoration: none; /* ← убрать подчёркивание */
+  cursor: pointer;
+}
+
+
+.main-page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+  width: 100%;          /* ← добавить */
+  overflow-x: hidden;   /* ← чтобы не было горизонтального скролла */
+}
+
+/* Навигация */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 50px;
+  background: white;
+  width: 100%;          /* ← добавить */
+}
+
+
+.logo {
+  color: #5dbea3;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.nav-link.active {
+  font-weight: 700; /* ← жирный для активной страницы */
+  color: #222;
+}
+
+.nav-links {
+  display: flex;
+  gap: 40px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: #333;
+  font-size: 16px;
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.login {
+  color: #5dbea3;
+  text-decoration: none;
+  font-size: 16px;
+}
+
+.register {
+  background: linear-gradient(150deg, #3ecfaa 0%, #1a8a62 100%);
+  color: white;
+  padding: 8px 20px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-size: 16px;
+  font-weight: 600;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    0 2px 6px rgba(0, 100, 60, 0.3);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.register:hover {
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.25),
+    0 3px 8px rgba(0, 100, 60, 0.35);
+  transform: translateY(-1px);
+}
+
+
+/* Hero — бирюзово-голубой градиент */
+.hero {
+  background: linear-gradient(-45deg, #51D0FF 0%, #A2F9D2 100%);
+  min-height: 550px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 50px 50px 100px; /* ← увеличен нижний padding */
+  position: relative;
+  z-index: 0;
+}
+
+.hero h1 {
+  font-size: 56px;
+  color: white;
+  margin-bottom: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.hero p {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  max-width: 700px;
+  line-height: 1.6;
+  margin-bottom: 30px;
+}
+
+.cta-button {
+  background: linear-gradient(180deg, #00C896 0%, #00624A 100%);
+  color: white;
+  border: none;
+  padding: 15px 50px;
+  font-size: 18px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-weight: 700;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 100, 60, 0.4);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.cta-button:hover {
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.35),
+    0 6px 12px rgba(0, 100, 60, 0.45);
+  transform: translateY(-2px);
+}
+
+.cta-button:active {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  transform: translateY(0);
+}
+
+/* Features — белый фон */
+.features {
+  background: white;
+  padding: 36px 40px 36px; /* ← padding-top для отступа под features-header */
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.features-header {
+  background: linear-gradient(45deg, #A1F8D3 0%, #54D2FE 100%);
+  color: white;
+  padding: 30px 100px;
+  border-radius: 20px;
+  font-size: 30px;
+  letter-spacing: 2px;
+  text-align: center;
+  width: fit-content;
+  margin: -45px auto 0;
+  position: relative;
+  z-index: 2;
+  font-weight: 600;
+
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.12),
+    0 3px 6px rgba(90, 181, 213, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+
+.features-grid {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+/* Карточка: иконка + текст в ряд */
+.feature-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px 40px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 260px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.feature-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* Footer */
+.footer {
+  background: #111;
+  color: white;
+  text-align: center;
+  padding: 25px 50px;
+  font-size: 15px;
+}

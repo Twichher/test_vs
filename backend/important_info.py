@@ -1,0 +1,1 @@
+DSN = "host=localhost port=5433 dbname=vstrechi_v4 user=postgres password=postgres"
