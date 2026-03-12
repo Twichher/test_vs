@@ -11,13 +11,7 @@ html, body {
   box-sizing: border-box;
 }
 
-.logo {
-  color: #5dbea3;
-  font-weight: bold;
-  font-size: 20px;
-  text-decoration: none; /* ← убрать подчёркивание */
-  cursor: pointer;
-}
+
 
 
 .main-page {
@@ -27,45 +21,14 @@ html, body {
   overflow-x: hidden;   /* ← чтобы не было горизонтального скролла */
 }
 
-/* Навигация */
-.navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 50px;
-  background: white;
-  width: 100%;          /* ← добавить */
-}
 
 
-.logo {
-  color: #5dbea3;
-  font-weight: bold;
-  font-size: 20px;
-}
 
-.nav-link {
-  text-decoration: none;
-  color: #333;
-  font-size: 16px;
-  font-weight: 400;
-}
 
-.nav-link.active {
-  font-weight: 700; /* ← жирный для активной страницы */
-  color: #222;
-}
 
-.nav-links {
-  display: flex;
-  gap: 40px;
-}
 
-.nav-links a {
-  text-decoration: none;
-  color: #333;
-  font-size: 16px;
-}
+
+
 
 .auth-buttons {
   display: flex;
@@ -75,8 +38,16 @@ html, body {
 
 .login {
   color: #5dbea3;
-  text-decoration: none;
   font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.2s ease;
+}
+
+.login:hover {
+  transform: translateY(-2px);
 }
 
 .register {
@@ -229,3 +200,11 @@ html, body {
   padding: 25px 50px;
   font-size: 15px;
 }
+
+
+
+
+
+
+
+

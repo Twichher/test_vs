@@ -1,11 +1,15 @@
 import NavbarNoLogin from '../components/NavbarNoLogin';
 import Footer from '../components/Footer';
 import './AboutPage.css'
+import { useSelector } from 'react-redux';
+import type { RootState } from '../slices/store';
+import NavbarLogin from '../components/NavbarLogin';
 
 const AboutPage: React.FC = () => {
+  const { isAuth } = useSelector((state: RootState) => state.auth);
   return (
     <div className="about-page">
-      <NavbarNoLogin />
+      {isAuth ? <NavbarLogin /> : <NavbarNoLogin />}
       <main className="about-content">
         <p>
           Сайт VSTRECHI.RU был создан, чтобы помочь людям в поиске компаний со схожими интересами.

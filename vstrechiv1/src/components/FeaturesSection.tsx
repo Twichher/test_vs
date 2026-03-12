@@ -10,11 +10,11 @@ interface FeatureItem {
     },
     {
       src: "/src/assets/bookmark_heart_2.svg",
-      label: "Преодолей страх",
+      label: "Преодолевание страха",
     },
     {
       src: "/src/assets/bookmark_heart_3.svg",
-      label: "Просто весело",
+      label: "Простое веселье",
     },
   ];
   

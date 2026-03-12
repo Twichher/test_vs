@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import NavbarNoLogin from '../components/NavbarNoLogin';
 import Footer from '../components/Footer';
 import './FaqPage.css'
+import { useSelector } from 'react-redux';
+import type { RootState } from '../slices/store';
+import NavbarLogin from '../components/NavbarLogin';
 
 interface FaqItem {
   question_id: number;
@@ -14,6 +17,7 @@ const FaqPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [openId, setOpenId] = useState<number | null>(null); // ← ID открытого вопроса
+    const { isAuth } = useSelector((state: RootState) => state.auth);
   
     useEffect(() => {
       fetch('http://localhost:8000/faq')
@@ -38,7 +42,7 @@ const FaqPage: React.FC = () => {
   
     return (
       <div className="faq-page">
-        <NavbarNoLogin />
+        {isAuth ? <NavbarLogin /> : <NavbarNoLogin />}
         <main className="faq-content">
           {loading && <p className="faq-status">Загрузка...</p>}
           {error && <p className="faq-status faq-error">Ошибка: {error}</p>}

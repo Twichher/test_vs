@@ -1,0 +1,93 @@
+/* Навигация */
+.navbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 50px;
+  }
+
+  .logo {
+    color: #5dbea3;
+    font-weight: bold;
+    font-size: 20px;
+    text-decoration: none; /* ← убрать подчёркивание */
+    cursor: pointer;
+  }
+
+  .logo {
+    color: #5dbea3;
+    font-weight: bold;
+    font-size: 20px;
+  }
+
+  .nav-links {
+    position: absolute;
+    left: 48%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 40px;
+  }
+  
+  .nav-links a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    font-weight: 400;
+  }
+  
+  .nav-link.active {
+    font-weight: 700; /* ← жирный для активной страницы */
+    color: #222;
+  }
+
+  .user-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, #00C896, #03cf9c);
+    padding: 10px 20px;
+    border-radius: 30px;
+  }
+  
+
+  .user-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+  }
+  
+  .user-currency {
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .logout-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 5px;
+    border-radius: 8px;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  
+  .logout-btn:hover {
+    background: #fff0f0;
+    transform: translateY(-2px);
+  }
