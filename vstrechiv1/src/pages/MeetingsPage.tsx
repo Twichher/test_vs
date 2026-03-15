@@ -7,7 +7,9 @@ import Footer from '../components/Footer';
 import NavBar from '../components/NavBar';
 import MeetingAsItem from '../components/MeetingAsItem';
 import FilterPanel from '../components/FilterPanel';
+import { FiCalendar, FiUser, FiSearch } from 'react-icons/fi';
 import './MeetingsPage.css';
+import { PiUsersFill } from 'react-icons/pi';
 
 interface MeetingTypeOne {
   meeting_id: number;
@@ -19,14 +21,34 @@ interface MeetingTypeOne {
   category_ids: number[];
 }
 
+interface MeetingInfo {
+  meeting_id: number;
+  status: string;
+  meeting_title: string;
+  meeting_start_at: string;
+  creator_user_id: number;
+  creator_first_name: string;
+  creator_last_name: string;
+  registered_users_count: number;
+  max_people: number;
+  district: string;
+  adults_only: boolean;
+  warnings: string;
+  meeting_description: string;
+}
+
 const MeetingsPage: React.FC = () => {
-  const { isAuth, district } = useSelector((state: RootState) => state.auth);
+  const { isAuth, district , user_id} = useSelector((state: RootState) => state.auth);
 
   const [meetings, setMeetings] = useState<MeetingTypeOne[]>([]);
   const [originalMeetings, setOriginalMeetings] = useState<MeetingTypeOne[]>([]);
   const [search, setSearch] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<boolean>(false);
+
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+
+  const [expandedInfo, setExpandedInfo] = useState<MeetingInfo | null>(null);
 
   useEffect(() => {
     fetch('http://localhost:8000/meetings', {
@@ -55,6 +77,8 @@ const MeetingsPage: React.FC = () => {
       })
       .catch(() => setLoading(false));
   }, [district]);
+
+  
 
   const handleSort = (filters?: {
     districts: string[];
@@ -101,10 +125,56 @@ const MeetingsPage: React.FC = () => {
       })
       .catch(console.error);
   };
+
+  const COLUMNS = 4;
+
+  // Считаем сколько плейсхолдеров нужно
+  const remainder = meetings.length % COLUMNS;
+  const placeholdersInLastRow = remainder === 0 ? 0 : COLUMNS - remainder;
+  // +COLUMNS для пустой строки снизу
+  const totalPlaceholders = placeholdersInLastRow + COLUMNS;
+
+  const getExpandedStyle = (index: number): React.CSSProperties => {
+    if (expandedId !== meetings[index].meeting_id) return {};
+    
+    const positionInRow = index % COLUMNS;
+    const rowIndex = Math.floor(index / COLUMNS) + 1; // 1-based номер строки
   
+    if (positionInRow === COLUMNS - 1) {
+      return {
+        gridColumn: `${COLUMNS - 1} / ${COLUMNS + 1}`, // 3 / 5
+        gridRow: `${rowIndex} / span 2`,                // ← явно фиксируем строку
+      };
+    }
+  
+    return {
+      gridColumn: 'span 2',
+      gridRow: `span 2`,                  // ← тоже фиксируем для остальных
+    };
+  };
 
+  const [isClosing, setIsClosing] = useState(false);
 
-
+  const handleCardClick = (meetingId: number) => {
+    if (expandedId === meetingId) {
+      // Запускаем анимацию закрытия, потом убираем карточку
+      setIsClosing(true);
+      setTimeout(() => {
+        setExpandedId(null);
+        setExpandedInfo(null);
+        setIsClosing(false);
+      }, 250); // должно совпадать с длительностью анимации
+    } else {
+      setExpandedId(meetingId);
+      setExpandedInfo(null);
+      fetch(`http://localhost:8000/meetings/${meetingId}`, { credentials: 'include' })
+        .then((res) => res.json())
+        .then((data: MeetingInfo) => setExpandedInfo(data))
+        .catch(console.error);
+    }
+  };
+  
+  
   return (
     <div className="meetings-page">
       {isAuth ? <NavbarLogin /> : <NavbarNoLogin />}
@@ -140,15 +210,101 @@ const MeetingsPage: React.FC = () => {
               <p className="meetings-status">Загрузка...</p>
             ) : (
               <div className="meetings-grid">
-                {meetings.map((meeting) => (
-                  <MeetingAsItem
-                    key={meeting.meeting_id}
-                    meeting_title={meeting.meeting_title}
-                    registered_users_count={meeting.registered_users_count}
-                    max_people_allowed={meeting.max_people_allowed}
-                    district={meeting.district}
-                    adults_only_18plus={meeting.adults_only_18plus}
-                  />
+              {meetings.map((meeting, index) => (
+                <div
+                  key={meeting.meeting_id}
+                  className="meeting-wrapper"
+                  style={getExpandedStyle(index)}
+                  onClick={() => handleCardClick(meeting.meeting_id)}
+                >
+                {expandedId === meeting.meeting_id ? (
+                <div className={`meeting-expanded-card ${isClosing ? 'closing' : ''}`}>
+                {expandedInfo ? (
+                  <>
+                    <div className="meeting-expanded-header">
+                      {expandedInfo.adults_only && (
+                        <span className="meeting-badge">18+</span>
+                      )}
+                      <h2 className="meeting-expanded-title">{expandedInfo.meeting_title}</h2>
+                    </div>
+
+                    <div className="meeting-expanded-body">
+                      <div className="meeting-expanded-row">
+                        <FiCalendar size={20} />
+                        <span>
+                          {new Date(expandedInfo.meeting_start_at).toLocaleString('ru-RU', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'long',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+
+                      <div className="meeting-expanded-row">
+                        <FiUser size={20} />
+                        <span>
+                          {expandedInfo.creator_first_name} {expandedInfo.creator_last_name?.charAt(0)}.
+                        </span>
+                        <button
+                          className="meeting-expanded-search-btn"
+                          onClick={(e) => {
+                            e.stopPropagation(); // ← чтобы не срабатывал onClick на карточке
+                            console.log(expandedInfo.creator_user_id);
+                          }}
+                        >
+                          <FiSearch size={20} />
+                        </button>
+                      </div>
+
+                      <div className="meeting-expanded-row">
+                        <PiUsersFill size={20} />
+                        <span>{expandedInfo.registered_users_count}/{expandedInfo.max_people}</span>
+                        <span className="meeting-expanded-district">{expandedInfo.district}</span>
+                      </div>
+
+                      {expandedInfo.warnings && (
+                        <div className="meeting-expanded-warnings">
+                          <span className="meeting-expanded-warning-label">Важно:</span> {expandedInfo.warnings}
+                        </div>
+                      )}
+
+                      {expandedInfo.meeting_description && (
+                        <p className="meeting-expanded-description">
+                          {expandedInfo.meeting_description}
+                        </p>
+                      )}
+
+                      <button
+                        className="meeting-join-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          console.log('meeting_id:', expandedInfo.meeting_id, 'user_id:', user_id);
+                        }}
+                      >
+                        Участвовать!
+                      </button>
+
+                    </div>
+                  </>
+                ) : (
+                  <p className="meeting-expanded-loading">Загрузка...</p>
+                )}
+              </div>
+                    ) : (
+                      <MeetingAsItem
+                        meeting_title={meeting.meeting_title}
+                        registered_users_count={meeting.registered_users_count}
+                        max_people_allowed={meeting.max_people_allowed}
+                        district={meeting.district}
+                        adults_only_18plus={meeting.adults_only_18plus}
+                      />
+                    )}
+                  </div>
+                ))}
+                {Array.from({ length: totalPlaceholders }).map((_, i) => (
+                  <div key={`placeholder-${i}`} className="meeting-placeholder" />
                 ))}
               </div>
             )}

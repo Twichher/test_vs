@@ -1,17 +1,19 @@
 .meeting-card {
-    background: linear-gradient(160deg, #3ecfaa 0%, #1a8a62 100%);
-    border-radius: 18px;
-    padding: 20px;
-    width: 300px;
-    height: 160px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    position: relative;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-  }
+  background: linear-gradient(160deg, #3ecfaa 0%, #1a8a62 100%);
+  border-radius: 18px;
+  padding: 20px;
+  width: 100%;  /* ← было 300px */
+  height: 100%; /* ← было 160px */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
   
   .meeting-card:hover {
     transform: translateY(-4px);

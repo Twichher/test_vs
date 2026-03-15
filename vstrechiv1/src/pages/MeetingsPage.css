@@ -83,7 +83,8 @@
   /* Сетка карточек */
   .meetings-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* ← было repeat(4, 1fr) */
+    grid-template-columns: repeat(4, 300px); /* ← фиксированные 4 колонки по 300px */
+    grid-auto-rows: 160px;                   /* ← фиксированная высота строки */
     gap: 20px;
     justify-content: center;
   }
@@ -115,4 +116,164 @@
     margin-top: 40px;
   }
   
+  .meeting-wrapper {
+    cursor: pointer;
+  }
   
+  .meeting-wrapper--expanded {
+    grid-column: span 2;      /* растём вправо */
+    grid-row: span 2;
+  }
+  
+  .meeting-expanded-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #00C896, #00624A);
+    border-radius: 16px;
+  }
+
+  .meeting-placeholder {
+    visibility: hidden;  /* невидим, но занимает место в grid */
+    pointer-events: none;
+  }
+
+  .meeting-wrapper--expanded-left {
+    grid-column: 3 / 5;  /* начинаем с 3-й колонки, заканчиваем на 5-й (не включая) */
+    grid-row: span 2;
+  }
+  
+  .meeting-expanded-card {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(160deg, #3ecfaa 0%, #1a8a62 100%);
+    border-radius: 18px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    color: white;
+    animation: expandIn 0.25s ease forwards;
+  }
+  
+  .meeting-expanded-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .meeting-expanded-title {
+    font-size: 25px;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .meeting-expanded-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .meeting-expanded-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+  }
+  
+  .meeting-expanded-district {
+    margin-left: 12px;
+    font-weight: 600;
+  }
+  
+  .meeting-expanded-warnings {
+    font-size: 18px;
+    color: #ffe066;
+  }
+  
+  .meeting-expanded-warning-label {
+    font-weight: 700;
+  }
+  
+  .meeting-expanded-description {
+    font-size: 18px;
+    opacity: 0.9;
+    margin: 0;
+    line-height: 1.5;
+  }
+  
+  .meeting-expanded-loading {
+    color: white;
+    opacity: 0.7;
+    margin: auto;
+  }
+  
+  .meeting-expanded-search-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #ffe066;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+  }
+  
+  .meeting-expanded-search-btn:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  .meeting-join-btn {
+    margin-top: auto;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    color: #1a8a62;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .meeting-join-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+  
+  .meeting-join-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+  
+
+  .meeting-expanded-card.closing {
+    animation: expandOut 0.25s ease forwards;
+  }
+  
+  @keyframes expandIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  
+  @keyframes expandOut {
+    from {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+    }
+  }
