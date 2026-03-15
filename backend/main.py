@@ -8,8 +8,8 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 
 from get_sql import FAQ_get_all_rows, USERS_check_login, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
-CATEGORIES_get_all
-from models import FAQ, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category
+CATEGORIES_get_all, MEETINGS_get_all_info
+from models import FAQ, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest
 from important_info import SECRET_KEY, ALGORITHM
 
 app = FastAPI()
@@ -81,6 +81,7 @@ def get_list_meetings(
 
     return result
 
+
 @app.post("/meetings/sort", response_model=List[MeetingTypeOne])
 def get_sorted_list_meetings(
     body: MeetingsRequest,
@@ -96,8 +97,31 @@ def get_sorted_list_meetings(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))  # ← увидишь реальную ошибку
+    
 
+#roots to CATEGORIES
+@app.get("/meetings/categories", response_model=List[Category])
+def get_all_categories(user_id: int = Depends(get_current_user)):
+    result = CATEGORIES_get_all()
 
+    if isinstance(result, tuple):
+        raise HTTPException(
+            status_code=500,
+            detail=result[1]
+        )
+    
+    return result
+    
+
+@app.get("/meetings/{meeting_id}", response_model=MeetingInfoRequest)
+def get_meeting_info(meeting_id : int,
+                     user_id: int = Depends(get_current_user)):
+    result = MEETINGS_get_all_info(meeting_id)
+
+    if isinstance(result, tuple): 
+        raise HTTPException(status_code=500, detail=result[1])
+    
+    return result
 
 
 #------------------------------------------------------------------------------------------------------
@@ -161,19 +185,3 @@ def logout(response: Response):
     return {"message": "Вышел успешно"}
 
 
-#------------------------------------------------------------------------------------------------------
-#roots to CATEGORIES
-#------------------------------------------------------------------------------------------------------
-
-
-@app.get("/meetings/categories", response_model=List[Category])
-def get_all_categories():
-    result = CATEGORIES_get_all()
-
-    if isinstance(result, tuple):
-        raise HTTPException(
-            status_code=500,
-            detail=result[1]
-        )
-    
-    return result

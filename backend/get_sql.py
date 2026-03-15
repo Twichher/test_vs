@@ -77,6 +77,7 @@ def MEETINGS_get_created_lsit(district : str):
         return (False, error, "MEETINGS_get_created_lsit")
 #print(MEETINGS_get_created_lsit("ЦАО"))
 
+
 # не sql запрос! Просто сортирует некоторый массив данных по заданным параметрам
 def MEETINGS_no_sql_sort_by_params(
     meetings: list,
@@ -111,6 +112,61 @@ def MEETINGS_no_sql_sort_by_params(
 #print(MEETINGS_no_sql_sort_by_params([{'meeting_id': 3, 'meeting_title': 'Утренняя пробежка', 'registered_users_count': 4, 'max_people_allowed': 15, 'district': 'ЦАО', 'adults_only_18plus': False, 'category_ids': [5, 6]}, {'meeting_id': 7, 'meeting_title': 'api1', 'registered_users_count': 0, 'max_people_allowed': 10, 'district': 'ЦАО', 'adults_only_18plus': False, 'category_ids': []}, {'meeting_id': 8, 'meeting_title': 'api1', 'registered_users_count': 0, 'max_people_allowed': 10, 'district': 'ЦАО', 'adults_only_18plus': False, 'category_ids': []}, {'meeting_id': 9, 'meeting_title': 'api1', 'registered_users_count': 0, 'max_people_allowed': 10, 'district': 'api1', 'adults_only_18plus': True, 'category_ids': [1, 2, 3, 4]}, {'meeting_id': 10, 'meeting_title': 'api2', 'registered_users_count': 0, 'max_people_allowed': 10, 'district': 'api2', 'adults_only_18plus': True, 'category_ids': [1, 2]}, {'meeting_id': 1, 'meeting_title': 'Настольные игры', 'registered_users_count': 4, 'max_people_allowed': 8, 'district': 'НАО', 'adults_only_18plus': False, 'category_ids': [1, 2]}, {'meeting_id': 2, 'meeting_title': 'Винный вечер', 'registered_users_count': 5, 'max_people_allowed': 10, 'district': 'ТАО', 'adults_only_18plus': True, 'category_ids': [3, 4]}],
 #                                     categories = [1]))
 
+
+# фукнция выводит всю информацию о встрече, на которую нажал пользователь
+# на главной странице (то есть по id)
+def MEETINGS_get_all_info(meeting_id : int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+
+                SELECT
+                    m.meeting_id,
+                    m.status,
+                    m.title                  AS meeting_title,
+                    m.start_at               AS meeting_start_at,
+                    m.creator_user_id,
+                    u.first_name             AS creator_first_name,
+                    u.last_name              AS creator_last_name,
+                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    m.max_people,
+                    m.district,
+                    m.adults_only,
+                    m.description            AS meeting_description,
+                    COALESCE(w.warnings, '') AS warnings
+                FROM meeting_table_2 m
+
+                -- Создатель встречи
+                JOIN user_table_1 u
+                    ON u.user_id = m.creator_user_id
+
+                -- Количество зарегистрированных
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'registered'
+                    GROUP BY meeting_id
+                ) r ON r.meeting_id = m.meeting_id
+
+                -- Предупреждения
+                LEFT JOIN (
+                    SELECT mw.meeting_id,
+                        STRING_AGG(w.warning_name, ', ' ORDER BY w.warning_name) AS warnings
+                    FROM meeting_warnings_table_21 mw
+                    JOIN warnings_table_13 w ON w.warning_id = mw.warning_id
+                    GROUP BY mw.meeting_id
+                ) w ON w.meeting_id = m.meeting_id
+
+                WHERE m.status = 'created'
+                AND m.meeting_id = %s;
+
+
+                """, (meeting_id,))
+                return cur.fetchone()
+    except Exception as error:
+        return (False, error, "MEETINGS_get_all_info")
+#print(MEETINGS_get_all_info(3))
 
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
