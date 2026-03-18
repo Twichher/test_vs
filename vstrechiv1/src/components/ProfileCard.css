@@ -1,0 +1,235 @@
+.profile-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #3ecfaa;
+    border-radius: 20px;
+    padding: 24px 20px;
+    width: 300px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    gap: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 1px solid #3ecfaa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #f5f5f5;
+    margin-bottom: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    position: relative; /* ← ключевое */
+    cursor: pointer;
+  }
+
+  .profile-avatar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.2s ease;
+  }
+
+  .profile-avatar:hover::after {
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+
+  
+  .profile-avatar-img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+  }
+  
+  .profile-avatar-icon {
+    color: #555;
+  }
+  
+  .profile-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111;
+    margin: 0;
+  }
+
+  
+  .profile-divider {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #111;
+    margin: 4px 0;
+  }
+  
+  .profile-role {
+    font-size: 15px;
+    font-weight: 600;
+    color: #3ecfaa;
+    margin: 0;
+  }
+
+  .organaizer{
+    color: #a61bf1;
+  }
+  
+  .profile-stats {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  
+  .profile-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #1a1a1a;
+  }
+  
+  .profile-stat-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #333;
+  }
+  
+  .profile-stat-value {
+    font-weight: 600;
+  }
+  
+  .profile-hint-icon {
+    color: #aaa;
+    cursor: pointer;
+  }
+  
+  .profile-tooltip {
+    position: relative;
+    cursor: default;
+  }
+  
+  .profile-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    z-index: 10;
+  }
+  
+  .profile-tooltip:hover::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  
+  .profile-avatar {
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  
+  .profile-avatar:hover {
+    opacity: 0.85;
+  }
+  
+  .photo-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .photo-modal {
+    position: relative;
+    background: #fff;
+    border-radius: 16px;
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    width: 700px;
+    height: 520px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  
+  .photo-modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    z-index: 1;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+  }
+  
+  .photo-modal-close:hover {
+    background: #f0f0f0;
+  }
+  
+  .photo-modal-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f5f5;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  
+  .photo-modal-main-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  .photo-modal-thumbnails {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow-y: auto;
+    width: 96px;
+    padding-right: 4px;
+  }
+  
+  .photo-modal-thumb {
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;       /* ← не сжимается */
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.7;
+  }
+  
+  .photo-modal-thumb:hover {
+    opacity: 1;
+  }
+  
+  .photo-modal-thumb--active {
+    border-color: #3ecfaa;
+    opacity: 1;
+  }
+  

@@ -56,6 +56,19 @@ class UserResp(BaseModel):
     is_registration_completed : bool
     meetings_as_currency : int
 
+class UsersStatsReq(BaseModel):
+    meetings_visited_as_guest: int
+    count_period_meetings_guest : int
+    rating_as_guest : int
+    count_all_rating_guest : int
+    intermediate_rating_as_guest : int
+    count_period_rating_guest : int
+    meetings_created_as_organizer : int
+    rating_as_organizer : int
+    count_period_meetings_as_organizer : int
+    intermediate_rating_as_organizer : int
+    photo_urls : list[str]
+
 class Category(BaseModel):
     category_id : int
     category_name : str

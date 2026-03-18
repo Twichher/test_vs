@@ -168,6 +168,8 @@ def MEETINGS_get_all_info(meeting_id : int):
         return (False, error, "MEETINGS_get_all_info")
 #print(MEETINGS_get_all_info(3))
 
+
+
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
 #------------------------------------------------------------------------------------------------------
@@ -239,7 +241,71 @@ def USERS_get_info_by_id(user_id : int):
                 return cur.fetchall()[0]
     except Exception as error:
         return (False, error, "USERS_get_info_by_id")
-    
+
+
+# получаем всю статистику о пользователе по id
+def USERS_get_all_stats_by_id(user_id : int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+
+                SELECT 
+                    uei.meetings_visited_as_guest, 
+                    uei.count_period_meetings_guest,
+                    uei.rating_as_guest,
+                    uei.count_all_rating_guest,
+                    uei.intermediate_rating_as_guest,
+                    uei.count_period_rating_guest,
+                    
+                    uei.meetings_created_as_organizer,
+                    uei.rating_as_organizer,                
+                    uei.count_period_meetings_as_organizer,
+                    uei.intermediate_rating_as_organizer,
+
+                    COALESCE(
+                        (SELECT ARRAY_AGG(photo_url ORDER BY uploaded_at ASC)
+                        FROM user_photos_table_14
+                        WHERE user_id = %s),
+                        ARRAY[]::TEXT[]
+                    ) AS photo_urls
+
+                FROM user_extra_info_table_3 uei
+                WHERE uei.user_id = %s
+                ORDER BY uei.record_id DESC
+                LIMIT 1;
+
+
+                """, (user_id, user_id))
+
+                return cur.fetchone()
+    except Exception as error:
+        return (False, error, "USERS_get_all_stats_by_id")
+
+# получаем id встреч на которые пользователь зарегистрирован
+def USERS_get_reged_meetings(user_id: int):
+    try:
+        with psycopg.connect(DSN) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT mrt.meeting_id
+                    FROM meeting_rating_table_8 mrt
+                    JOIN meeting_table_2 mt ON mrt.meeting_id = mt.meeting_id
+                    WHERE mt.status = 'created'
+                      AND mrt.user_action = 'registered'
+                      AND mrt.user_id = %s;
+                """, (user_id,))
+                return [row[0] for row in cur.fetchall()]  # ← распаковка
+    except Exception as error:
+        return (False, error, "USERS_get_reged_meetings")
+
+# получаем краткую информацию о встречах на которые пользователь записан
+def USERS_get_MEETINGS_info_reged(user_id : int):
+    pass
+
+# получаем краткую инф-ю о встречах на которые пользователь сходил и они закончились
+def USERS_get_MEETINGS_info_finished(user_id : int):
+    pass
 
 #------------------------------------------------------------------------------------------------------
 #roots to CATEGORIES

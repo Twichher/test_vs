@@ -1,0 +1,18 @@
+html {
+    min-height: 100vh;
+    background: #FFFCF1;
+  }
+  
+  body {
+    min-height: 100vh;
+    background: #FFFCF1;
+    margin: 0;
+  }
+  
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #FFFCF1;
+  }
+  

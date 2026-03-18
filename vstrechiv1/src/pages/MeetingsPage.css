@@ -10,7 +10,7 @@
     flex: 1;
     max-width: 1360px;
     margin: 0 auto;
-    padding: 20px 40px 60px;
+    padding: 0px 40px 60px;
     width: 100%;
   }
   
@@ -277,3 +277,40 @@
       transform: scale(0.95) translateY(8px);
     }
   }
+
+  .profile-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .profile-modal {
+    position: relative;
+    background: #FFFCF1;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  
+  .profile-modal-close {
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #333;
+    padding: 4px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+    z-index: 1;
+  }
+  
+  .profile-modal-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
+  

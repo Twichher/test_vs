@@ -7,6 +7,7 @@ import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
 import MeetingsPage from './pages/MeetingsPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -33,6 +34,7 @@ function App() {
       <Route path="/about" element={<AboutPage />} />
       <Route path="/faq" element={<FaqPage />} />
       <Route path="/meetings" element={<MeetingsPage />} />
+      <Route path="/user/:user_id" element={<ProfilePage />} />
     </Routes>
   );
 }

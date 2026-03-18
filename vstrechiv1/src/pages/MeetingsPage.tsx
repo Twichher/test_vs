@@ -7,9 +7,10 @@ import Footer from '../components/Footer';
 import NavBar from '../components/NavBar';
 import MeetingAsItem from '../components/MeetingAsItem';
 import FilterPanel from '../components/FilterPanel';
-import { FiCalendar, FiUser, FiSearch } from 'react-icons/fi';
+import { FiCalendar, FiUser, FiSearch, FiX } from 'react-icons/fi';
 import './MeetingsPage.css';
 import { PiUsersFill } from 'react-icons/pi';
+import ProfileCard from '../components/ProfileCard';
 
 interface MeetingTypeOne {
   meeting_id: number;
@@ -40,6 +41,7 @@ interface MeetingInfo {
 const MeetingsPage: React.FC = () => {
   const { isAuth, district , user_id} = useSelector((state: RootState) => state.auth);
 
+  const [regedMeetingIds, setRegedMeetingIds] = useState<number[]>([]);
   const [meetings, setMeetings] = useState<MeetingTypeOne[]>([]);
   const [originalMeetings, setOriginalMeetings] = useState<MeetingTypeOne[]>([]);
   const [search, setSearch] = useState<string>('');
@@ -50,13 +52,27 @@ const MeetingsPage: React.FC = () => {
 
   const [expandedInfo, setExpandedInfo] = useState<MeetingInfo | null>(null);
 
+  const [profileModalUserId, setProfileModalUserId] = useState<number | null>(null); // state для модалки и открытие по клику
+  const [profileModalfirstname, setProfileModalFirstName] = useState<string | undefined>(undefined)
+  const [profileModallastname, setProfileModalLastName] = useState<string | undefined>(undefined)
+
   useEffect(() => {
-    fetch('http://localhost:8000/meetings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ district: district ?? '' }),
+    // 1. Получаем id встреч, куда уже записан пользователь
+    fetch(`http://localhost:8000/users/${user_id}/reged_meetings`, {
       credentials: 'include',
     })
+      .then((res) => res.json())
+      .then((regedIds: number[]) => {
+        setRegedMeetingIds(regedIds);
+  
+        // 2. Только после этого запрашиваем список встреч
+        return fetch('http://localhost:8000/meetings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ district: district ?? '' }),
+          credentials: 'include',
+        });
+      })
       .then((res) => {
         if (res.status === 401 || res.status === 403) {
           setAuthError(true);
@@ -71,12 +87,22 @@ const MeetingsPage: React.FC = () => {
           console.error('Unexpected /meetings response:', data);
           return;
         }
-        setMeetings(data);
-        setOriginalMeetings(data);
+  
+        // 3. Фильтруем — убираем встречи куда уже записан
+        setRegedMeetingIds((currentReged) => {
+          const filtered = data.filter(
+            (m) => !currentReged.includes(m.meeting_id)
+          );
+          setMeetings(filtered);
+          setOriginalMeetings(filtered);
+          return currentReged;
+        });
+  
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [district]);
+  
 
   
 
@@ -250,8 +276,10 @@ const MeetingsPage: React.FC = () => {
                         <button
                           className="meeting-expanded-search-btn"
                           onClick={(e) => {
-                            e.stopPropagation(); // ← чтобы не срабатывал onClick на карточке
-                            console.log(expandedInfo.creator_user_id);
+                            e.stopPropagation();
+                            setProfileModalUserId(expandedInfo.creator_user_id);
+                            setProfileModalLastName(expandedInfo.creator_last_name)
+                            setProfileModalFirstName(expandedInfo.creator_first_name)
                           }}
                         >
                           <FiSearch size={20} />
@@ -311,6 +339,18 @@ const MeetingsPage: React.FC = () => {
           </>
         )}
       </main>
+
+      {profileModalUserId !== null && (
+        <div className="profile-modal-overlay" onClick={() => setProfileModalUserId(null)}>
+          <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="profile-modal-close" onClick={() => setProfileModalUserId(null)}>
+              <FiX size={24} />
+            </button>
+            <ProfileCard userId={profileModalUserId} firstname={profileModalfirstname} lastname={profileModallastname} isOrganizer={true} />
+          </div>
+        </div>
+      )}
+
 
       <Footer />
     </div>

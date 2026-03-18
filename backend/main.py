@@ -8,8 +8,9 @@ from datetime import datetime, timedelta, timezone
 from jose import jwt
 
 from get_sql import FAQ_get_all_rows, USERS_check_login, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
-CATEGORIES_get_all, MEETINGS_get_all_info
-from models import FAQ, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest
+CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id
+from models import FAQ, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
+UsersStatsReq
 from important_info import SECRET_KEY, ALGORITHM
 
 app = FastAPI()
@@ -185,3 +186,20 @@ def logout(response: Response):
     return {"message": "Вышел успешно"}
 
 
+@app.get("/users/{user_id}/reged_meetings", response_model=list[int])
+def get_reged_meetings(user_id: int = Depends(get_current_user)):
+    result = USERS_get_reged_meetings(user_id)
+
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+
+    return result
+
+@app.get("/users/{_user_id}/stats", response_model=UsersStatsReq)
+def get_stats_of_user(_user_id : int, user_id: int = Depends(get_current_user)):
+    result = USERS_get_all_stats_by_id(_user_id)
+
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+
+    return result
