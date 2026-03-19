@@ -8,6 +8,7 @@ import AboutPage from './pages/AboutPage';
 import FaqPage from './pages/FaqPage';
 import MeetingsPage from './pages/MeetingsPage';
 import ProfilePage from './pages/ProfilePage';
+import OneMeetingPage from './pages/OneMeetingPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +36,7 @@ function App() {
       <Route path="/faq" element={<FaqPage />} />
       <Route path="/meetings" element={<MeetingsPage />} />
       <Route path="/user/:user_id" element={<ProfilePage />} />
+      <Route path="/meetings/:meeting_id/info" element={<OneMeetingPage />} />
     </Routes>
   );
 }

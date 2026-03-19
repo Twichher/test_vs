@@ -41,6 +41,23 @@ class MeetingInfoRequest(BaseModel):
     warnings : str
     meeting_description : str
 
+class MeetingInfoRequestV2(BaseModel):
+    meeting_id : int
+    status : str
+    meeting_title : str
+    meeting_start_at : datetime
+    creator_user_id : int
+    creator_first_name : str
+    creator_last_name : str
+    registered_users_count : int
+    max_people : int
+    district : str
+    adults_only : bool
+    warnings : str
+    meeting_description : str
+    meeting_city : str
+    meeting_adress : str
+
 class UserLogin(BaseModel):
     email_user : str
     password : str
@@ -68,6 +85,9 @@ class UsersStatsReq(BaseModel):
     count_period_meetings_as_organizer : int
     intermediate_rating_as_organizer : int
     photo_urls : list[str]
+
+class RegUserToMeetingRequest(BaseModel):
+    user_action: str
 
 class Category(BaseModel):
     category_id : int

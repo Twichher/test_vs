@@ -24,7 +24,7 @@ interface ProfileCardProps {
   userId?: number; // если не передан — берём из Redux (своя страница)
   firstname?: string
   lastname?: string
-  isOrganizer : boolean
+  isOrganizer? : boolean
 }
 
 export default function ProfileCard({ userId, firstname , lastname, isOrganizer}: ProfileCardProps) {

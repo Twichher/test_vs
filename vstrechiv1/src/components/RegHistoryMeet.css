@@ -1,0 +1,55 @@
+.reg-history {
+    width: 100%;
+    max-width: 1100px;  /* ← под ширину MeetingsPage */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 0 30px;
+    align-self: flex-start; /* ← прижать влево */
+  }
+  
+  
+  .reg-history-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .reg-history-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding: 4px 0;
+    width: fit-content;
+    transition: color 0.2s ease;
+  }
+  
+  .reg-history-header:hover {
+    color: #3ecfaa;
+  }
+  
+  .reg-history-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* ← такое же как на MeetingsPage */
+    gap: 12px;
+  }
+  
+  
+  /* История — карточки серые */
+  .reg-history-grid--attended .meeting-card {
+    background: #d0d0d0;
+    color: #666;
+  }
+  
+  .reg-history-empty {
+    font-size: 14px;
+    color: #aaa;
+    margin: 0;
+  }
+  

@@ -56,6 +56,13 @@ const MeetingsPage: React.FC = () => {
   const [profileModalfirstname, setProfileModalFirstName] = useState<string | undefined>(undefined)
   const [profileModallastname, setProfileModalLastName] = useState<string | undefined>(undefined)
 
+  const [joinModalOpen, setJoinModalOpen] = useState(false);// state для модалки для регистрации на встречу
+  const [newlyRegisteredIds, setNewlyRegisteredIds] = useState<number[]>([]); // state для зарегистрированных встреч
+  const [joinError, setJoinError] = useState(false); // state для ошибки при регистрации
+
+
+
+
   useEffect(() => {
     // 1. Получаем id встреч, куда уже записан пользователь
     fetch(`http://localhost:8000/users/${user_id}/reged_meetings`, {
@@ -244,7 +251,7 @@ const MeetingsPage: React.FC = () => {
                   onClick={() => handleCardClick(meeting.meeting_id)}
                 >
                 {expandedId === meeting.meeting_id ? (
-                <div className={`meeting-expanded-card ${isClosing ? 'closing' : ''}`}>
+                <div className={`meeting-expanded-card ${isClosing ? 'closing' : ''} ${newlyRegisteredIds.includes(expandedInfo?.meeting_id ?? -1) ? 'meeting-expanded-card--reged' : ''}`}>
                 {expandedInfo ? (
                   <>
                     <div className="meeting-expanded-header">
@@ -304,15 +311,19 @@ const MeetingsPage: React.FC = () => {
                         </p>
                       )}
 
+                    {newlyRegisteredIds.includes(expandedInfo.meeting_id) ? (
+                      <p className="meeting-expanded-reged-text">Мы Вас уже ждём! 🎉</p>
+                    ) : (
                       <button
                         className="meeting-join-btn"
                         onClick={(e) => {
                           e.stopPropagation();
-                          console.log('meeting_id:', expandedInfo.meeting_id, 'user_id:', user_id);
+                          setJoinModalOpen(true);
                         }}
                       >
                         Участвовать!
                       </button>
+                    )}
 
                     </div>
                   </>
@@ -327,6 +338,7 @@ const MeetingsPage: React.FC = () => {
                         max_people_allowed={meeting.max_people_allowed}
                         district={meeting.district}
                         adults_only_18plus={meeting.adults_only_18plus}
+                        isReged={newlyRegisteredIds.includes(meeting.meeting_id)}
                       />
                     )}
                   </div>
@@ -350,6 +362,69 @@ const MeetingsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+          {joinModalOpen && expandedInfo && (
+            <div className="join-modal-overlay" onClick={() => setJoinModalOpen(false)}>
+              <div className="join-modal" onClick={(e) => e.stopPropagation()}>
+
+                <p className="join-modal-text">
+                  Внимание! Вы хотите записаться на встречу{' '}
+                  <strong>{expandedInfo.meeting_title}</strong>, которая пройдёт{' '}
+                  <strong>
+                    {new Date(expandedInfo.meeting_start_at).toLocaleString('ru-RU', {
+                      day: 'numeric',
+                      month: 'long',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </strong>.
+                </p>
+
+                {joinError && (
+                  <p className="join-modal-error">Ошибка регистрации</p>
+                )}
+
+                <div className="join-modal-buttons">
+                  <button
+                    className="join-modal-btn join-modal-btn--confirm"
+                    onClick={() => {
+                      fetch(`http://localhost:8000/meetings/${expandedInfo.meeting_id}/user/${user_id}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ user_action: 'registered' }),
+                      })
+                        .then((res) => {
+                          if (!res.ok) throw new Error(`Ошибка: ${res.status}`);
+                          return res.json();
+                        })
+                        .then(() => {
+                          setNewlyRegisteredIds((prev) => [...prev, expandedInfo.meeting_id]);
+                          setJoinModalOpen(false);
+                          setJoinError(false);
+                        })
+                        .catch(() => setJoinError(true));
+                    }}
+                  >
+                    Зарегистрироваться
+                  </button>
+
+                  <button
+                    className="join-modal-btn join-modal-btn--cancel"
+                    onClick={() => {
+                      setJoinModalOpen(false);
+                      setJoinError(false);
+                      }
+                    }
+                  >
+                    Отмена
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
 
 
       <Footer />

@@ -7,10 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
 from jose import jwt
 
-from get_sql import FAQ_get_all_rows, USERS_check_login, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
+from get_sql import FAQ_get_all_rows, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id
-from models import FAQ, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
-UsersStatsReq
+from post_sql import USERS_post_reg_to_meet
+from models import FAQ, MeetingInfoRequestV2, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
+UsersStatsReq, RegUserToMeetingRequest
 from important_info import SECRET_KEY, ALGORITHM
 
 app = FastAPI()
@@ -124,6 +125,28 @@ def get_meeting_info(meeting_id : int,
     
     return result
 
+@app.get("/meetings/{meeting_id}/info", response_model=MeetingInfoRequestV2)
+def get_meetings_all_info_new_page(meeting_id : int,user_id: int = Depends(get_current_user)):
+    result = MEETINGS_reged_get_all_info(meeting_id)
+
+    if isinstance(result, tuple):
+        raise HTTPException(
+            status_code=500,
+            detail=result[1]
+        )
+    
+    return result
+
+
+@app.post("/meetings/{meeting_id}/user/{user_id}")
+def post_reg_user_to_meeting(meeting_id : int, user_id : int, body : RegUserToMeetingRequest):
+    result = USERS_post_reg_to_meet(meeting_id , user_id, body.user_action)
+
+    if isinstance(result, tuple): 
+        raise HTTPException(status_code=500, detail=result[1])
+    
+    return result
+
 
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
@@ -185,7 +208,7 @@ def logout(response: Response):
     response.delete_cookie(key="access_token")
     return {"message": "Вышел успешно"}
 
-
+# возвращаем только idшники встреч
 @app.get("/users/{user_id}/reged_meetings", response_model=list[int])
 def get_reged_meetings(user_id: int = Depends(get_current_user)):
     result = USERS_get_reged_meetings(user_id)
@@ -203,3 +226,22 @@ def get_stats_of_user(_user_id : int, user_id: int = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail=str(result[1]))
 
     return result
+
+@app.get("/users/{_user_id}/info_reged_meetings", response_model=List[MeetingTypeOne])
+def get_info_of_reged_meetings(_user_id : int, user_id: int = Depends(get_current_user)):
+    result = USERS_get_MEETINGS_info_reged(_user_id)
+
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+
+    return result
+
+@app.get("/users/{_user_id}/info_atted_meetings", response_model=List[MeetingTypeOne])
+def get_info_of_atted_meetings(_user_id : int, user_id: int = Depends(get_current_user)):
+    result = USERS_get_MEETINGS_info_finished(_user_id)
+
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+
+    return result
+

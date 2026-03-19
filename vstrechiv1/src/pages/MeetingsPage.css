@@ -170,6 +170,7 @@
   }
   
   .meeting-expanded-body {
+    flex: 1; /* ← добавь */
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -227,7 +228,6 @@
   }
   
   .meeting-join-btn {
-    margin-top: auto;
     width: 100%;
     padding: 12px;
     background: white;
@@ -239,6 +239,7 @@
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-top: auto;
   }
   
   .meeting-join-btn:hover {
@@ -312,5 +313,91 @@
   
   .profile-modal-close:hover {
     background: rgba(0, 0, 0, 0.08);
+  }
+  
+
+  .join-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .join-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 28px 24px;
+    max-width: 420px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+  
+  .join-modal-text {
+    font-size: 15px;
+    color: #1a1a1a;
+    line-height: 1.6;
+    margin: 0;
+  }
+  
+  .join-modal-buttons {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .join-modal-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  
+  .join-modal-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+  }
+  
+  .join-modal-btn--confirm {
+    background: #3ecfaa;
+    color: #fff;
+  }
+  
+  .join-modal-btn--cancel {
+    background: #f0f0f0;
+    color: #333;
+  }
+
+  .meeting-card--reged {
+    background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%);
+  }
+  
+  .meeting-expanded-card--reged {
+    background: linear-gradient(160deg, #c084fc 0%, #a855f7 100%);
+  }
+  
+  .meeting-expanded-reged-text {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+    margin: 0;
+    padding: 12px;
+    margin-top: auto; /* ← прижимает к низу */
+  }
+  
+  .join-modal-error {
+    color: #e53e3e;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0;
   }
   

@@ -7,6 +7,7 @@ interface MeetingAsItemProps {
   max_people_allowed: number;
   district: string;
   adults_only_18plus: boolean;
+  isReged?: boolean;
 }
 
 const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
@@ -15,9 +16,10 @@ const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
   max_people_allowed,
   district,
   adults_only_18plus,
+  isReged = false,  
 }) => {
   return (
-    <div className="meeting-card">
+    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''}`}>
       {adults_only_18plus && <span className="meeting-badge">18+</span>}
       <h3 className="meeting-title">{meeting_title}</h3>
       <div className="meeting-footer">

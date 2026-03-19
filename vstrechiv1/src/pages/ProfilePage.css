@@ -2,14 +2,18 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
   
   .profile-page-content {
+    flex: 1;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;    /* ProfileCard по центру */
     padding: 20px 20px;
+    gap: 24px;
   }
+  
 
   .meetings-settings-panel {
     display: flex;
@@ -24,3 +28,9 @@
     padding: 25px 50px;
     font-size: 15px;
   }
+
+  .profile-meetings-wrapper {
+    width: 100%;
+    max-width: 1100px;
+  }
+  

@@ -2,8 +2,8 @@
   background: linear-gradient(160deg, #3ecfaa 0%, #1a8a62 100%);
   border-radius: 18px;
   padding: 20px;
-  width: 100%;  /* ← было 300px */
-  height: 100%; /* ← было 160px */
+  width: 300px;  /* ← было 300px */
+  height: 160px; /* ← было 160px */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
