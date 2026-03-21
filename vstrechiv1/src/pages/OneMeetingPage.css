@@ -14,3 +14,79 @@
     padding: 20px 20px;
   }
   
+
+  .meeting-page {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  
+  .meeting-page-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+  
+  .meeting-page-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .meeting-cancel-btn {
+    padding: 10px 24px;
+    border-radius: 12px;
+    border: none;
+    background: #f56565;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+  
+  .meeting-cancel-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .meeting-users-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+    margin-left: 0;
+    align-self: flex-start;
+  }
+  
+  
+  .meeting-users-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1a1a1a;
+    padding: 4px 0;
+    width: fit-content;
+    transition: color 0.2s ease;
+  }
+  
+  .meeting-users-header:hover {
+    color: #3ecfaa;
+  }
+  
+  .meeting-users-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 240px);
+    gap: 12px;
+    justify-content: start; /* ← прижимает колонки влево */
+  }
+  

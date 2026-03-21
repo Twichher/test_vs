@@ -58,6 +58,14 @@ class MeetingInfoRequestV2(BaseModel):
     meeting_city : str
     meeting_adress : str
 
+class MeetingRegedMissedUser(BaseModel):
+    user_id : int
+    first_name : str
+    last_name : str
+    is_organizer : bool
+    user_action : str
+    photo_url : str | None
+
 class UserLogin(BaseModel):
     email_user : str
     password : str

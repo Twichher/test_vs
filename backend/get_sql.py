@@ -222,6 +222,40 @@ def MEETINGS_reged_get_all_info(meeting_id : int):
                 return cur.fetchone()
     except Exception as error:
         return (False, error, "MEETINGS_reged_get_all_info")
+    
+
+# по id встречи выводим список всех пользователей кто на нее зареган и кто от нее отписался
+def MEETINGS_get_reged_missed_users(meeting_id : int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.is_organizer,
+                    mr.user_action,
+                    (
+                        SELECT photo_url 
+                        FROM user_photos_table_14
+                        WHERE user_id = u.user_id
+                        ORDER BY uploaded_at DESC
+                        LIMIT 1
+                    ) AS photo_url
+                FROM meeting_rating_table_8 mr
+                JOIN user_table_1 u ON u.user_id = mr.user_id
+                WHERE mr.meeting_id = %s
+                AND mr.user_action IN ('registered', 'missed')
+                ORDER BY u.last_name, u.first_name;
+
+
+                """, (meeting_id, ))
+
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "MEETINGS_get_reged_missed_users")
 
 #------------------------------------------------------------------------------------------------------
 #roots to USERS

@@ -7,10 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
 from jose import jwt
 
-from get_sql import FAQ_get_all_rows, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
+from get_sql import FAQ_get_all_rows, MEETINGS_get_reged_missed_users, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id
 from post_sql import USERS_post_reg_to_meet
-from models import FAQ, MeetingInfoRequestV2, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
+from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
 UsersStatsReq, RegUserToMeetingRequest
 from important_info import SECRET_KEY, ALGORITHM
 
@@ -144,6 +144,18 @@ def post_reg_user_to_meeting(meeting_id : int, user_id : int, body : RegUserToMe
 
     if isinstance(result, tuple): 
         raise HTTPException(status_code=500, detail=result[1])
+    
+    return result
+
+@app.get("/meetings/{meeting_id}/reged_users", response_model=List[MeetingRegedMissedUser])
+def get_reged_missed_users(meeting_id : int):
+    result = MEETINGS_get_reged_missed_users(meeting_id)
+
+    if isinstance(result, tuple):
+        raise HTTPException(
+            status_code=500,
+            detail=result[1]
+        )
     
     return result
 
