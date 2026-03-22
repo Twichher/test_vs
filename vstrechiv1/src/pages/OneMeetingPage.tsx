@@ -80,6 +80,7 @@ export default function OneMeetingPage() {
                     user_action={u.user_action}
                     photo_url={u.photo_url}
                     isCurrentUser={u.user_id === user_id}
+
                   />
                 ))}
               </div>

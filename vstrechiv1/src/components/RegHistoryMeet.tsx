@@ -13,6 +13,8 @@ interface MeetingTypeOne {
     max_people_allowed: number;
     district: string;
     adults_only_18plus: boolean;
+    start_at: string;
+    end_at: string;
     category_ids: number[];
   }
 
@@ -68,7 +70,7 @@ interface MeetingTypeOne {
                     key={meeting.meeting_id}
                     onClick={() => {
                       console.log(meeting.meeting_id);
-                      navigate(`/meetings/${meeting.meeting_id}/info`);
+                      navigate(`/meetings/info_reged/${meeting.meeting_id}`);
                     }}
                     style={{ cursor: 'pointer' }}
                   >
@@ -78,6 +80,8 @@ interface MeetingTypeOne {
                       max_people_allowed={meeting.max_people_allowed}
                       district={meeting.district}
                       adults_only_18plus={meeting.adults_only_18plus}
+                      start_at = {meeting.start_at}
+                      end_at = {meeting.end_at}
                     />
                   </div>
                 ))
@@ -104,7 +108,10 @@ interface MeetingTypeOne {
                 attendedMeetings.map((meeting) => (
                   <div
                   key={meeting.meeting_id}
-                  onClick={() => console.log(meeting.meeting_id)}
+                  onClick={() => {
+                    console.log(meeting.meeting_id);
+                    navigate(`/meetings/info_history/${meeting.meeting_id}`);
+                  }}
                   style={{ cursor: 'pointer' }}
                   >
                     <MeetingAsItem
@@ -114,6 +121,8 @@ interface MeetingTypeOne {
                       max_people_allowed={meeting.max_people_allowed}
                       district={meeting.district}
                       adults_only_18plus={meeting.adults_only_18plus}
+                      start_at = {meeting.start_at}
+                      end_at = {meeting.end_at}
                     />
                   </div>
                 ))

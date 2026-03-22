@@ -18,6 +18,8 @@ class MeetingTypeOne(BaseModel):
     district : str
     adults_only_18plus : bool
     category_ids : list[int]
+    start_at : datetime
+    end_at : datetime
 
 class MeetingsRequest(BaseModel):
     meetings: List[MeetingTypeOne]
@@ -31,6 +33,7 @@ class MeetingInfoRequest(BaseModel):
     status : str
     meeting_title : str
     meeting_start_at : datetime
+    meeting_end_at : datetime
     creator_user_id : int
     creator_first_name : str
     creator_last_name : str
@@ -46,6 +49,7 @@ class MeetingInfoRequestV2(BaseModel):
     status : str
     meeting_title : str
     meeting_start_at : datetime
+    meeting_end_at : datetime
     creator_user_id : int
     creator_first_name : str
     creator_last_name : str

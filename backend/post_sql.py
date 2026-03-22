@@ -3,6 +3,28 @@ from psycopg.rows import dict_row
 
 from important_info import DSN
 
+
+#------------------------------------------------------------------------------------------------------
+#roots to MEETINGS
+#------------------------------------------------------------------------------------------------------
+
+# функция отменяет запись пользователя (переводит его из registered в missed)
+def USERS_update_miss_meeting(meeting_id: int, user_id: int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                            
+                UPDATE meeting_rating_table_8
+                SET user_action = 'missed'
+                WHERE user_id = %s and meeting_id = %s
+
+                """, (user_id, meeting_id))
+                return {"MEETING": meeting_id, "USER": user_id, "ACTION": "MISSED", "ANSWER": True}
+    except Exception as error:
+        return (False, error, "USERS_update_miss_meeting")
+
+
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
 #------------------------------------------------------------------------------------------------------

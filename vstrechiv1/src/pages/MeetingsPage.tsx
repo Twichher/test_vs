@@ -19,6 +19,8 @@ interface MeetingTypeOne {
   max_people_allowed: number;
   district: string;
   adults_only_18plus: boolean;
+  start_at: string;
+  end_at: string;
   category_ids: number[];
 }
 
@@ -27,6 +29,7 @@ interface MeetingInfo {
   status: string;
   meeting_title: string;
   meeting_start_at: string;
+  meeting_end_at : string;
   creator_user_id: number;
   creator_first_name: string;
   creator_last_name: string;
@@ -271,6 +274,12 @@ const MeetingsPage: React.FC = () => {
                             month: 'long',
                             hour: '2-digit',
                             minute: '2-digit',
+                          })} - {new Date(expandedInfo.meeting_end_at).toLocaleString('ru-RU', {
+                            weekday: 'short',
+                            day: 'numeric',
+                            month: 'long',
+                            hour: '2-digit',
+                            minute: '2-digit',
                           })}
                         </span>
                       </div>
@@ -338,6 +347,8 @@ const MeetingsPage: React.FC = () => {
                         max_people_allowed={meeting.max_people_allowed}
                         district={meeting.district}
                         adults_only_18plus={meeting.adults_only_18plus}
+                        start_at = {meeting.start_at}
+                        end_at = {meeting.end_at}
                         isReged={newlyRegisteredIds.includes(meeting.meeting_id)}
                       />
                     )}
@@ -388,7 +399,7 @@ const MeetingsPage: React.FC = () => {
                   <button
                     className="join-modal-btn join-modal-btn--confirm"
                     onClick={() => {
-                      fetch(`http://localhost:8000/meetings/${expandedInfo.meeting_id}/user/${user_id}`, {
+                      fetch(`http://localhost:8000/meetings/${expandedInfo.meeting_id}/reg/${user_id}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         credentials: 'include',

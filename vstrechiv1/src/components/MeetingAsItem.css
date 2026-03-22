@@ -61,3 +61,15 @@
     border-radius: 10px;
   }
   
+  .meeting-datetime {
+    margin: 8px 0 4px;
+  }
+  
+  .meeting-date {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    text-transform: capitalize;
+  }
+
+  

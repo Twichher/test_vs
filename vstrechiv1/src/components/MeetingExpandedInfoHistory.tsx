@@ -1,4 +1,4 @@
-import './MeetingExpandedInfo.css'
+import './MeetingExpandedInfoHistory.css'
 import { useEffect, useState } from 'react';
 import { FiCalendar, FiSearch, FiX } from 'react-icons/fi';
 import { BsPerson } from 'react-icons/bs';
@@ -29,7 +29,7 @@ interface MeetingExpandedInfoProps {
     meeting_id : number
 }
 
-export default function MeetingExpandedInfo({meeting_id} : MeetingExpandedInfoProps){
+export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpandedInfoProps){
     const [info, setInfo] = useState<MeetingInfoV2 | null>(null);
 
     const [profileModalUserId, setProfileModalUserId] = useState<number | null>(null); // state для модалки и открытие по клику
@@ -37,7 +37,7 @@ export default function MeetingExpandedInfo({meeting_id} : MeetingExpandedInfoPr
     const [profileModallastname, setProfileModalLastName] = useState<string | undefined>(undefined)
 
     useEffect(() => {
-      fetch(`http://localhost:8000/meetings/${meeting_id}/reged_info`, {
+      fetch(`http://localhost:8000/meetings/${meeting_id}/atted_info`, {
         credentials: 'include',
       })
         .then((res) => res.json())
@@ -51,7 +51,7 @@ export default function MeetingExpandedInfo({meeting_id} : MeetingExpandedInfoPr
     if (!info) return <div className="meeting-expanded-info-card" />;
 
     return (
-    <div className="meeting-expanded-info-card">
+    <div className="meeting-expanded-info-card--reged">
         <h2 className="mei-title">
         {info.meeting_title}
         {info.adults_only && <span className="mei-badge">18+</span>}

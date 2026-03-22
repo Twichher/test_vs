@@ -1,0 +1,14 @@
+.meeting-expanded-info-card--reged {
+    width: 480px;
+    min-height: 320px;
+    background: #959595;
+    border-radius: 18px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: white;
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }

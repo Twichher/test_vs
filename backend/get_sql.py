@@ -48,7 +48,9 @@ def MEETINGS_get_created_lsit(district : str):
                     m.max_people AS max_people_allowed,
                     m.district,
                     m.adults_only AS adults_only_18plus,
-                    COALESCE(c.category_ids, '{}') AS category_ids
+                    COALESCE(c.category_ids, '{}') AS category_ids,
+                    m.start_at AS start_at,
+                    m.end_at AS end_at
                 FROM meeting_table_2 m
 
                 LEFT JOIN (
@@ -126,6 +128,7 @@ def MEETINGS_get_all_info(meeting_id : int):
                     m.status,
                     m.title                  AS meeting_title,
                     m.start_at               AS meeting_start_at,
+                    m.end_at AS meeting_end_at,
                     m.creator_user_id,
                     u.first_name             AS creator_first_name,
                     u.last_name              AS creator_last_name,
@@ -169,7 +172,7 @@ def MEETINGS_get_all_info(meeting_id : int):
 #print(MEETINGS_get_all_info(3))
 
 
-# выводим информацию о встрече в профиле для записей(встречи где поль-ль учавств), всю информацию, включая адрес
+# выводим информацию о встрече в профиле для записей(встречи где поль-ль учавствует), всю информацию, включая адрес
 def MEETINGS_reged_get_all_info(meeting_id : int):
     try:
         with psycopg.connect(DSN, row_factory=dict_row) as conn:
@@ -181,6 +184,7 @@ def MEETINGS_reged_get_all_info(meeting_id : int):
                     m.status,
                     m.title                  AS meeting_title,
                     m.start_at               AS meeting_start_at,
+                    m.end_at               AS meeting_end_at,
                     m.creator_user_id,
                     u.first_name             AS creator_first_name,
                     u.last_name              AS creator_last_name,
@@ -224,6 +228,62 @@ def MEETINGS_reged_get_all_info(meeting_id : int):
         return (False, error, "MEETINGS_reged_get_all_info")
     
 
+# выводим информацию о встрече в профиле для записей(встречи где поль-ль учавствовал), всю информацию, включая адрес
+def MEETINGS_atted_get_all_info(meeting_id : int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+
+                                SELECT
+                    m.meeting_id,
+                    m.status,
+                    m.title                  AS meeting_title,
+                    m.start_at               AS meeting_start_at,
+                    m.end_at               AS meeting_end_at,
+                    m.creator_user_id,
+                    u.first_name             AS creator_first_name,
+                    u.last_name              AS creator_last_name,
+                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    m.max_people,
+                    m.district,
+                    m.adults_only,
+                    m.description            AS meeting_description,
+                    COALESCE(w.warnings, '') AS warnings,
+                    m.city AS meeting_city,
+                    m.address AS meeting_adress
+                FROM meeting_table_2 m
+
+                -- Создатель встречи
+                JOIN user_table_1 u
+                    ON u.user_id = m.creator_user_id
+
+                -- Количество посетивших
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action IN ('attended', 'missed')
+                    GROUP BY meeting_id
+                ) r ON r.meeting_id = m.meeting_id
+
+                -- Предупреждения
+                LEFT JOIN (
+                    SELECT mw.meeting_id,
+                        STRING_AGG(w.warning_name, ', ' ORDER BY w.warning_name) AS warnings
+                    FROM meeting_warnings_table_21 mw
+                    JOIN warnings_table_13 w ON w.warning_id = mw.warning_id
+                    GROUP BY mw.meeting_id
+                ) w ON w.meeting_id = m.meeting_id
+
+                WHERE m.status = 'finished'
+                AND m.meeting_id = %s;
+
+                """, (meeting_id, ))
+                return cur.fetchone()
+    except Exception as error:
+        return (False, error, "MEETINGS_atted_get_all_info")   
+
+
 # по id встречи выводим список всех пользователей кто на нее зареган и кто от нее отписался
 def MEETINGS_get_reged_missed_users(meeting_id : int):
     try:
@@ -256,6 +316,38 @@ def MEETINGS_get_reged_missed_users(meeting_id : int):
                 return cur.fetchall()
     except Exception as error:
         return (False, error, "MEETINGS_get_reged_missed_users")
+    
+
+# по id встречи выводим тех кто был на завершенной встречи и тех кто пропустил ее
+def MEETINGS_get_atted_missed_users(meeting_id : int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.is_organizer,
+                    mr.user_action,
+                    (
+                        SELECT photo_url 
+                        FROM user_photos_table_14
+                        WHERE user_id = u.user_id
+                        ORDER BY uploaded_at DESC
+                        LIMIT 1
+                    ) AS photo_url
+                FROM meeting_rating_table_8 mr
+                JOIN user_table_1 u ON u.user_id = mr.user_id
+                WHERE mr.meeting_id = %s
+                AND mr.user_action IN ('attended', 'missed')
+                ORDER BY u.last_name, u.first_name;
+        
+                """, (meeting_id, ))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "MEETINGS_get_atted_missed_users")
 
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
@@ -400,6 +492,8 @@ def USERS_get_MEETINGS_info_reged(user_id : int):
                     m.max_people AS max_people_allowed,
                     m.district,
                     m.adults_only AS adults_only_18plus,
+                    m.start_at AS start_at,
+                    m.end_at AS end_at,
                     COALESCE(c.category_ids, '{}') AS category_ids
                 FROM meeting_table_2 m
 
@@ -445,6 +539,8 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     m.max_people AS max_people_allowed,
                     m.district,
                     m.adults_only AS adults_only_18plus,
+                    m.start_at AS start_at,
+                    m.end_at AS end_at,
                     COALESCE(c.category_ids, '{}') AS category_ids
                 FROM meeting_table_2 m
 
@@ -452,7 +548,7 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                 JOIN meeting_rating_table_8 ur
                     ON ur.meeting_id = m.meeting_id
                     AND ur.user_id = %s
-                    AND ur.user_action = 'attended'
+                    AND ur.user_action IN ('attended', 'missed')
 
                 LEFT JOIN (
                     SELECT meeting_id, COUNT(*) AS registered_users_count
@@ -467,11 +563,9 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     GROUP BY meeting_id
                 ) c ON c.meeting_id = m.meeting_id
 
-                WHERE m.status = 'finished'
                 ORDER BY m.meeting_id;
 
                 """, (user_id,))
-
                 return cur.fetchall()
     except Exception as error:
         return (False, error, "USERS_get_MEETINGS_info_finished")
