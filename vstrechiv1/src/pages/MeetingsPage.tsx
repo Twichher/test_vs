@@ -67,7 +67,7 @@ const MeetingsPage: React.FC = () => {
 
 
   useEffect(() => {
-    // 1. Получаем id встреч, куда уже записан пользователь
+    // 1. Получаем id встреч, куда уже записан пользователь или отменил которые встречи
     fetch(`http://localhost:8000/users/${user_id}/reged_meetings`, {
       credentials: 'include',
     })
@@ -98,7 +98,7 @@ const MeetingsPage: React.FC = () => {
           return;
         }
   
-        // 3. Фильтруем — убираем встречи куда уже записан
+        // 3. Фильтруем — убираем встречи куда уже записан или отписался от них
         setRegedMeetingIds((currentReged) => {
           const filtered = data.filter(
             (m) => !currentReged.includes(m.meeting_id)

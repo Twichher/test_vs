@@ -262,7 +262,7 @@ def MEETINGS_atted_get_all_info(meeting_id : int):
                 LEFT JOIN (
                     SELECT meeting_id, COUNT(*) AS registered_users_count
                     FROM meeting_rating_table_8
-                    WHERE user_action IN ('attended', 'missed')
+                    WHERE user_action = 'attended'
                     GROUP BY meeting_id
                 ) r ON r.meeting_id = m.meeting_id
 
@@ -275,7 +275,6 @@ def MEETINGS_atted_get_all_info(meeting_id : int):
                     GROUP BY mw.meeting_id
                 ) w ON w.meeting_id = m.meeting_id
 
-                WHERE m.status = 'finished'
                 AND m.meeting_id = %s;
 
                 """, (meeting_id, ))
@@ -471,7 +470,7 @@ def USERS_get_reged_meetings(user_id: int):
                     FROM meeting_rating_table_8 mrt
                     JOIN meeting_table_2 mt ON mrt.meeting_id = mt.meeting_id
                     WHERE mt.status = 'created'
-                      AND mrt.user_action = 'registered'
+                      AND mrt.user_action IN ('registered' , 'missed')
                       AND mrt.user_id = %s;
                 """, (user_id,))
                 return [row[0] for row in cur.fetchall()]  # ← распаковка
@@ -541,6 +540,7 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     m.adults_only AS adults_only_18plus,
                     m.start_at AS start_at,
                     m.end_at AS end_at,
+                    m.status AS status,
                     COALESCE(c.category_ids, '{}') AS category_ids
                 FROM meeting_table_2 m
 

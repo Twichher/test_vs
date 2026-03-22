@@ -16,6 +16,7 @@ interface MeetingTypeOne {
     start_at: string;
     end_at: string;
     category_ids: number[];
+    status?: string;
   }
 
   export default function RegHistoryMeet() {

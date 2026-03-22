@@ -20,6 +20,7 @@ class MeetingTypeOne(BaseModel):
     category_ids : list[int]
     start_at : datetime
     end_at : datetime
+    status : str | None = None
 
 class MeetingsRequest(BaseModel):
     meetings: List[MeetingTypeOne]
@@ -59,7 +60,7 @@ class MeetingInfoRequestV2(BaseModel):
     adults_only : bool
     warnings : str
     meeting_description : str
-    meeting_city : str
+    meeting_city : str | None
     meeting_adress : str
 
 class MeetingRegedMissedUser(BaseModel):

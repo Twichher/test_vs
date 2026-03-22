@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
@@ -17,6 +17,54 @@ interface MeetingRegedMissedUser {
   is_organizer: boolean;
   user_action: string;
   photo_url: string | null;
+}
+
+// Компонент кнопки отмены записи
+interface CancelButtonProps {
+  meeting_id: string | undefined;
+  user_id: number | null;
+}
+
+function CancelButton({ meeting_id, user_id }: CancelButtonProps) {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
+  const handleCancel = async () => {
+    if (!meeting_id || !user_id) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/meetings/${meeting_id}/canceledby/${user_id}`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Ошибка при отмене записи');
+      }
+
+      // Перенаправляем на страницу пользователя
+      navigate(`/user/${user_id}`);
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert('Не удалось отменить запись');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <button
+      className="meeting-cancel-btn"
+      onClick={handleCancel}
+      disabled={loading}
+    >
+      {loading ? 'Отмена...' : 'Отменить запись'}
+    </button>
+  );
 }
 
 export default function OneMeetingPage() {
@@ -48,15 +96,7 @@ export default function OneMeetingPage() {
 
           <MeetingExpandedInfo meeting_id={Number(meeting_id)} />
 
-          <button
-            className="meeting-cancel-btn"
-            onClick={() => {
-              console.log('cancel meeting', meeting_id);
-              console.log('user id', user_id);
-            }}
-          >
-            Отменить запись
-          </button>
+          <CancelButton meeting_id={meeting_id} user_id={user_id} />
 
           {/* Секция записанных пользователей */}
           <div className="meeting-users-section">

@@ -139,6 +139,7 @@ def get_meetings_all_info_new_page(meeting_id : int,user_id: int = Depends(get_c
 
 @app.get("/meetings/{meeting_id}/atted_info", response_model=MeetingInfoRequestV2)
 def get_meetings_history_all_info_new_page(meeting_id : int,user_id: int = Depends(get_current_user)):
+    
     result = MEETINGS_atted_get_all_info(meeting_id)
 
     if isinstance(result, tuple):

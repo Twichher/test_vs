@@ -21,7 +21,7 @@ interface MeetingInfoV2 {
     adults_only: boolean;
     warnings: string;
     meeting_description: string;
-    meeting_city: string;
+    meeting_city?: string;
     meeting_adress: string;
   }
 
