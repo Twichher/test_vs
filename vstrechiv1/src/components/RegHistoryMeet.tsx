@@ -17,6 +17,7 @@ interface MeetingTypeOne {
     end_at: string;
     category_ids: number[];
     status?: string;
+    user_action?: string;
   }
 
   export default function RegHistoryMeet() {
@@ -109,9 +110,10 @@ interface MeetingTypeOne {
                 attendedMeetings.map((meeting) => (
                   <div
                   key={meeting.meeting_id}
+                  className={meeting.user_action === 'missed' ? 'meeting-missed' : ''}
                   onClick={() => {
                     console.log(meeting.meeting_id);
-                    navigate(`/meetings/info_history/${meeting.meeting_id}`);
+                    navigate(`/meetings/info_history/${meeting.meeting_id}?action=${meeting.user_action}`);
                   }}
                   style={{ cursor: 'pointer' }}
                   >

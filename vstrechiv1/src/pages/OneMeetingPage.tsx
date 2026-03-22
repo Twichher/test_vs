@@ -30,12 +30,20 @@ function CancelButton({ meeting_id, user_id }: CancelButtonProps) {
   const [loading, setLoading] = useState(false);
 
   const handleCancel = async () => {
-    if (!meeting_id || !user_id) return;
+    // Валидация: проверяем что meeting_id - валидное число
+    const meetingIdNum = Number(meeting_id);
+    if (!meeting_id || isNaN(meetingIdNum) || meetingIdNum <= 0 || !user_id) {
+      console.error('Неверные параметры для отмены записи');
+      return;
+    }
+
+    // Предотвращаем повторные клики
+    if (loading) return;
 
     setLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:8000/meetings/${meeting_id}/canceledby/${user_id}`,
+        `http://localhost:8000/meetings/${meetingIdNum}/canceledby/${user_id}`,
         {
           method: 'PUT',
           credentials: 'include',
@@ -46,12 +54,12 @@ function CancelButton({ meeting_id, user_id }: CancelButtonProps) {
         throw new Error('Ошибка при отмене записи');
       }
 
-      // Перенаправляем на страницу пользователя
-      navigate(`/user/${user_id}`);
+      // Перенаправляем на страницу пользователя с replace: true
+      // чтобы нельзя было вернуться назад кнопкой браузера
+      navigate(`/user/${user_id}`, { replace: true });
     } catch (error) {
       console.error('Ошибка:', error);
       alert('Не удалось отменить запись');
-    } finally {
       setLoading(false);
     }
   };

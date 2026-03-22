@@ -27,6 +27,10 @@
     align-items: center;
     gap: 20px;
     margin-bottom: 30px;
+    max-width: 1260px;  /* 4*300 + 3*20 = ширина grid */
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
   }
   
   .meetings-search {

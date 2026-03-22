@@ -52,4 +52,13 @@
     color: #aaa;
     margin: 0;
   }
+
+  /* Отменённые встречи — мягкий красный */
+  .meeting-missed .meeting-card {
+    background: #eca3a3;
+  }
+  
+  .meeting-missed .meeting-card:hover {
+    background: #eca3a3;
+  }
   

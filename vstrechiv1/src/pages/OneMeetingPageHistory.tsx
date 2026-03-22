@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
 import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
@@ -21,7 +21,10 @@ interface MeetingRegedMissedUser {
 
 export default function OneMeetingPageHistory() {
     const { meeting_id } = useParams<{ meeting_id: string }>();
+    const [searchParams] = useSearchParams();
     const { user_id } = useSelector((state: RootState) => state.auth);
+    
+    const userAction = searchParams.get('action');
   
     const [regedUsers, setRegedUsers] = useState<MeetingRegedMissedUser[]>([]);
     const [usersOpen, setUsersOpen] = useState(true);
@@ -46,40 +49,48 @@ export default function OneMeetingPageHistory() {
         <main className="meeting-page-content">
           <div className="meeting-page-inner">
   
-            <MeetingExpandedInfoHistory meeting_id={Number(meeting_id)} />
+            {!userAction ? (
+              <div className="access-denied">
+                <h2>Нет доступа</h2>
+                <p>Доступ к этой странице возможен только через историю встреч.</p>
+              </div>
+            ) : (
+              <>
+                <MeetingExpandedInfoHistory meeting_id={Number(meeting_id)} />
   
-            {/* Секция записанных пользователей */}
-            <div className="meeting-users-section">
-              <button
-                className="meeting-users-header"
-                onClick={() => setUsersOpen((prev) => !prev)}
-              >
-                <span>Записаны</span>
-                {usersOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-              </button>
-  
-              {usersOpen && (
-                <div className="meeting-users-grid">
-                  {regedUsers.map((u) => (
-                    <UserComponent
-                      key={u.user_id}
-                      user_id={u.user_id}
-                      first_name={u.first_name}
-                      last_name={u.last_name}
-                      is_organizer={u.is_organizer}
-                      user_action={u.user_action}
-                      photo_url={u.photo_url}
-                      isCurrentUser={u.user_id === user_id}
-  
-                    />
-                  ))}
+                {/* Секция записанных пользователей */}
+                <div className="meeting-users-section">
+                  <button
+                    className="meeting-users-header"
+                    onClick={() => setUsersOpen((prev) => !prev)}
+                  >
+                    <span>Записаны</span>
+                    {usersOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+                  </button>
+      
+                  {usersOpen && (
+                    <div className="meeting-users-grid">
+                      {regedUsers.map((u) => (
+                        <UserComponent
+                          key={u.user_id}
+                          user_id={u.user_id}
+                          first_name={u.first_name}
+                          last_name={u.last_name}
+                          is_organizer={u.is_organizer}
+                          user_action={u.user_action}
+                          photo_url={u.photo_url}
+                          isCurrentUser={u.user_id === user_id}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
   
           </div>
         </main>
-  
+
         <Footer />
       </div>
     );

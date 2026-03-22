@@ -21,6 +21,7 @@ class MeetingTypeOne(BaseModel):
     start_at : datetime
     end_at : datetime
     status : str | None = None
+    user_action : str | None = None
 
 class MeetingsRequest(BaseModel):
     meetings: List[MeetingTypeOne]

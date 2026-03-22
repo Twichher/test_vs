@@ -541,6 +541,7 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     m.start_at AS start_at,
                     m.end_at AS end_at,
                     m.status AS status,
+                    ur.user_action AS user_action,
                     COALESCE(c.category_ids, '{}') AS category_ids
                 FROM meeting_table_2 m
 

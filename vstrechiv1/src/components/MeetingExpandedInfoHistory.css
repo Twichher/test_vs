@@ -12,3 +12,8 @@
     box-sizing: border-box;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
+  .meeting-missed-card {
+    background: #eca3a3 ;
+    color: #1a1a1a;
+  }

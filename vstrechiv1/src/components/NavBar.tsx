@@ -23,6 +23,7 @@ const NavBar: React.FC<NavBarProps> = ({ onChange }) => {
 
   const handleClick = (key: typeof items[number]['key']) => {
     if (key === 'profile') navigate(`/user/${user_id}`);
+    if (key === 'settings') navigate(`/settings`)
     onChange?.(key);
   };
 

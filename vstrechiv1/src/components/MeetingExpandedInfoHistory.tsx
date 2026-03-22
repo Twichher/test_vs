@@ -1,5 +1,6 @@
 import './MeetingExpandedInfoHistory.css'
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { FiCalendar, FiSearch, FiX } from 'react-icons/fi';
 import { BsPerson } from 'react-icons/bs';
 import { PiUsersFill } from 'react-icons/pi';
@@ -31,6 +32,8 @@ interface MeetingExpandedInfoProps {
 
 export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpandedInfoProps){
     const [info, setInfo] = useState<MeetingInfoV2 | null>(null);
+    const [searchParams] = useSearchParams();
+    const userAction = searchParams.get('action');
 
     const [profileModalUserId, setProfileModalUserId] = useState<number | null>(null); // state для модалки и открытие по клику
     const [profileModalfirstname, setProfileModalFirstName] = useState<string | undefined>(undefined)
@@ -51,7 +54,7 @@ export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpande
     if (!info) return <div className="meeting-expanded-info-card" />;
 
     return (
-    <div className="meeting-expanded-info-card--reged">
+    <div className={`meeting-expanded-info-card--reged ${userAction === 'missed' ? 'meeting-missed-card' : ''}`}>
         <h2 className="mei-title">
         {info.meeting_title}
         {info.adults_only && <span className="mei-badge">18+</span>}
