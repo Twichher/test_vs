@@ -22,11 +22,11 @@ export default function ProfilePage() {
       <NavbarLogin />
       <div className="meetings-settings-panel">
               <NavBar onChange={() => {}} />
-        </div>
-        <main className="profile-page-content">
-          <ProfileCard />
-          <RegHistoryMeet />
-        </main>
+      </div>
+      <main className="profile-page-content">
+        <ProfileCard />
+        <RegHistoryMeet />
+      </main>
 
       <Footer />
     </div>
