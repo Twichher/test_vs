@@ -155,6 +155,254 @@
   flex-shrink: 0;
 }
 
+/* Модальное окно выбора района */
+.district-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.district-modal {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  width: 90%;
+  max-width: 520px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.district-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  text-align: center;
+  color: #333;
+}
+
+.district-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.district-modal-close:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Сетка районов */
+.district-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.district-item {
+  padding: 16px 8px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.district-item:hover {
+  border-color: #3ecfaa;
+  background: #f0fdf9;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.2);
+}
+
+.district-item--selected {
+  border-color: #3ecfaa;
+  background: #3ecfaa;
+  color: white;
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.3);
+}
+
+.district-item--selected:hover {
+  background: #2db894;
+  border-color: #2db894;
+}
+
+/* Кнопка Применить */
+.district-apply-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #3ecfaa;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.district-apply-btn:hover:not(:disabled) {
+  background: #2db894;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.3);
+}
+
+.district-apply-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Стили для модального окна пола */
+.gender-modal {
+  max-width: 320px;
+}
+
+.gender-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.gender-item {
+  padding: 20px 16px;
+  font-size: 16px;
+}
+
+/* Стили для модального окна даты рождения */
+.birthdate-modal {
+  max-width: 380px;
+}
+
+.birthdate-inputs {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.birthdate-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.birthdate-field label {
+  font-size: 12px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.birthdate-field input {
+  width: 70px;
+  padding: 12px;
+  border: 1px solid #000;
+  border-radius: 8px;
+  font-size: 18px;
+  text-align: center;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.birthdate-field input:focus {
+  border-color: #3ecfaa;
+  box-shadow: 0 0 0 2px rgba(62, 207, 170, 0.2);
+}
+
+.birthdate-separator {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+/* Кнопка Сохранить */
+.settings-save-btn {
+  width: 100%;
+  max-width: 480px;
+  padding: 16px;
+  margin-top: 24px;
+  border: none;
+  border-radius: 12px;
+  background: #3ecfaa;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.3);
+}
+
+.settings-save-btn:hover {
+  background: #2db894;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(62, 207, 170, 0.4);
+}
+
+.settings-save-btn:active {
+  transform: translateY(0);
+}
+
+.settings-save-btn--loading {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Сообщения о статусе сохранения */
+.settings-message {
+  width: 100%;
+  max-width: 480px;
+  padding: 16px;
+  margin-top: 24px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.settings-message--success {
+  background: #d1fae5;
+  color: #065f46;
+  border: 1px solid #3ecfaa;
+}
+
+.settings-message--error {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Адаптивность */
 @media (max-width: 640px) {
   .setting-field,
@@ -171,5 +419,13 @@
   
   .setting-input {
     width: 100%;
+  }
+
+  .district-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .district-modal {
+    padding: 24px;
   }
 }

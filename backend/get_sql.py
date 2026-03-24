@@ -571,6 +571,29 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
     except Exception as error:
         return (False, error, "USERS_get_MEETINGS_info_finished")
 
+
+# получаем данные пользователя для страницы настроек
+def USERS_get_settings_info(user_id: int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT 
+                    u.first_name,
+                    u.last_name,
+                    u.birth_date,
+                    u.gender,
+                    u.district,
+                    u.email
+                FROM user_table_1 u
+                WHERE u.user_id = %s;
+                """, (user_id,))
+                result = cur.fetchone()
+                return result
+    except Exception as error:
+        return (False, error, "USERS_get_settings_info")
+
+
 #------------------------------------------------------------------------------------------------------
 #roots to CATEGORIES
 #------------------------------------------------------------------------------------------------------

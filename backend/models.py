@@ -106,3 +106,54 @@ class RegUserToMeetingRequest(BaseModel):
 class Category(BaseModel):
     category_id : int
     category_name : str
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для обновления данных пользователя (Settings)
+#------------------------------------------------------------------------------------------------------
+
+class UpdateLastNameRequest(BaseModel):
+    last_name: str
+
+class UpdateFirstNameRequest(BaseModel):
+    first_name: str
+
+class UpdateBirthDateRequest(BaseModel):
+    birth_date: str
+
+class UpdateGenderRequest(BaseModel):
+    gender: str  # 'M' или 'F'
+
+class UpdateDistrictRequest(BaseModel):
+    district: str
+
+class UpdateFieldResponse(BaseModel):
+    success: bool
+    message: str | None = None
+    field_name: str | None = None
+    new_value: str | None = None
+
+
+# Модель для данных пользователя (страница настроек)
+class UserSettingsInfo(BaseModel):
+    first_name: str
+    last_name: str
+    birth_date: str | None = None
+    gender: str | None = None
+    district: str | None = None
+    email: str
+
+
+# Модель для обновления настроек (все поля опциональные)
+class UpdateSettingsRequest(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
+    birth_date: str | None = None
+    gender: str | None = None
+    district: str | None = None
+
+
+class UpdateSettingsResponse(BaseModel):
+    success: bool
+    message: str
+    data: UserSettingsInfo | None = None

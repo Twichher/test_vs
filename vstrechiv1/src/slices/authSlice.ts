@@ -28,6 +28,12 @@ const initialState: AuthState = {
   meetings_as_currency: null,
 };
 
+interface UpdateProfilePayload {
+  first_name?: string;
+  last_name?: string;
+  district?: string;
+}
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -45,6 +51,18 @@ const authSlice = createSlice({
       state.is_registration_completed = action.payload.is_registration_completed;
       state.meetings_as_currency = action.payload.meetings_as_currency;
     },
+    // Обновление данных профиля (после сохранения настроек)
+    updateUserProfile(state, action: PayloadAction<UpdateProfilePayload>) {
+      if (action.payload.first_name !== undefined) {
+        state.first_name = action.payload.first_name;
+      }
+      if (action.payload.last_name !== undefined) {
+        state.last_name = action.payload.last_name;
+      }
+      if (action.payload.district !== undefined) {
+        state.district = action.payload.district;
+      }
+    },
     // Логаут — сбросить всё
     clearUser(state) {
       return initialState;
@@ -52,5 +70,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, clearUser } = authSlice.actions;
+export const { setUser, updateUserProfile, clearUser } = authSlice.actions;
 export default authSlice.reducer;
