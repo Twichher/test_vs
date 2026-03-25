@@ -4,6 +4,18 @@
     min-height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
+/* Анимация появления блоков */
+@keyframes fadeInBlock {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
   
   .profile-page-content {
     flex: 1;
@@ -13,6 +25,21 @@
     padding: 20px 20px;
     gap: 24px;
   }
+
+.profile-animate-block {
+  animation: fadeInBlock 0.3s ease-out forwards;
+  width: 100%;
+  display: flex;
+  transform: none !important;
+}
+
+.profile-animate-block--center {
+  justify-content: center;
+}
+
+.profile-animate-block--left {
+  justify-content: flex-start;
+}
   
 
   .meetings-settings-panel {
@@ -33,4 +60,119 @@
     width: 100%;
     max-width: 1100px;
   }
+
+/* Модальное окно фото */
+.photo-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: modalFadeIn 0.3s ease forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.photo-modal {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  width: 700px;
+  height: 520px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  opacity: 0;
+  transform: scale(0.95);
+  animation: modalScaleIn 0.3s ease forwards;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.photo-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  z-index: 1;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.photo-modal-close:hover {
+  background: #f0f0f0;
+}
+
+.photo-modal-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.photo-modal-main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.photo-modal-thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  width: 96px;
+  padding-right: 4px;
+}
+
+.photo-modal-thumb {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.photo-modal-thumb:hover {
+  opacity: 1;
+}
+
+.photo-modal-thumb--active {
+  border-color: #3ecfaa;
+  opacity: 1;
+}
   

@@ -4,7 +4,7 @@ import type { RootState }  from '../slices/store';
 import { updateUserProfile } from '../slices/authSlice';
 import { useNavigate } from 'react-router-dom';
 import { useState, useRef, useEffect } from 'react';
-import { FiEdit2, FiDownload, FiX } from 'react-icons/fi';
+import { FiEdit2, FiX, FiCamera } from 'react-icons/fi';
 import NavbarLogin from '../components/NavbarLogin';
 import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
@@ -24,6 +24,62 @@ type ChangedFields = {
 };
 
 type SaveStatus = 'idle' | 'loading' | 'success' | 'error';
+
+// Компонент загрузки фотографии
+function PhotoUploadField({ 
+  onFileSelect, 
+  isChanged,
+  onEditStateChange 
+}: { 
+  onFileSelect: (file: File | null) => void;
+  isChanged: boolean;
+  onEditStateChange: (isChanged: boolean) => void;
+}) {
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      // Проверяем тип файла
+      if (!file.type.startsWith('image/')) {
+        alert('Пожалуйста, выберите файл изображения');
+        return;
+      }
+      // Создаем превью
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      onFileSelect(file);
+      onEditStateChange(true); // Уведомляем, что фото изменено
+    }
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  return (
+    <div className="setting-photo-upload">
+      <div className={`setting-photo-btn ${isChanged ? 'setting-photo-btn--changed' : ''}`} onClick={handleClick}>
+        {preview ? (
+          <img src={preview} alt="Preview" className="setting-photo-preview" />
+        ) : (
+          <FiCamera size={32} />
+        )}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp"
+          onChange={handleFileChange}
+        />
+      </div>
+      <span className="setting-photo-label">Загрузить фотографию</span>
+    </div>
+  );
+}
 
 interface SettingFieldProps {
   label: string;
@@ -474,6 +530,9 @@ export default function SettingsPage () {
     // Состояние сохранения
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
     const [saveMessage, setSaveMessage] = useState('');
+    
+    // Состояние для файла фотографии
+    const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
 
     // Загрузка данных пользователя
     useEffect(() => {
@@ -512,75 +571,97 @@ export default function SettingsPage () {
       
       setSaveStatus('loading');
       
-      // Формируем данные для отправки
-      const updateData: Partial<UserSettingsData> = {};
-      
-      if (editedValues.last_name !== undefined && editedValues.last_name !== userData.last_name) {
-        updateData.last_name = editedValues.last_name;
-      }
-      if (editedValues.first_name !== undefined && editedValues.first_name !== userData.first_name) {
-        updateData.first_name = editedValues.first_name;
-      }
-      if (editedValues.birth_date !== undefined && editedValues.birth_date !== userData.birth_date) {
-        updateData.birth_date = editedValues.birth_date;
-      }
-      if (editedValues.gender !== undefined && editedValues.gender !== userData.gender) {
-        updateData.gender = editedValues.gender;
-      }
-      if (editedValues.district !== undefined && editedValues.district !== userData.district) {
-        updateData.district = editedValues.district;
-      }
-      if (editedValues.email !== undefined && editedValues.email !== userData.email) {
-        updateData.email = editedValues.email;
-      }
-      
       try {
-        const response = await fetch(`http://localhost:8000/users/${user_id}/settings`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify(updateData),
-        });
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || 'Ошибка сохранения');
+        // 1. Сначала загружаем фото если оно выбрано
+        if (selectedPhoto) {
+          const photoFormData = new FormData();
+          photoFormData.append('file', selectedPhoto);
+          
+          const photoResponse = await fetch(`http://localhost:8000/users/${user_id}/photo`, {
+            method: 'POST',
+            credentials: 'include',
+            body: photoFormData,
+          });
+          
+          if (!photoResponse.ok) {
+            const errorData = await photoResponse.json();
+            throw new Error(errorData.detail || 'Ошибка загрузки фотографии');
+          }
+          
+          const photoResult = await photoResponse.json();
+          console.log('Фото загружено:', photoResult);
         }
         
-        const result = await response.json();
+        // 2. Формируем данные для обновления настроек
+        const updateData: Partial<UserSettingsData> = {};
         
-        if (result.success) {
-          setSaveStatus('success');
-          setSaveMessage('Данные успешно сохранены!');
-          
-          // Обновляем userData
-          setUserData(prev => prev ? { ...prev, ...editedValues } : null);
-          
-          // Обновляем данные в Redux store (authSlice)
-          const profileUpdate: { first_name?: string; last_name?: string; district?: string } = {};
-          if (editedValues.first_name !== undefined) {
-            profileUpdate.first_name = editedValues.first_name;
-          }
-          if (editedValues.last_name !== undefined) {
-            profileUpdate.last_name = editedValues.last_name;
-          }
-          if (editedValues.district !== undefined) {
-            profileUpdate.district = editedValues.district;
-          }
-          dispatch(updateUserProfile(profileUpdate));
-          
-          // Сбрасываем состояние изменений
-          setChangedFields({});
-          setEditedValues({});
-          
-          // Через 3 секунды скрываем сообщение
-          setTimeout(() => {
-            setSaveStatus('idle');
-            setSaveMessage('');
-          }, 3000);
-        } else {
-          throw new Error(result.message || 'Ошибка сохранения');
+        if (editedValues.last_name !== undefined && editedValues.last_name !== userData.last_name) {
+          updateData.last_name = editedValues.last_name;
         }
+        if (editedValues.first_name !== undefined && editedValues.first_name !== userData.first_name) {
+          updateData.first_name = editedValues.first_name;
+        }
+        if (editedValues.birth_date !== undefined && editedValues.birth_date !== userData.birth_date) {
+          updateData.birth_date = editedValues.birth_date;
+        }
+        if (editedValues.gender !== undefined && editedValues.gender !== userData.gender) {
+          updateData.gender = editedValues.gender;
+        }
+        if (editedValues.district !== undefined && editedValues.district !== userData.district) {
+          updateData.district = editedValues.district;
+        }
+        if (editedValues.email !== undefined && editedValues.email !== userData.email) {
+          updateData.email = editedValues.email;
+        }
+        
+        // 3. Отправляем обновление настроек только если есть изменения
+        if (Object.keys(updateData).length > 0) {
+          const response = await fetch(`http://localhost:8000/users/${user_id}/settings`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(updateData),
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Ошибка сохранения');
+          }
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            // Обновляем userData
+            setUserData(prev => prev ? { ...prev, ...editedValues } : null);
+            
+            // Обновляем данные в Redux store (authSlice)
+            const profileUpdate: { first_name?: string; last_name?: string; district?: string } = {};
+            if (editedValues.first_name !== undefined) {
+              profileUpdate.first_name = editedValues.first_name;
+            }
+            if (editedValues.last_name !== undefined) {
+              profileUpdate.last_name = editedValues.last_name;
+            }
+            if (editedValues.district !== undefined) {
+              profileUpdate.district = editedValues.district;
+            }
+            dispatch(updateUserProfile(profileUpdate));
+          }
+        }
+        
+        setSaveStatus('success');
+        setSaveMessage('Данные успешно сохранены!');
+        
+        // Сбрасываем состояние изменений
+        setChangedFields({});
+        setEditedValues({});
+        setSelectedPhoto(null);
+        
+        // Через 3 секунды скрываем сообщение
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setSaveMessage('');
+        }, 3000);
       } catch (error: any) {
         setSaveStatus('error');
         setSaveMessage(error.message || 'Произошла ошибка при сохранении');
@@ -593,8 +674,8 @@ export default function SettingsPage () {
       }
     };
 
-    const handlePhotoUpload = () => {
-      console.log('Загрузить фотографию');
+    const handlePhotoSelect = (file: File | null) => {
+      setSelectedPhoto(file);
     };
 
     if (!isAuth){
@@ -625,12 +706,11 @@ export default function SettingsPage () {
             </div>
             <main className='settings-page-content'>
                 {/* Блок загрузки фотографии */}
-                <div className="setting-photo-upload">
-                  <span className="setting-photo-label">Загрузить фотографию*</span>
-                  <button className="setting-photo-btn" onClick={() => handlePhotoUpload()}>
-                    <FiDownload size={24} />
-                  </button>
-                </div>
+                <PhotoUploadField 
+                  onFileSelect={handlePhotoSelect} 
+                  isChanged={changedFields['Фото'] || false}
+                  onEditStateChange={(isChanged) => handleEditStateChange('Фото', isChanged)}
+                />
 
                 {/* Поля настроек */}
                 <div className="settings-form">

@@ -6,6 +6,8 @@
     gap: 8px;
     padding: 0 30px;
     align-self: flex-start; /* ← прижать влево */
+    position: relative;
+    z-index: 1;
   }
   
   

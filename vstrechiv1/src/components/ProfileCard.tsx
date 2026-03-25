@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
 import { BsPerson } from 'react-icons/bs';
 import { FiHelpCircle } from 'react-icons/fi';
-import { FiX } from 'react-icons/fi';
 import './ProfileCard.css';
 
 interface UserStats {
@@ -25,9 +24,10 @@ interface ProfileCardProps {
   firstname?: string
   lastname?: string
   isOrganizer? : boolean
+  onPhotoClick?: (photoUrl: string, allPhotos: string[]) => void;
 }
 
-export default function ProfileCard({ userId, firstname , lastname, isOrganizer}: ProfileCardProps) {
+export default function ProfileCard({ userId, firstname , lastname, isOrganizer, onPhotoClick}: ProfileCardProps) {
 
   const { user_id, first_name, last_name, district, is_organizer } = useSelector(
     (state: RootState) => state.auth
@@ -39,9 +39,6 @@ export default function ProfileCard({ userId, firstname , lastname, isOrganizer}
   const targetisOrganizer = isOrganizer ?? is_organizer
 
   const [stats, setStats] = useState<UserStats | null>(null);
-
-  const [photoModalOpen, setPhotoModalOpen] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user_id) return;
@@ -66,9 +63,8 @@ export default function ProfileCard({ userId, firstname , lastname, isOrganizer}
 
       {/* Аватар */}
       <div className="profile-avatar" onClick={() => {
-        if (stats && stats.photo_urls.length > 0) {
-          setSelectedPhoto(avatarUrl);
-          setPhotoModalOpen(true);
+        if (stats && stats.photo_urls.length > 0 && onPhotoClick && avatarUrl) {
+          onPhotoClick(avatarUrl, stats.photo_urls);
         }
         }}>
         {avatarUrl ? (
@@ -165,37 +161,6 @@ export default function ProfileCard({ userId, firstname , lastname, isOrganizer}
         </>
 
         )}
-      {photoModalOpen && stats && (
-        <div className="photo-modal-overlay" onClick={() => setPhotoModalOpen(false)}>
-          <div className="photo-modal" onClick={(e) => e.stopPropagation()}>
-
-          <button className="photo-modal-close" onClick={() => setPhotoModalOpen(false)}>
-            <FiX size={24} />
-          </button>
-
-          {/* Список миниатюр — теперь слева */}
-          <div className="photo-modal-thumbnails">
-            {stats.photo_urls.map((url, index) => (
-              <img
-                key={index}
-                src={url}
-                alt={`photo-${index}`}
-                className={`photo-modal-thumb ${selectedPhoto === url ? 'photo-modal-thumb--active' : ''}`}
-                onClick={() => setSelectedPhoto(url)}
-              />
-            ))}
-          </div>
-
-          {/* Главное фото — теперь справа */}
-          <div className="photo-modal-main">
-            {selectedPhoto && (
-              <img src={selectedPhoto} alt="selected" className="photo-modal-main-img" />
-            )}
-          </div>
-
-          </div>
-        </div>
-      )}
     </div>
   );
 }

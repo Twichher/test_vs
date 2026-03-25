@@ -23,29 +23,43 @@
   width: 100%;
   max-width: 480px;
   margin-left: -6%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Блок загрузки фотографии - выровнен слева как остальные */
+/* Анимация появления для всех блоков */
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+@keyframes fadeInBlock {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Блок загрузки фотографии - по центру */
 .setting-photo-upload {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  width: 100%;
-  max-width: 480px;
-  margin-left: -4%;
+  gap: 12px;
+  animation: fadeInBlock 0.2s ease-out forwards;
 }
 
 .setting-photo-label {
-  width: 150px;
   font-size: 16px;
   color: #333;
-  text-align: right;
-  flex-shrink: 0;
+  text-align: center;
 }
 
 .setting-photo-btn {
-  width: 60px;
-  height: 60px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   border: 1px solid #000;
   background: white;
@@ -56,6 +70,8 @@
   transition: all 0.2s ease;
   color: #666;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
 }
 
 .setting-photo-btn:hover {
@@ -65,11 +81,29 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.setting-photo-btn--changed {
+  border: 1px solid #3ecfaa !important;
+  box-shadow: 0 0 0 2px rgba(62, 207, 170, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.setting-photo-btn input[type="file"] {
+  display: none;
+}
+
+.setting-photo-preview {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #000;
+}
+
 /* Поле настройки */
 .setting-field {
   display: flex;
   align-items: center;
   gap: 16px;
+  animation: fadeInBlock 0.2s ease-out forwards;
 }
 
 .setting-label {
@@ -343,6 +377,7 @@
   border: none;
   border-radius: 12px;
   background: #3ecfaa;
+  animation: fadeInBlock 0.2s ease-out forwards;
   color: white;
   font-size: 18px;
   font-weight: 600;

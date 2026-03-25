@@ -261,3 +261,28 @@ def USERS_update_settings(user_id: int, **kwargs):
                 }
     except Exception as error:
         return (False, error, "USERS_update_settings")
+
+
+# добавление фотографии пользователя в таблицу
+def USERS_add_photo(user_id: int, photo_url: str):
+    """
+    Добавляет запись о фотографии пользователя в user_photos_table_14
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO user_photos_table_14 (user_id, photo_url)
+                    VALUES (%s, %s)
+                    RETURNING record_id, user_id, photo_url, uploaded_at
+                """, (user_id, photo_url))
+                result = cur.fetchone()
+                return {
+                    "success": True,
+                    "record_id": result["record_id"],
+                    "user_id": result["user_id"],
+                    "photo_url": result["photo_url"],
+                    "uploaded_at": result["uploaded_at"]
+                }
+    except Exception as error:
+        return (False, error, "USERS_add_photo")

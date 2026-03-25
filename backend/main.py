@@ -9,9 +9,11 @@ from jose import jwt
 
 from get_sql import FAQ_get_all_rows, MEETINGS_atted_get_all_info, MEETINGS_get_atted_missed_users, MEETINGS_get_reged_missed_users, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id, USERS_get_settings_info
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
-UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse
+UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse
+from minio_defs import upload_photo
+from fastapi import UploadFile, File
 from important_info import SECRET_KEY, ALGORITHM
 
 app = FastAPI()
@@ -451,6 +453,54 @@ def get_user_settings(user_id: int, current_user_id: int = Depends(get_current_u
         result['birth_date'] = result['birth_date'].strftime('%d.%m.%Y')
     
     return result
+
+
+@app.post("/users/{user_id}/photo", response_model=UploadPhotoResponse)
+async def upload_user_photo(
+    user_id: int,
+    file: UploadFile = File(...),
+    current_user_id: int = Depends(get_current_user)
+):
+    """Загружает фотографию пользователя в MinIO и сохраняет URL в БД"""
+    # Проверяем, что пользователь загружает свою фотографию
+    if user_id != current_user_id:
+        raise HTTPException(status_code=403, detail="Можно загружать только свои фотографии")
+    
+    # Проверяем тип файла
+    if not file.content_type or not file.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Файл должен быть изображением (JPEG, PNG, GIF, etc.)")
+    
+    try:
+        # Читаем содержимое файла
+        file_data = await file.read()
+        
+        # Загружаем в MinIO
+        upload_result = upload_photo(file_data, file.filename, file.content_type)
+        
+        if not upload_result["success"]:
+            raise HTTPException(status_code=500, detail=upload_result.get("error", "Ошибка загрузки файла"))
+        
+        photo_url = upload_result["url"]
+        
+        # Сохраняем URL в БД
+        db_result = USERS_add_photo(user_id, photo_url)
+        
+        if isinstance(db_result, tuple):
+            # Если ошибка в БД, удаляем файл из MinIO
+            # TODO: добавить удаление файла из MinIO при ошибке БД
+            raise HTTPException(status_code=500, detail=str(db_result[1]))
+        
+        return UploadPhotoResponse(
+            success=True,
+            message="Фотография успешно загружена",
+            photo_url=photo_url,
+            record_id=db_result["record_id"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.put("/users/{user_id}/settings", response_model=UpdateSettingsResponse)

@@ -157,3 +157,11 @@ class UpdateSettingsResponse(BaseModel):
     success: bool
     message: str
     data: UserSettingsInfo | None = None
+
+
+# Модель для ответа после загрузки фото
+class UploadPhotoResponse(BaseModel):
+    success: bool
+    message: str
+    photo_url: str | None = None
+    record_id: int | None = None
