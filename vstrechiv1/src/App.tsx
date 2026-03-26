@@ -11,6 +11,7 @@ import ProfilePage from './pages/ProfilePage';
 import OneMeetingPage from './pages/OneMeetingPage';
 import OneMeetingPageHistory from './pages/OneMeetingPageHistory';
 import SettingsPage from './pages/SettingsPage';
+import StatsPage from './pages/StatsPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -23,7 +24,7 @@ function App() {
         if (!res.ok) throw new Error('Не авторизован');
         return res.json();
       })
-      .then((data) => {
+    .then((data) => {
         dispatch(setUser(data));
       })
       .catch(() => {
@@ -39,10 +40,11 @@ function App() {
       <Route path="/meetings" element={<MeetingsPage />} />
       <Route path="/user/:user_id" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/stats" element={<StatsPage />} />
       <Route path="/meetings/info_reged/:meeting_id" element={<OneMeetingPage />} />
       <Route path="/meetings/info_history/:meeting_id" element={<OneMeetingPageHistory />} />
     </Routes>
   );
-}
+}   
 
 export default App;

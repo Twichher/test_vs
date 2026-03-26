@@ -10,15 +10,8 @@
     flex: 1;
     max-width: 1360px;
     margin: 0 auto;
-    padding: 0px 40px 60px;
+    padding: 0px 40px 60px 140px; /* отступ слева для NavBar */
     width: 100%;
-  }
-  
-  /* Панель настроек по центру */
-  .meetings-settings-panel {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 30px;
   }
   
   /* Поиск и фильтры */

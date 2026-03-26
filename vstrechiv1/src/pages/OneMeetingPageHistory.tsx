@@ -42,9 +42,7 @@ export default function OneMeetingPageHistory() {
     return (
       <div className="meeting-page">
         <NavbarLogin />
-        <div className="meetings-settings-panel">
-          <NavBar onChange={() => {}} />
-        </div>
+        <NavBar onChange={() => {}} />
   
         <main className="meeting-page-content">
           <div className="meeting-page-inner">

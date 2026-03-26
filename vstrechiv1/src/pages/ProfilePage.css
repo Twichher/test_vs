@@ -22,7 +22,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;    /* ProfileCard по центру */
-    padding: 20px 20px;
+    padding: 20px 20px 20px 140px; /* отступ слева для NavBar */
     gap: 24px;
   }
 
@@ -41,12 +41,6 @@
   justify-content: flex-start;
 }
   
-
-  .meetings-settings-panel {
-    display: flex;
-    justify-content: center;
-    padding: 20px 30px 0px;
-  }
 
   .footer {
     background: #111;

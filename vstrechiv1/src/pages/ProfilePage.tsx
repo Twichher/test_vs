@@ -32,9 +32,7 @@ export default function ProfilePage() {
   return (
     <div className="profile-page">
       <NavbarLogin />
-      <div className="meetings-settings-panel">
-              <NavBar onChange={() => {}} />
-      </div>
+      <NavBar onChange={() => {}} />
       <main className="profile-page-content">
         <div className="profile-animate-block profile-animate-block--center">
           <ProfileCard onPhotoClick={handlePhotoClick} />

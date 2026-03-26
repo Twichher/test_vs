@@ -10,8 +10,17 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 20px;
+
+}
+
+.settings-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 24px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
 }
 
 /* Форма настроек */
@@ -22,8 +31,8 @@
   gap: 16px;
   width: 100%;
   max-width: 480px;
-  margin-left: -6%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin-left: -18%;
 }
 
 /* Анимация появления для всех блоков */
@@ -187,6 +196,42 @@
   width: 40px;
   height: 40px;
   flex-shrink: 0;
+}
+
+/* Кнопка Сменить пароль */
+.setting-password-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: fadeInBlock 0.2s ease-out forwards;
+}
+
+.setting-password-label-spacer {
+  width: 150px;
+  flex-shrink: 0;
+}
+
+.settings-password-btn {
+  width: 290px; /* ширина = все пространство - label - gap - button - gap */
+  padding: 12px 16px;
+  border: 1px solid #e57373;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #c65528;
+  background: #ffebee;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.settings-password-btn:hover {
+  background: #e00a0a;
+  border-color: #ef5350;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Модальное окно выбора района */

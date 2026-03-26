@@ -687,9 +687,7 @@ export default function SettingsPage () {
       return (
         <div className='SettingPage'>
           <NavbarLogin />
-          <div className="meetings-settings-panel">
-            <NavBar />
-          </div>
+          <NavBar />
           <main className='settings-page-content'>
             <p>Загрузка...</p>
           </main>
@@ -701,10 +699,9 @@ export default function SettingsPage () {
     return (
         <div className='SettingPage'>
             <NavbarLogin />
-            <div className="meetings-settings-panel">
-                <NavBar />
-            </div>
+            <NavBar />
             <main className='settings-page-content'>
+              <div className="settings-content-wrapper">
                 {/* Блок загрузки фотографии */}
                 <PhotoUploadField 
                   onFileSelect={handlePhotoSelect} 
@@ -758,6 +755,17 @@ export default function SettingsPage () {
                         onEditStateChange={(isChanged) => handleEditStateChange('Почта', isChanged)}
                         isChanged={changedFields['Почта'] || false}
                       />
+                      
+                      {/* Кнопка Сменить пароль */}
+                      <div className="setting-password-row">
+                        <div className="setting-password-label-spacer"></div>
+                        <button 
+                          className="settings-password-btn"
+                          onClick={() => {/* TODO: открыть модальное окно смены пароля */}}
+                        >
+                          Сменить пароль
+                        </button>
+                      </div>
                     </>
                   )}
                 </div>
@@ -780,6 +788,7 @@ export default function SettingsPage () {
                     Сохранить
                   </button>
                 ) : null}
+              </div>
             </main>
             <Footer />
         </div>

@@ -1,21 +1,25 @@
 .settings-panel {
-  display: inline-flex;
+  position: fixed;
+  left: 50px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 30px;
-  padding: 12px 20px;
+  gap: 20px;
+  padding: 20px 12px;
   border: 1px solid #4ecba5;
   border-radius: 25px;
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
+  z-index: 100;
 }
-
 
 .settings-icon {
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px 20px;
+  padding: 10px 5px;
   border-radius: 12px;
   color: #555;
   display: flex;

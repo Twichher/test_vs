@@ -233,9 +233,7 @@ const MeetingsPage: React.FC = () => {
           </p>
         ) : (
           <>
-            <div className="meetings-settings-panel">
-              <NavBar onChange={() => {}} />
-            </div>
+            <NavBar onChange={() => {}} />
 
             <div className="meetings-toolbar">
               <div className="meetings-search">

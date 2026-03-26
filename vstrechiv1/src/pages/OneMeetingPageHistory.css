@@ -1,3 +1,11 @@
+.meeting-page-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 20px 20px 140px; /* отступ слева для NavBar */
+}
+
 .access-denied {
   display: flex;
   flex-direction: column;
