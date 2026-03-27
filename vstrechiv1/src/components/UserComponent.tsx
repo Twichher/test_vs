@@ -18,7 +18,7 @@ export default function UserComponent({
   user_id,
   first_name,
   last_name,
-  is_organizer,
+  is_organizer: _is_organizer,
   user_action,
   photo_url,
   isCurrentUser
@@ -78,7 +78,7 @@ export default function UserComponent({
               userId={user_id}
               firstname={first_name}
               lastname={last_name}
-              isOrganizer={is_organizer}
+              
               onPhotoClick={handlePhotoClick}
             />
           </div>

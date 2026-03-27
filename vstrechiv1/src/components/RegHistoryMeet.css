@@ -63,4 +63,33 @@
   .meeting-missed .meeting-card:hover {
     background: #eca3a3;
   }
+
+/* Кнопка создания встречи */
+.create-meeting-card {
+  width: 300px;
+  height: 160px;
+  border: 2px dashed #999;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+  color: #666;
+  box-sizing: border-box;
+}
+
+.create-meeting-card:hover {
+  border-color: #3ecfaa;
+  color: #3ecfaa;
+  background: rgba(62, 207, 170, 0.05);
+}
+
+.create-meeting-text {
+  font-size: 16px;
+  font-weight: 600;
+}
   

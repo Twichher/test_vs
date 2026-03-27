@@ -1,0 +1,115 @@
+/* Секция кнопки вывода валюты */
+.withdraw-currency-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.withdraw-currency-btn {
+  padding: 12px 24px;
+  background: #FFFCF1;
+  border: 2px solid #000;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.withdraw-currency-btn:hover {
+  background: #000;
+  color: #FFFCF1;
+}
+
+/* Модальное окно вывода валюты */
+.withdraw-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: withdrawOverlayFadeIn 0.3s ease forwards;
+}
+
+@keyframes withdrawOverlayFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.withdraw-modal {
+  background: #FFFCF1;
+  border-radius: 20px;
+  padding: 30px 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: withdrawModalFadeIn 0.3s ease 0.1s forwards;
+}
+
+@keyframes withdrawModalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.withdraw-modal-title {
+  margin: 0 0 24px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+  text-align: center;
+}
+
+.withdraw-modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.withdraw-modal-btn {
+  padding: 10px 20px;
+  border: 2px solid #000;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.withdraw-modal-btn--confirm {
+  background: #000;
+  color: #FFFCF1;
+}
+
+.withdraw-modal-btn--confirm:hover:not(:disabled) {
+  background: #333;
+}
+
+.withdraw-modal-btn--confirm:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.withdraw-modal-btn--cancel {
+  background: transparent;
+  color: #000;
+}
+
+.withdraw-modal-btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

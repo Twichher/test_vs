@@ -23,40 +23,47 @@ interface ProfileCardProps {
   userId?: number; // если не передан — берём из Redux (своя страница)
   firstname?: string
   lastname?: string
-  isOrganizer? : boolean
   onPhotoClick?: (photoUrl: string, allPhotos: string[]) => void;
 }
 
-export default function ProfileCard({ userId, firstname , lastname, isOrganizer, onPhotoClick}: ProfileCardProps) {
+export default function ProfileCard({ userId, firstname , lastname, onPhotoClick}: ProfileCardProps) {
 
-  const { user_id, first_name, last_name, district, is_organizer } = useSelector(
+  const { user_id, first_name, last_name, district } = useSelector(
     (state: RootState) => state.auth
   );
 
   const targetId = userId ?? user_id;
   const targetfirstname = firstname ?? first_name
   const targetlastname = lastname ?? last_name
-  const targetisOrganizer = isOrganizer ?? is_organizer
 
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [isOrganizer, setIsOrganizer] = useState<boolean>(false);
 
   useEffect(() => {
     if (!user_id) return;
+    
+    // Загружаем статистику
     fetch(`http://localhost:8000/users/${targetId}/stats`, {
       credentials: 'include',
     })
       .then((res) => res.json())
       .then((data: UserStats) => setStats(data))
       .catch(console.error);
-  }, [user_id]);
+    
+    // Загружаем флаг is_organizer
+    fetch(`http://localhost:8000/users/${targetId}/is_organizer`, {
+      credentials: 'include',
+    })
+      .then((res) => res.json())
+      .then((data: { user_id: number; is_organizer: boolean }) => setIsOrganizer(data.is_organizer))
+      .catch(console.error);
+  }, [user_id, targetId]);
 
   // Последняя загруженная фотография (ASC → последний элемент)
   const avatarUrl =
     stats && stats.photo_urls.length > 0
       ? stats.photo_urls[stats.photo_urls.length - 1]
       : null;
-
-  const role = targetisOrganizer 
 
   return (
     <div className="profile-card">
@@ -81,13 +88,10 @@ export default function ProfileCard({ userId, firstname , lastname, isOrganizer,
 
       <hr className="profile-divider" />
 
-      {/* Роль */}
+      {/* Секция Визитёра - всегда показываем */}
       <p className="profile-role">Визитёр</p>
-
-      {/* Статистика */}
       {stats && (
         <div className="profile-stats">
-
           <div className="profile-stat-row">
             <span
               className="profile-stat-label profile-tooltip"
@@ -124,43 +128,45 @@ export default function ProfileCard({ userId, firstname , lastname, isOrganizer,
           </div>
         </div>
       )}
-      {role && stats &&(
+
+      {/* Секция Организатора - показываем только если is_organizer = True */}
+      {isOrganizer && stats && (
         <>
-        <p className="profile-role organaizer">Организатор</p>
-        <div className="profile-stats">
-        <div className="profile-stat-row">
-            <span
-              className="profile-stat-label profile-tooltip"
-              data-tooltip={`В промежуточный создано встреч: ${stats.count_period_meetings_as_organizer}`}
-            >
-              Встреч <FiHelpCircle size={14} className="profile-hint-icon" />
-            </span>
-            <span className="profile-stat-value">{stats.meetings_created_as_organizer}</span>
-          </div>
-
-          <div className="profile-stat-row">
-            <span 
-              className="profile-stat-label profile-tooltip"
-              data-tooltip={`Средняя оценка созданных встреч`}
+          <hr className="profile-divider" />
+          <p className="profile-role organaizer">Организатор</p>
+          <div className="profile-stats">
+            <div className="profile-stat-row">
+              <span
+                className="profile-stat-label profile-tooltip"
+                data-tooltip={`В промежуточный создано встреч: ${stats.count_period_meetings_as_organizer}`}
               >
-              Рейтинг <FiHelpCircle size={14} className="profile-hint-icon" />
-            </span>
-            <span className="profile-stat-value">{stats.rating_as_organizer}</span>
-          </div>
+                Встреч <FiHelpCircle size={14} className="profile-hint-icon" />
+              </span>
+              <span className="profile-stat-value">{stats.meetings_created_as_organizer}</span>
+            </div>
 
-          <div className="profile-stat-row">
-            <span 
-            className="profile-stat-label profile-tooltip"
-            data-tooltip={`Средняя оценка созданных встреч в промежуточный период`}
-            >
-              Промежуточный <FiHelpCircle size={14} className="profile-hint-icon" />
-            </span>
-            <span className="profile-stat-value">{stats.intermediate_rating_as_organizer}</span>
+            <div className="profile-stat-row">
+              <span 
+                className="profile-stat-label profile-tooltip"
+                data-tooltip={`Средняя оценка созданных встреч`}
+                >
+                Рейтинг <FiHelpCircle size={14} className="profile-hint-icon" />
+              </span>
+              <span className="profile-stat-value">{stats.rating_as_organizer}</span>
+            </div>
+
+            <div className="profile-stat-row">
+              <span 
+              className="profile-stat-label profile-tooltip"
+              data-tooltip={`Средняя оценка созданных встреч в промежуточный период`}
+              >
+                Промежуточный <FiHelpCircle size={14} className="profile-hint-icon" />
+              </span>
+              <span className="profile-stat-value">{stats.intermediate_rating_as_organizer}</span>
+            </div>
           </div>
-        </div>
         </>
-
-        )}
+      )}
     </div>
   );
 }

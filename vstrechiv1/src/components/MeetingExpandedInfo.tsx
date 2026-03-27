@@ -141,7 +141,7 @@ export default function MeetingExpandedInfo({meeting_id} : MeetingExpandedInfoPr
             <button className="profile-modal-close" onClick={() => setProfileModalUserId(null)}>
               <FiX size={24} />
             </button>
-            <ProfileCard userId={profileModalUserId} firstname={profileModalfirstname} lastname={profileModallastname} isOrganizer={true} onPhotoClick={handlePhotoClick} />
+            <ProfileCard userId={profileModalUserId} firstname={profileModalfirstname} lastname={profileModallastname} onPhotoClick={handlePhotoClick} />
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import './RegHistoryMeet.css'
 import MeetingAsItem from './MeetingAsItem';
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { FiChevronDown, FiChevronUp, FiEdit2 } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
@@ -21,13 +21,17 @@ interface MeetingTypeOne {
   }
 
   export default function RegHistoryMeet() {
-    const { user_id } = useSelector((state: RootState) => state.auth);
+    const { user_id, is_organizer } = useSelector((state: RootState) => state.auth);
   
     const [regedMeetings, setRegedMeetings] = useState<MeetingTypeOne[]>([]);
     const [attendedMeetings, setAttendedMeetings] = useState<MeetingTypeOne[]>([]);
+    const [organizerActiveMeetings, setOrganizerActiveMeetings] = useState<MeetingTypeOne[]>([]);
+    const [organizerHistoryMeetings, setOrganizerHistoryMeetings] = useState<MeetingTypeOne[]>([]);
   
     const [regedOpen, setRegedOpen] = useState(true);
     const [attendedOpen, setAttendedOpen] = useState(true);
+    const [organizerActiveOpen, setOrganizerActiveOpen] = useState(true);
+    const [organizerHistoryOpen, setOrganizerHistoryOpen] = useState(true);
 
     const navigate = useNavigate();
   
@@ -47,10 +51,119 @@ interface MeetingTypeOne {
         .then((res) => res.json())
         .then((data: MeetingTypeOne[]) => setAttendedMeetings(data))
         .catch(console.error);
-    }, [user_id]);
+
+      // Загружаем данные организатора только если пользователь является организатором
+      if (is_organizer) {
+        fetch(`http://localhost:8000/users/${user_id}/organizer_active_meetings`, {
+          credentials: 'include',
+        })
+          .then((res) => res.json())
+          .then((data: MeetingTypeOne[]) => setOrganizerActiveMeetings(data))
+          .catch(console.error);
+
+        fetch(`http://localhost:8000/users/${user_id}/organizer_history_meetings`, {
+          credentials: 'include',
+        })
+          .then((res) => res.json())
+          .then((data: MeetingTypeOne[]) => setOrganizerHistoryMeetings(data))
+          .catch(console.error);
+      }
+    }, [user_id, is_organizer]);
   
     return (
       <div className="reg-history">
+
+        {/* Ваши активные встречи (только для организаторов) */}
+        {is_organizer && (
+          <div className="reg-history-section">
+            <button
+              className="reg-history-header"
+              onClick={() => setOrganizerActiveOpen((prev) => !prev)}
+            >
+              <span>Ваши активные встречи</span>
+              {organizerActiveOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+            </button>
+  
+            {organizerActiveOpen && (
+              <div className="reg-history-grid">
+                {/* Кнопка создания встречи */}
+                <div
+                  className="create-meeting-card"
+                  onClick={() => navigate('/meetings/create')}
+                >
+                  <span className="create-meeting-text">Создать встречу</span>
+                  <FiEdit2 size={24} />
+                </div>
+                
+                {organizerActiveMeetings.map((meeting) => (
+                  <div
+                    key={meeting.meeting_id}
+                    onClick={() => {
+                      console.log(meeting.meeting_id);
+                      navigate(`/meetings/info_reged/${meeting.meeting_id}`);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <MeetingAsItem
+                      meeting_title={meeting.meeting_title}
+                      registered_users_count={meeting.registered_users_count}
+                      max_people_allowed={meeting.max_people_allowed}
+                      district={meeting.district}
+                      adults_only_18plus={meeting.adults_only_18plus}
+                      start_at = {meeting.start_at}
+                      end_at = {meeting.end_at}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* История созданных встреч (только для организаторов) */}
+        {is_organizer && (
+          <div className="reg-history-section">
+            <button
+              className="reg-history-header"
+              onClick={() => setOrganizerHistoryOpen((prev) => !prev)}
+            >
+              <span>История созданных встреч</span>
+              {organizerHistoryOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+            </button>
+  
+            {organizerHistoryOpen && (
+              <div className="reg-history-grid reg-history-grid--attended">
+                {organizerHistoryMeetings.length === 0 ? (
+                  <p className="reg-history-empty">История пуста</p>
+                ) : (
+                  organizerHistoryMeetings.map((meeting) => (
+                    <div
+                      key={meeting.meeting_id}
+                      className={meeting.status === 'canceled' ? 'meeting-missed' : ''}
+                      onClick={() => {
+                        console.log(meeting.meeting_id);
+                        // Для canceled используем тот же путь что и для пропущенных встреч
+                        const actionParam = meeting.status === 'canceled' ? 'missed' : 'attended';
+                        navigate(`/meetings/info_history/${meeting.meeting_id}?action=${actionParam}`);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <MeetingAsItem
+                        meeting_title={meeting.meeting_title}
+                        registered_users_count={meeting.registered_users_count}
+                        max_people_allowed={meeting.max_people_allowed}
+                        district={meeting.district}
+                        adults_only_18plus={meeting.adults_only_18plus}
+                        start_at = {meeting.start_at}
+                        end_at = {meeting.end_at}
+                      />
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        )}
   
         {/* Записи */}
         <div className="reg-history-section">

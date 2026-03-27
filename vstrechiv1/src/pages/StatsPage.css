@@ -10,7 +10,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 20px 20px 0px; /* отступ слева для NavBar */
+  padding: 20px 20px 20px 140px;
 }
 
 .stats-content-wrapper {
@@ -42,21 +42,19 @@
   }
 }
 
-@keyframes scaleIn {
+@keyframes fadeOut {
   from {
-    opacity: 0;
-    transform: scale(0.95);
+    opacity: 1;
   }
   to {
-    opacity: 1;
-    transform: scale(1);
+    opacity: 0;
   }
 }
 
 @keyframes slideInFromBottom {
   from {
     opacity: 0;
-    transform: translateY(40px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -98,7 +96,7 @@
 
 .stats-select {
   appearance: none;
-  padding: 10px 10px 10px 16px;
+  padding: 10px 40px 10px 16px;
   border: 1px solid #000;
   border-radius: 12px;
   font-size: 16px;
@@ -164,233 +162,43 @@
   opacity: 1;
 }
 
-/* Заголовок с датой */
-.stats-date-title {
-  font-size: 20px;
-  font-weight: 600;
-  text-align: center;
-  color: #333;
-  margin: 0;
-  animation: fadeIn 0.6s ease-out forwards;
-  animation-delay: 0.9s;
-  opacity: 0;
+/* Skeleton loader */
+.stats-skeleton-container {
+  animation: fadeIn 0.3s ease-out;
 }
 
-.stats-date-title span {
-  font-weight: 700;
+.stats-skeleton-title {
+  width: 250px;
+  height: 24px;
+  margin: 0 auto 20px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
-/* Таблица */
-.stats-table-container {
-  border: 1px solid #000;
+.stats-skeleton-table {
+  border: 1px solid #e0e0e0;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   background: white;
-  animation: slideInFromBottom 0.8s ease-out forwards;
-  animation-delay: 1.2s;
-  opacity: 0;
-}
-
-.stats-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.stats-table thead {
-  background: #3ecfaa;
-  color: white;
-}
-
-.stats-table th {
-  padding: 14px 12px;
-  font-weight: 600;
-  font-size: 15px;
-  text-align: center;
-}
-
-.stats-table tbody tr {
-  border-bottom: 1px solid #eee;
-  transition: background 0.2s ease;
-}
-
-.stats-table tbody tr:hover {
-  background: #f8f8f8;
-}
-
-.stats-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.stats-table td {
-  padding: 12px;
-  font-size: 15px;
-  text-align: center;
-}
-
-/* Колонки */
-.stats-col-rank,
-.stats-cell-rank {
-  width: 60px;
-}
-
-.stats-col-name {
-  width: 220px;
-  text-align: left;
-  padding-left: 16px;
-}
-
-.stats-cell-name {
-  text-align: left !important;
-  padding-left: 16px;
-}
-
-.stats-col-meetings,
-.stats-cell-meetings {
-  width: 80px;
-}
-
-.stats-col-ratings,
-.stats-cell-ratings {
-  width: 80px;
-}
-
-.stats-col-rating,
-.stats-cell-rating {
-  width: 80px;
-}
-
-.stats-col-rvru,
-.stats-cell-rvru {
-  width: 100px;
-}
-
-/* Бейдж квартала */
-.stats-district-badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-/* RVRU заголовок с tooltip */
-.stats-col-rvru {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.stats-rvru-tooltip {
-  position: relative;
-  cursor: help;
-}
-
-.stats-rvru-icon {
-  color: white;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
-  cursor: help;
-}
-
-.stats-rvru-icon:hover {
-  opacity: 1;
-}
-
-/* RVRU Tooltip - используем title вместо кастомного */
-
-/* Значок места */
-.stats-rank-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  font-weight: 600;
-  font-size: 14px;
-  background: #f0f0f0;
-  color: #333;
-}
-
-/* Имя пользователя с кнопкой */
-.stats-cell-name span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-  display: block;
-}
-
-/* Колонка для кнопки действий */
-.stats-col-action,
-.stats-cell-action {
-  width: 50px;
-  text-align: center;
-}
-
-.stats-user-btn {
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.stats-user-btn:hover {
-  border-color: #3ecfaa;
-  color: #3ecfaa;
-  background: #f0fdf9;
-}
-
-/* Строка пропуска */
-.stats-gap-row {
-  background: #f9f9f9 !important;
-}
-
-.stats-gap-cell {
-  padding: 8px !important;
-  color: #999;
-  font-weight: 600;
-  letter-spacing: 4px;
-}
-
-/* Текущий пользователь */
-.stats-current-user {
-  background: #e8f5e9 !important;
-}
-
-.stats-current-user:hover {
-  background: #c8e6c9 !important;
-}
-
-/* Загрузка - Skeleton */
-.stats-loading {
-  width: 100%;
-  padding: 20px;
-  animation: fadeIn 0.3s ease-out;
+  padding: 16px;
 }
 
 .stats-skeleton-row {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 12px;
   align-items: center;
 }
 
+.stats-skeleton-row:last-child {
+  margin-bottom: 0;
+}
+
 .stats-skeleton-rank {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
   background-size: 200% 100%;
@@ -398,18 +206,17 @@
 }
 
 .stats-skeleton-name {
-  flex: 1;
-  height: 20px;
+  width: 160px;
+  height: 16px;
   border-radius: 4px;
   background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
-  max-width: 200px;
 }
 
 .stats-skeleton-action {
-  width: 40px;
-  height: 32px;
+  width: 32px;
+  height: 28px;
   border-radius: 6px;
   background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
   background-size: 200% 100%;
@@ -417,21 +224,34 @@
 }
 
 .stats-skeleton-district {
-  width: 60px;
-  height: 24px;
-  border-radius: 12px;
+  width: 50px;
+  height: 20px;
+  border-radius: 10px;
   background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 .stats-skeleton-number {
-  width: 60px;
-  height: 20px;
+  width: 50px;
+  height: 16px;
   border-radius: 4px;
   background: linear-gradient(90deg, #e0e0e0 25%, #f0f0f0 50%, #e0e0e0 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+/* Анимация таблицы */
+.stats-table-animated {
+  animation: slideInFromBottom 0.6s ease-out;
+}
+
+/* Загрузка */
+.stats-loading {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  font-size: 16px;
 }
 
 /* Неавторизован */
@@ -445,11 +265,21 @@
 .stats-profile-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: modalOverlayFadeIn 0.3s ease forwards;
+}
+
+@keyframes modalOverlayFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.5);
+  }
 }
 
 .stats-profile-modal {
@@ -458,12 +288,26 @@
   border-radius: 20px;
   padding: 30px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: scale(0.9) translateY(20px);
+  animation: modalContentFadeIn 0.3s ease 0.1s forwards;
+}
+
+@keyframes modalContentFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .stats-profile-modal-close {
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: 5px;
+  right: 5px;
   background: none;
   border: none;
   cursor: pointer;
@@ -611,10 +455,6 @@
 
   .stats-radio-group {
     flex-wrap: wrap;
-  }
-
-  .stats-table-container {
-    overflow-x: auto;
   }
 
   .stats-profile-modal {

@@ -1,0 +1,230 @@
+.stats-table-wrapper {
+  animation: slideInFromBottom 0.4s ease-out forwards;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stats-table-title {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.stats-table-container {
+  border: 1px solid #000;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: white;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.stats-table thead {
+  background: #3ecfaa;
+  color: white;
+}
+
+.stats-table th {
+  padding: 14px 8px;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: center;
+}
+
+.stats-table tbody tr {
+  border-bottom: 1px solid #eee;
+  transition: background 0.2s ease;
+  background: white;
+}
+
+.stats-table tbody tr:hover {
+  background: #f8f8f8;
+}
+
+.stats-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.stats-table td {
+  padding: 10px 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Колонки */
+.stats-col-rank,
+.stats-cell-rank {
+  width: 50px;
+}
+
+.stats-col-name {
+  width: 180px;
+  text-align: left;
+  padding-left: 12px;
+}
+
+.stats-cell-name {
+  text-align: left !important;
+  padding-left: 12px;
+}
+
+.stats-cell-name span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+  display: block;
+}
+
+.stats-col-action,
+.stats-cell-action {
+  width: 45px;
+  text-align: center;
+}
+
+.stats-col-district,
+.stats-cell-district {
+  width: 80px;
+  text-align: center;
+}
+
+.stats-col-meetings,
+.stats-cell-meetings {
+  width: 65px;
+}
+
+.stats-col-ratings,
+.stats-cell-ratings {
+  width: 65px;
+}
+
+.stats-col-rating,
+.stats-cell-rating {
+  width: 65px;
+}
+
+.stats-col-rvru,
+.stats-cell-rvru {
+  width: 80px;
+}
+
+/* Значок места */
+.stats-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 13px;
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Кнопка просмотра профиля */
+.stats-user-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s ease;
+  margin: 0 auto;
+}
+
+.stats-user-btn:hover {
+  border-color: #3ecfaa;
+  color: #3ecfaa;
+  background: #f0fdf9;
+}
+
+/* Бейдж квартала */
+.stats-district-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Строка пропуска */
+.stats-gap-row {
+  background: #f9f9f9 !important;
+}
+
+.stats-gap-row:hover {
+  background: #f9f9f9 !important;
+}
+
+.stats-gap-cell {
+  padding: 6px !important;
+  color: #999;
+  font-weight: 600;
+  letter-spacing: 4px;
+}
+
+/* Текущий пользователь */
+.stats-current-user {
+  background: #e8f5e9 !important;
+}
+
+.stats-current-user:hover {
+  background: #c8e6c9 !important;
+}
+
+/* RVRU заголовок с tooltip */
+.stats-col-rvru {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.stats-rvru-tooltip {
+  cursor: help;
+}
+
+.stats-rvru-icon {
+  color: white;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  cursor: help;
+}
+
+.stats-rvru-icon:hover {
+  opacity: 1;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .stats-table-container {
+    overflow-x: auto;
+  }
+  
+  .stats-table {
+    min-width: 600px;
+  }
+}

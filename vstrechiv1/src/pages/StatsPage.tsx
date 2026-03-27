@@ -1,12 +1,12 @@
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
-import { FiX, FiSearch, FiHelpCircle } from 'react-icons/fi';
+import { useState, useEffect, useCallback } from 'react';
+import { FiX } from 'react-icons/fi';
 import type { RootState } from '../slices/store';
 import NavbarLogin from '../components/NavbarLogin';
 import NavbarNoLogin from '../components/NavbarNoLogin';
 import NavBar from '../components/NavBar';
 import ProfileCard from '../components/ProfileCard';
+import StatsTable, { type UserStat } from '../components/StatsTable';
 import Footer from '../components/Footer';
 import './StatsPage.css';
 
@@ -17,48 +17,36 @@ const MOSCOW_DISTRICTS = [
   'СЗАО', 'ЗелАО', 'ТАО', 'НАО'
 ];
 
-interface UserStat {
-  user_id: number;
-  first_name: string;
-  last_name: string;
-  district: string;
-  meetings_count: number;
-  ratings_count: number;
-  rating: number;
-  rank: number;
-  rvru?: number;
-}
+// Моковые данные
+const MOCK_USERS: UserStat[] = [
+  { user_id: 1, first_name: 'Иван', last_name: 'Иванов', district: 'ЦАО', meetings_count: 99, ratings_count: 85, rating: 9.9, rank: 1 },
+  { user_id: 2, first_name: 'Петр', last_name: 'Петров', district: 'САО', meetings_count: 95, ratings_count: 80, rating: 9.8, rank: 2 },
+  { user_id: 3, first_name: 'Сергей', last_name: 'Сергеев', district: 'СВАО', meetings_count: 92, ratings_count: 78, rating: 9.7, rank: 3 },
+  { user_id: 4, first_name: 'Алексей', last_name: 'Алексеев', district: 'ВАО', meetings_count: 88, ratings_count: 75, rating: 9.6, rank: 4 },
+  { user_id: 5, first_name: 'Дмитрий', last_name: 'Дмитриев', district: 'ЮВАО', meetings_count: 85, ratings_count: 72, rating: 9.5, rank: 5 },
+  { user_id: 6, first_name: 'Андрей', last_name: 'Андреев', district: 'ЮАО', meetings_count: 82, ratings_count: 70, rating: 9.4, rank: 6 },
+  { user_id: 7, first_name: 'Михаил', last_name: 'Михайлов', district: 'ЮЗАО', meetings_count: 78, ratings_count: 68, rating: 9.3, rank: 7 },
+  { user_id: 8, first_name: 'Николай', last_name: 'Николаев', district: 'ЗАО', meetings_count: 75, ratings_count: 65, rating: 9.2, rank: 8 },
+  { user_id: 9, first_name: 'Владимир', last_name: 'Владимиров', district: 'СЗАО', meetings_count: 72, ratings_count: 62, rating: 9.1, rank: 9 },
+  { user_id: 10, first_name: 'Александр', last_name: 'Александров', district: 'ЗелАО', meetings_count: 70, ratings_count: 60, rating: 9.0, rank: 10 },
+  { user_id: 11, first_name: 'Елена', last_name: 'Еленова', district: 'ТАО', meetings_count: 65, ratings_count: 55, rating: 8.9, rank: 11 },
+  { user_id: 12, first_name: 'Мария', last_name: 'Мариева', district: 'НАО', meetings_count: 60, ratings_count: 50, rating: 8.8, rank: 12 },
+];
 
-// Цвета для кварталов
-const DISTRICT_COLORS: Record<string, { bg: string; text: string }> = {
-  'ЦАО': { bg: '#c8e6c9', text: '#2e7d32' },      // Зеленый
-  'САО': { bg: '#e1bee7', text: '#7b1fa2' },      // Фиолетовый
-  'СВАО': { bg: '#b3e5fc', text: '#0288d1' },     // Голубой
-  'ВАО': { bg: '#ffccbc', text: '#d84315' },      // Оранжевый
-  'ЮВАО': { bg: '#f0f4c3', text: '#827717' },     // Лайм
-  'ЮАО': { bg: '#d1c4e9', text: '#512da8' },      // Фиолетово-синий
-  'ЮЗАО': { bg: '#b2dfdb', text: '#00796b' },     // Бирюзовый
-  'ЗАО': { bg: '#ffe0b2', text: '#ef6c00' },      // Янтарный
-  'СЗАО': { bg: '#f8bbd0', text: '#c2185b' },     // Розовый
-  'ЗелАО': { bg: '#dcedc8', text: '#558b2f' },    // Светло-зеленый
-  'ТАО': { bg: '#cfd8dc', text: '#455a64' },      // Серо-синий
-  'НАО': { bg: '#fff9c4', text: '#f9a825' },      // Желтый
-};
+// Моковые данные используются только при ошибке сервера
 
 export default function StatsPage() {
   const { isAuth, user_id } = useSelector((state: RootState) => state.auth);
-  const navigate = useNavigate();
 
   // Фильтры
   const [selectedDistrict, setSelectedDistrict] = useState<string>('');
   const [ratingType, setRatingType] = useState<'overall' | 'intermediate'>('overall');
   const [userType, setUserType] = useState<'guest' | 'organizer'>('guest');
 
-  // Данные статистики
-  const [topUsers, setTopUsers] = useState<UserStat[]>([]);
-  const [currentUserStat, setCurrentUserStat] = useState<UserStat | null>(null);
-  const [lastPlace, setLastPlace] = useState<number>(0);
+  // Данные и состояние загрузки
+  const [data, setData] = useState<{ topUsers: UserStat[]; currentUserStat: UserStat | null; lastPlaceUser: UserStat | null; lastPlace: number } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [tableKey, setTableKey] = useState(0);
 
   // Модальное окно профиля
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -70,68 +58,90 @@ export default function StatsPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
   const [allPhotos, setAllPhotos] = useState<string[]>([]);
 
-  const currentDate = new Date().toLocaleDateString('ru-RU');
+  // Функция расчета RVRU
+  const calculateRVRU = (user: UserStat): number => {
+    const V = user.meetings_count;
+    const O = user.ratings_count;
+    const R = user.rating;
+    return R * Math.log(V + 1) * Math.log(O + 1);
+  };
 
-  // Загрузка статистики
+  // Загрузка данных с бэкенда
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setData(null); // Скрываем старую таблицу
+
+    try {
+      const response = await fetch('http://localhost:8000/stats_data', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          district: selectedDistrict,
+          rating_type: ratingType,
+          user_type: userType
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки статистики');
+      }
+
+      const result = await response.json();
+
+      setData({
+        topUsers: result.top_users,
+        currentUserStat: result.current_user,
+        lastPlaceUser: result.last_place_user,
+        lastPlace: result.last_place
+      });
+
+      setTableKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Ошибка загрузки статистики:', error);
+      // При ошибке используем моковые данные с реальным user_id
+      if (!user_id) return;
+      const currentUserStat: UserStat = {
+        user_id: user_id,
+        first_name: 'Вы',
+        last_name: '',
+        district: selectedDistrict || 'ЦАО',
+        meetings_count: 45,
+        ratings_count: 40,
+        rating: 8.5,
+        rank: 15
+      };
+      let filteredUsers = [...MOCK_USERS];
+      if (selectedDistrict) {
+        filteredUsers = filteredUsers.filter(u => u.district === selectedDistrict);
+      }
+      if (!filteredUsers.find(u => u.user_id === user_id)) {
+        filteredUsers.push(currentUserStat);
+      }
+      const usersWithRVRU = filteredUsers.map(user => ({
+        ...user,
+        rvru: calculateRVRU(user)
+      })).sort((a, b) => (b.rvru || 0) - (a.rvru || 0));
+      const rankedUsers = usersWithRVRU.map((user, index) => ({...user, rank: index + 1}));
+      const currentUserWithRank = rankedUsers.find(u => u.user_id === user_id) || null;
+      const lastPlaceUser = rankedUsers[rankedUsers.length - 1] || null;
+      setData({
+        topUsers: rankedUsers.slice(0, 10),
+        currentUserStat: currentUserWithRank,
+        lastPlaceUser: lastPlaceUser,
+        lastPlace: rankedUsers.length
+      });
+      setTableKey(prev => prev + 1);
+    }
+
+    setLoading(false);
+  }, [selectedDistrict, ratingType, userType, user_id]);
+
+  // Загружаем данные при изменении фильтров
   useEffect(() => {
     if (!isAuth) return;
-    
-    setLoading(true);
-    // TODO: заменить на реальный endpoint
-    // Заглушка данных для демонстрации
-    const mockData: UserStat[] = [
-      { user_id: 1, first_name: 'Иван', last_name: 'Иванов', district: 'ЦАО', meetings_count: 99, ratings_count: 85, rating: 9.9, rank: 1 },
-      { user_id: 2, first_name: 'Петр', last_name: 'Петров', district: 'САО', meetings_count: 95, ratings_count: 80, rating: 9.8, rank: 2 },
-      { user_id: 3, first_name: 'Сергей', last_name: 'Сергеев', district: 'СВАО', meetings_count: 92, ratings_count: 78, rating: 9.7, rank: 3 },
-      { user_id: 4, first_name: 'Алексей', last_name: 'Алексеев', district: 'ВАО', meetings_count: 88, ratings_count: 75, rating: 9.6, rank: 4 },
-      { user_id: 5, first_name: 'Дмитрий', last_name: 'Дмитриев', district: 'ЮВАО', meetings_count: 85, ratings_count: 72, rating: 9.5, rank: 5 },
-      { user_id: 6, first_name: 'Андрей', last_name: 'Андреев', district: 'ЮАО', meetings_count: 82, ratings_count: 70, rating: 9.4, rank: 6 },
-      { user_id: 7, first_name: 'Михаил', last_name: 'Михайлов', district: 'ЮЗАО', meetings_count: 78, ratings_count: 68, rating: 9.3, rank: 7 },
-      { user_id: 8, first_name: 'Николай', last_name: 'Николаев', district: 'ЗАО', meetings_count: 75, ratings_count: 65, rating: 9.2, rank: 8 },
-      { user_id: 9, first_name: 'Владимир', last_name: 'Владимиров', district: 'СЗАО', meetings_count: 72, ratings_count: 62, rating: 9.1, rank: 9 },
-      { user_id: 10, first_name: 'Александр', last_name: 'Александров', district: 'ЗелАО', meetings_count: 70, ratings_count: 60, rating: 9.0, rank: 10 },
-      { user_id: 11, first_name: 'Елена', last_name: 'Еленова', district: 'ТАО', meetings_count: 65, ratings_count: 55, rating: 8.9, rank: 11 },
-      { user_id: 12, first_name: 'Мария', last_name: 'Мариева', district: 'НАО', meetings_count: 60, ratings_count: 50, rating: 8.8, rank: 12 },
-    ];
-
-    // Текущий пользователь (например, на 15 месте)
-    const currentUser: UserStat = {
-      user_id: user_id || 999,
-      first_name: 'Текущий',
-      last_name: 'Пользователь',
-      district: 'ЦАО',
-      meetings_count: 45,
-      ratings_count: 40,
-      rating: 8.5,
-      rank: 15
-    };
-
-    // Функция расчета RVRU: R × ln(V + 1) × ln(O + 1)
-    const calculateRVRU = (user: UserStat): number => {
-      const V = user.meetings_count;
-      const O = user.ratings_count;
-      const R = user.rating;
-      return R * Math.log(V + 1) * Math.log(O + 1);
-    };
-
-    // Добавляем RVRU к пользователям и сортируем
-    const usersWithRVRU = [...mockData, currentUser].map(user => ({
-      ...user,
-      rvru: calculateRVRU(user)
-    })).sort((a, b) => (b.rvru || 0) - (a.rvru || 0));
-
-    // Пересчитываем rank
-    const rankedUsers = usersWithRVRU.map((user, index) => ({
-      ...user,
-      rank: index + 1
-    }));
-
-    setTopUsers(rankedUsers.slice(0, 10));
-    const currentUserWithRank = rankedUsers.find(u => u.user_id === (user_id || 999));
-    setCurrentUserStat(currentUserWithRank || null);
-    setLastPlace(rankedUsers.length);
-    setLoading(false);
-  }, [isAuth, selectedDistrict, ratingType, userType, user_id]);
+    loadData();
+  }, [isAuth, loadData]);
 
   const handleUserClick = (user: UserStat) => {
     setSelectedUserId(user.user_id);
@@ -143,13 +153,6 @@ export default function StatsPage() {
     setSelectedPhoto(photoUrl);
     setAllPhotos(photos);
     setPhotoModalOpen(true);
-  };
-
-  const getRankStyle = (rank: number): React.CSSProperties => {
-    if (rank === 1) return { background: '#FFD700', color: '#000' }; // Золото
-    if (rank === 2) return { background: '#C0C0C0', color: '#000' }; // Серебро
-    if (rank === 3) return { background: '#CD7F32', color: '#fff' }; // Бронза
-    return {};
   };
 
   if (!isAuth) {
@@ -243,141 +246,42 @@ export default function StatsPage() {
             </div>
           </div>
 
-          {/* Дата статистики */}
-          <h2 className="stats-date-title">Статистика на {currentDate}</h2>
-
-          {/* Таблица */}
-          {loading ? (
-            <div className="stats-loading">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="stats-skeleton-row">
-                  <div className="stats-skeleton-rank"></div>
-                  <div className="stats-skeleton-name"></div>
-                  <div className="stats-skeleton-action"></div>
-                  <div className="stats-skeleton-district"></div>
-                  <div className="stats-skeleton-number"></div>
-                  <div className="stats-skeleton-number"></div>
-                  <div className="stats-skeleton-number"></div>
-                  <div className="stats-skeleton-number"></div>
-                </div>
-              ))}
+          {/* Skeleton loader */}
+          {loading && (
+            <div className="stats-skeleton-container">
+              <div className="stats-skeleton-title"></div>
+              <div className="stats-skeleton-table">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="stats-skeleton-row">
+                    <div className="stats-skeleton-rank"></div>
+                    <div className="stats-skeleton-name"></div>
+                    <div className="stats-skeleton-action"></div>
+                    <div className="stats-skeleton-district"></div>
+                    <div className="stats-skeleton-number"></div>
+                    <div className="stats-skeleton-number"></div>
+                    <div className="stats-skeleton-number"></div>
+                    <div className="stats-skeleton-number"></div>
+                  </div>
+                ))}
+              </div>
             </div>
-          ) : (
-            <div className="stats-table-container">
-              <table className="stats-table">
-                <thead>
-                  <tr>
-                    <th className="stats-col-rank">№</th>
-                    <th className="stats-col-name">Имя и Фамилия</th>
-                    <th className="stats-col-action"></th>
-                    <th className="stats-col-district">Квартал</th>
-                    <th className="stats-col-meetings">Встреч</th>
-                    <th className="stats-col-ratings">Оценок</th>
-                    <th className="stats-col-rating">Рейтинг</th>
-                    <th className="stats-col-rvru">
-                      RVRU
-                      <span className="stats-rvru-tooltip" title="Это наш рейтинг, чтобы выявлять лучших пользователей">
-                        <FiHelpCircle size={14} className="stats-rvru-icon" />
-                      </span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* Топ-10 */}
-                  {topUsers.map((user) => (
-                    <tr key={user.user_id} className={user.user_id === user_id ? 'stats-current-user' : ''}>
-                      <td className="stats-cell-rank">
-                        <span className="stats-rank-badge" style={getRankStyle(user.rank)}>
-                          {user.rank}
-                        </span>
-                      </td>
-                      <td className="stats-cell-name">
-                        <span>{user.first_name} {user.last_name}</span>
-                      </td>
-                      <td className="stats-cell-action">
-                        <button 
-                          className="stats-user-btn"
-                          onClick={() => handleUserClick(user)}
-                        >
-                          <FiSearch size={14} />
-                        </button>
-                      </td>
-                      <td className="stats-cell-district">
-                        <span 
-                          className="stats-district-badge"
-                          style={{
-                            backgroundColor: DISTRICT_COLORS[user.district]?.bg || '#e0e0e0',
-                            color: DISTRICT_COLORS[user.district]?.text || '#333'
-                          }}
-                        >
-                          {user.district}
-                        </span>
-                      </td>
-                      <td className="stats-cell-meetings">{user.meetings_count}</td>
-                      <td className="stats-cell-ratings">{user.ratings_count}</td>
-                      <td className="stats-cell-rating">{user.rating.toFixed(1)}</td>
-                      <td className="stats-cell-rvru">{user.rvru?.toFixed(2)}</td>
-                    </tr>
-                  ))}
+          )}
 
-                  {/* Пропуск и текущий пользователь, если он не в топ-10 */}
-                  {currentUserStat && !topUsers.find(u => u.user_id === currentUserStat.user_id) && (
-                    <>
-                      <tr className="stats-gap-row">
-                        <td colSpan={8} className="stats-gap-cell">...</td>
-                      </tr>
-                      <tr className="stats-current-user">
-                        <td className="stats-cell-rank">
-                          <span className="stats-rank-badge">{currentUserStat.rank}</span>
-                        </td>
-                        <td className="stats-cell-name">
-                          <span>{currentUserStat.first_name} {currentUserStat.last_name}</span>
-                        </td>
-                        <td className="stats-cell-action">
-                          <button 
-                            className="stats-user-btn"
-                            onClick={() => handleUserClick(currentUserStat)}
-                          >
-                            <FiSearch size={14} />
-                          </button>
-                        </td>
-                        <td className="stats-cell-district">
-                          <span 
-                            className="stats-district-badge"
-                            style={{
-                              backgroundColor: DISTRICT_COLORS[currentUserStat.district]?.bg || '#e0e0e0',
-                              color: DISTRICT_COLORS[currentUserStat.district]?.text || '#333'
-                            }}
-                          >
-                            {currentUserStat.district}
-                          </span>
-                        </td>
-                        <td className="stats-cell-meetings">{currentUserStat.meetings_count}</td>
-                        <td className="stats-cell-ratings">{currentUserStat.ratings_count}</td>
-                        <td className="stats-cell-rating">{currentUserStat.rating.toFixed(1)}</td>
-                        <td className="stats-cell-rvru">{currentUserStat.rvru?.toFixed(2)}</td>
-                      </tr>
-                    </>
-                  )}
-
-                  {/* Последнее место (всегда показываем после текущего пользователя или топ-10) */}
-                  <tr className="stats-gap-row">
-                    <td colSpan={8} className="stats-gap-cell">...</td>
-                  </tr>
-                  <tr>
-                    <td className="stats-cell-rank">
-                      <span className="stats-rank-badge">{lastPlace}</span>
-                    </td>
-                    <td className="stats-cell-name">—</td>
-                    <td className="stats-cell-action">—</td>
-                    <td className="stats-cell-district">—</td>
-                    <td className="stats-cell-meetings">—</td>
-                    <td className="stats-cell-ratings">—</td>
-                    <td className="stats-cell-rating">—</td>
-                    <td className="stats-cell-rvru">—</td>
-                  </tr>
-                </tbody>
-              </table>
+          {/* Таблица с анимацией перехода */}
+          {data && !loading && (
+            <div 
+              key={tableKey} 
+              className="stats-table-animated"
+            >
+              <StatsTable
+                topUsers={data.topUsers}
+                currentUserStat={data.currentUserStat}
+                lastPlaceUser={data.lastPlaceUser}
+                lastPlace={data.lastPlace}
+                currentUserId={user_id}
+                userType={userType}
+                onUserClick={handleUserClick}
+              />
             </div>
           )}
         </div>
@@ -394,7 +298,6 @@ export default function StatsPage() {
               userId={selectedUserId} 
               firstname={selectedUserName?.first} 
               lastname={selectedUserName?.last} 
-              isOrganizer={userType === 'organizer'}
               onPhotoClick={handlePhotoClick}
             />
           </div>

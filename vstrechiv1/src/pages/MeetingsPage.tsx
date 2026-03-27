@@ -44,7 +44,7 @@ interface MeetingInfo {
 const MeetingsPage: React.FC = () => {
   const { isAuth, district , user_id} = useSelector((state: RootState) => state.auth);
 
-  const [regedMeetingIds, setRegedMeetingIds] = useState<number[]>([]);
+  const [_regedMeetingIds, setRegedMeetingIds] = useState<number[]>([]);
   const [meetings, setMeetings] = useState<MeetingTypeOne[]>([]);
   const [originalMeetings, setOriginalMeetings] = useState<MeetingTypeOne[]>([]);
   const [search, setSearch] = useState<string>('');
@@ -378,7 +378,7 @@ const MeetingsPage: React.FC = () => {
             <button className="profile-modal-close" onClick={() => setProfileModalUserId(null)}>
               <FiX size={24} />
             </button>
-            <ProfileCard userId={profileModalUserId} firstname={profileModalfirstname} lastname={profileModallastname} isOrganizer={true} onPhotoClick={handlePhotoClick} />
+            <ProfileCard userId={profileModalUserId} firstname={profileModalfirstname} lastname={profileModallastname} onPhotoClick={handlePhotoClick} />
           </div>
         </div>
       )}

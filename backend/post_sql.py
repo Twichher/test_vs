@@ -286,3 +286,39 @@ def USERS_add_photo(user_id: int, photo_url: str):
                 }
     except Exception as error:
         return (False, error, "USERS_add_photo")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Currency
+#------------------------------------------------------------------------------------------------------
+    
+def USERS_reset_earned_currency(user_id: int):
+    """
+    Обнуляет earned_currency для пользователя (при выводе средств).
+    Обновляет последнюю запись в user_extra_info_table_3, устанавливая earned_currency = 0.
+    """
+    try:
+        with psycopg.connect(DSN) as conn:
+            with conn.cursor() as cur:
+                # Находим последнюю запись пользователя и обновляем earned_currency
+                cur.execute("""
+                UPDATE user_extra_info_table_3
+                SET earned_currency = 0
+                WHERE record_id = (
+                    SELECT record_id
+                    FROM user_extra_info_table_3
+                    WHERE user_id = %s
+                    ORDER BY record_id DESC
+                    LIMIT 1
+                )
+                RETURNING record_id, earned_currency;
+                """, (user_id,))
+                
+                result = cur.fetchone()
+                if not result:
+                    return (False, "User not found", "USERS_reset_earned_currency")
+                
+                conn.commit()
+                return result[0]
+    except Exception as error:
+        return (False, error, "USERS_reset_earned_currency")

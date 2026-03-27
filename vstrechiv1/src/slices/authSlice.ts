@@ -64,7 +64,7 @@ const authSlice = createSlice({
       }
     },
     // Логаут — сбросить всё
-    clearUser(state) {
+    clearUser(_state) {
       return initialState;
     },
   },

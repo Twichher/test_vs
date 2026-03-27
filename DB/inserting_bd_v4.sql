@@ -547,8 +547,10 @@ VALUES
 	select * from user_extra_info_table_3 where user_id in (1,2,3,4,5)
 	ORDER BY date_of_stats DESC LIMIT 5
 
-	delete from meeting_rating_table_8
-	where meeting_id = 2 and user_id = 1
+	select * from meeting_table_2
+	where meeting_id = 7 
+
+	select * from user_extra_info_table_3 where user_id = 1;
 -------------------------------------------------------------------------------
 
 -- Table: categories_table_10

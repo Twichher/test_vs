@@ -129,6 +129,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_user_extra_info_user_id
 
 DROP INDEX IF EXISTS ux_user_extra_info_user_id;
 
+-- Добавляем новые колонки для подсчета оценок организатора
+-- Учитываем, что таблица уже содержит данные
+
+ALTER TABLE user_extra_info_table_3
+ADD COLUMN IF NOT EXISTS count_all_rating_organizer INTEGER NOT NULL DEFAULT 0 
+CHECK (count_all_rating_organizer >= 0);
+
+ALTER TABLE user_extra_info_table_3
+ADD COLUMN IF NOT EXISTS count_period_rating_organizer INTEGER NOT NULL DEFAULT 0 
+CHECK (count_period_rating_organizer >= 0);
+
+-- Обновляем существующие строки (на всякий случай, хотя DEFAULT уже должен был установить 0)
+UPDATE user_extra_info_table_3 
+SET count_all_rating_organizer = 0 
+WHERE count_all_rating_organizer IS NULL;
+
+UPDATE user_extra_info_table_3 
+SET count_period_rating_organizer = 0 
+WHERE count_period_rating_organizer IS NULL;
+
 -------------------------------------------------------------------------------
 
 -- Table: notifications_table_4

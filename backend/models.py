@@ -165,3 +165,37 @@ class UploadPhotoResponse(BaseModel):
     message: str
     photo_url: str | None = None
     record_id: int | None = None
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для статистики (Stats Page)
+#------------------------------------------------------------------------------------------------------
+
+class StatsUser(BaseModel):
+    """Модель пользователя в таблице статистики"""
+    user_id: int
+    first_name: str
+    last_name: str
+    district: str
+    meetings_count: int
+    ratings_count: int
+    rating: float
+    rvru: float  # Вычисляемый рейтинг RVRU
+    rank: int  # Позиция в рейтинге
+
+class StatsRequest(BaseModel):
+    """Запрос на получение статистики"""
+    district: str | None = None  # Фильтр по району (None = все)
+    rating_type: str = "overall"  # 'overall' или 'intermediate'
+    user_type: str = "guest"  # 'guest' или 'organizer'
+
+class StatsResponse(BaseModel):
+    """Ответ со статистикой"""
+    top_users: List[StatsUser]  # Топ-10 пользователей
+    current_user: StatsUser | None = None  # Текущий пользователь (если не в топ-10)
+    last_place_user: StatsUser | None = None  # Пользователь на последнем месте
+    last_place: int  # Номер последнего места (всего участников)
+    total_count: int  # Общее количество для отображения
+    district: str | None = None  # Примененный фильтр
+    rating_type: str  # Примененный тип рейтинга
+    user_type: str  # Примененный тип пользователя

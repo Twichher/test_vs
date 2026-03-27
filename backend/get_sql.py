@@ -615,3 +615,347 @@ def CATEGORIES_get_all():
         return (False, error, "CATEGORIES_get_all")
     
 #print(CATEGORIES_get_all())
+
+
+#------------------------------------------------------------------------------------------------------
+#roots to Stats
+#------------------------------------------------------------------------------------------------------
+
+# Параметры: rating_type='overall', user_type='guest', district=None (все районы) или конкретный район
+# Возвращает статистику для визитеров по общему рейтингу
+def STATS_get_guests_overall(district: str = None):
+    """
+    Параметры:
+    - district: фильтр по району (None = все районы, или строка типа 'ЦАО')
+    Возвращает:
+    - user_id, first_name, last_name, district
+    - meetings_count: meetings_visited_as_guest (всего встреч)
+    - ratings_count: count_all_rating_guest (всего оценок)
+    - rating: rating_as_guest (общий рейтинг)
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Берем только последнюю запись для каждого пользователя
+                cur.execute("""
+                WITH latest_stats AS (
+                    SELECT DISTINCT ON (user_id)
+                        user_id,
+                        meetings_visited_as_guest AS meetings_count,
+                        count_all_rating_guest AS ratings_count,
+                        rating_as_guest AS rating
+                    FROM user_extra_info_table_3
+                    ORDER BY user_id, record_id DESC
+                )
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.district,
+                    ls.meetings_count,
+                    ls.ratings_count,
+                    ls.rating
+                FROM user_table_1 u
+                JOIN latest_stats ls ON ls.user_id = u.user_id
+                WHERE (%s::text IS NULL OR %s::text = '' OR u.district = %s::text)
+                AND u.is_blocked = FALSE
+                ORDER BY ls.rating DESC, ls.meetings_count DESC;
+                """, (district, district, district))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "STATS_get_guests_overall")
+
+
+# Параметры: rating_type='intermediate', user_type='guest', district=None или конкретный район
+# Возвращает статистику для визитеров по промежуточному рейтингу
+def STATS_get_guests_intermediate(district: str = None):
+    """
+    Параметры:
+    - district: фильтр по району (None = все районы)
+    Возвращает:
+    - user_id, first_name, last_name, district
+    - meetings_count: count_period_meetings_guest (встречи в промежуточный период)
+    - ratings_count: count_period_rating_guest (оценки в промежуточный период)
+    - rating: intermediate_rating_as_guest (промежуточный рейтинг)
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                WITH latest_stats AS (
+                    SELECT DISTINCT ON (user_id)
+                        user_id,
+                        count_period_meetings_guest AS meetings_count,
+                        count_period_rating_guest AS ratings_count,
+                        intermediate_rating_as_guest AS rating
+                    FROM user_extra_info_table_3
+                    ORDER BY user_id, record_id DESC
+                )
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.district,
+                    ls.meetings_count,
+                    ls.ratings_count,
+                    ls.rating
+                FROM user_table_1 u
+                JOIN latest_stats ls ON ls.user_id = u.user_id
+                WHERE (%s::text IS NULL OR %s::text = '' OR u.district = %s::text)
+                AND u.is_blocked = FALSE
+                ORDER BY ls.rating DESC, ls.meetings_count DESC;
+                """, (district, district, district))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "STATS_get_guests_intermediate")
+
+
+# Параметры: rating_type='overall', user_type='organizer', district=None или конкретный район
+# Возвращает статистику для организаторов по общему рейтингу
+def STATS_get_organizers_overall(district: str = None):
+    """
+    Параметры:
+    - district: фильтр по району (None = все районы)
+    Возвращает:
+    - user_id, first_name, last_name, district
+    - meetings_count: meetings_created_as_organizer (всего создано встреч)
+    - ratings_count: count_all_rating_organizer (всего оценок получено)
+    - rating: rating_as_organizer (общий рейтинг)
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                WITH latest_stats AS (
+                    SELECT DISTINCT ON (user_id)
+                        user_id,
+                        meetings_created_as_organizer AS meetings_count,
+                        count_all_rating_organizer AS ratings_count,
+                        rating_as_organizer AS rating
+                    FROM user_extra_info_table_3
+                    ORDER BY user_id, record_id DESC
+                )
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.district,
+                    ls.meetings_count,
+                    ls.ratings_count,
+                    ls.rating
+                FROM user_table_1 u
+                JOIN latest_stats ls ON ls.user_id = u.user_id
+                WHERE (%s::text IS NULL OR %s::text = '' OR u.district = %s::text)
+                AND u.is_organizer = TRUE
+                AND u.is_blocked = FALSE
+                ORDER BY ls.rating DESC, ls.meetings_count DESC;
+                """, (district, district, district))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "STATS_get_organizers_overall")
+
+
+# Параметры: rating_type='intermediate', user_type='organizer', district=None или конкретный район
+# Возвращает статистику для организаторов по промежуточному рейтингу
+def STATS_get_organizers_intermediate(district: str = None):
+    """
+    Параметры:
+    - district: фильтр по району (None = все районы)
+    Возвращает:
+    - user_id, first_name, last_name, district
+    - meetings_count: count_period_meetings_as_organizer (встречи в промежуточный период)
+    - ratings_count: count_period_rating_organizer (оценки в промежуточный период)
+    - rating: intermediate_rating_as_organizer (промежуточный рейтинг)
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                WITH latest_stats AS (
+                    SELECT DISTINCT ON (user_id)
+                        user_id,
+                        count_period_meetings_as_organizer AS meetings_count,
+                        count_period_rating_organizer AS ratings_count,
+                        intermediate_rating_as_organizer AS rating
+                    FROM user_extra_info_table_3
+                    ORDER BY user_id, record_id DESC
+                )
+                SELECT 
+                    u.user_id,
+                    u.first_name,
+                    u.last_name,
+                    u.district,
+                    ls.meetings_count,
+                    ls.ratings_count,
+                    ls.rating
+                FROM user_table_1 u
+                JOIN latest_stats ls ON ls.user_id = u.user_id
+                WHERE (%s::text IS NULL OR %s::text = '' OR u.district = %s::text)
+                AND u.is_organizer = TRUE
+                AND u.is_blocked = FALSE
+                ORDER BY ls.rating DESC, ls.meetings_count DESC;
+                """, (district, district, district))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "STATS_get_organizers_intermediate")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Profile
+#------------------------------------------------------------------------------------------------------
+
+def PROFILE_get_user_is_organizer(user_id: int):
+    """
+    Получает флаг is_organizer для пользователя из user_table_1
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT is_organizer 
+                FROM user_table_1 
+                WHERE user_id = %s;
+                """, (user_id,))
+                result = cur.fetchone()
+                return result['is_organizer'] if result else False
+    except Exception as error:
+        return (False, error, "PROFILE_get_user_is_organizer")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to ORGANIZER meetings
+#------------------------------------------------------------------------------------------------------
+
+# получаем активные встречи организатора (status = 'created' или 'in_progress')
+def ORGANIZER_get_active_meetings(user_id: int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    m.meeting_id,
+                    m.title AS meeting_title,
+                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    m.max_people AS max_people_allowed,
+                    m.district,
+                    m.adults_only AS adults_only_18plus,
+                    m.start_at AS start_at,
+                    m.end_at AS end_at,
+                    m.status AS status,
+                    COALESCE(c.category_ids, '{}') AS category_ids
+                FROM meeting_table_2 m
+                
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'registered'
+                    GROUP BY meeting_id
+                ) r ON r.meeting_id = m.meeting_id
+                
+                LEFT JOIN (
+                    SELECT meeting_id, ARRAY_AGG(category_id) AS category_ids
+                    FROM meeting_categories_table_11
+                    GROUP BY meeting_id
+                ) c ON c.meeting_id = m.meeting_id
+                
+                WHERE m.creator_user_id = %s
+                AND m.status IN ('created', 'in_progress')
+                ORDER BY m.start_at ASC;
+                """, (user_id,))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "ORGANIZER_get_active_meetings")
+
+
+# получаем историю созданных встреч организатора (status = 'finished' или 'canceled')
+def ORGANIZER_get_history_meetings(user_id: int):
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    m.meeting_id,
+                    m.title AS meeting_title,
+                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    m.max_people AS max_people_allowed,
+                    m.district,
+                    m.adults_only AS adults_only_18plus,
+                    m.start_at AS start_at,
+                    m.end_at AS end_at,
+                    m.status AS status,
+                    COALESCE(c.category_ids, '{}') AS category_ids
+                FROM meeting_table_2 m
+                
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'attended'
+                    GROUP BY meeting_id
+                ) r ON r.meeting_id = m.meeting_id
+                
+                LEFT JOIN (
+                    SELECT meeting_id, ARRAY_AGG(category_id) AS category_ids
+                    FROM meeting_categories_table_11
+                    GROUP BY meeting_id
+                ) c ON c.meeting_id = m.meeting_id
+                
+                WHERE m.creator_user_id = %s
+                AND m.status IN ('finished', 'canceled')
+                ORDER BY m.end_at DESC;
+                """, (user_id,))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "ORGANIZER_get_history_meetings")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Currency
+#------------------------------------------------------------------------------------------------------
+
+# получаем earned_currency для авторизованного пользователя
+def USERS_get_earned_currency(user_id: int):
+    """
+    Получает earned_currency для пользователя.
+    Проверка авторизации происходит на уровне endpoint.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT 
+                    uei.earned_currency
+                FROM user_extra_info_table_3 uei
+                WHERE uei.user_id = %s
+                ORDER BY uei.record_id DESC
+                LIMIT 1;
+                """, (user_id,))
+                result = cur.fetchone()
+                return result['earned_currency'] if result else 0
+    except Exception as error:
+        return (False, error, "USERS_get_earned_currency")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Meeting Basic Info
+#------------------------------------------------------------------------------------------------------
+
+def MEETINGS_get_basic_info(meeting_id: int):
+    """
+    Получает базовую информацию о встрече: meeting_id, creator_user_id, start_at, status.
+    Используется для определения прав пользователя на странице встречи.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT 
+                    meeting_id,
+                    creator_user_id,
+                    start_at,
+                    status
+                FROM meeting_table_2
+                WHERE meeting_id = %s;
+                """, (meeting_id,))
+                return cur.fetchone()
+    except Exception as error:
+        return (False, error, "MEETINGS_get_basic_info")

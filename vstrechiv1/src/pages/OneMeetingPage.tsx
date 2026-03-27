@@ -9,6 +9,7 @@ import MeetingExpandedInfo from '../components/MeetingExpandedInfo';
 import UserComponent from '../components/UserComponent';
 import Footer from '../components/Footer';
 import './OneMeetingPage.css';
+import './MeetingActionModals.css';
 
 interface MeetingRegedMissedUser {
   user_id: number;
@@ -17,6 +18,13 @@ interface MeetingRegedMissedUser {
   is_organizer: boolean;
   user_action: string;
   photo_url: string | null;
+}
+
+interface MeetingInfo {
+  meeting_id: number;
+  creator_user_id: number;
+  start_at: string;
+  status: string;
 }
 
 // Компонент кнопки отмены записи
@@ -75,22 +83,141 @@ function CancelButton({ meeting_id, user_id }: CancelButtonProps) {
   );
 }
 
+// Компонент кнопок управления встречей для организатора
+interface OrganizerActionsProps {
+  meeting_id: string | undefined;
+  user_id: number | null;
+  meetingInfo: MeetingInfo | null;
+}
+
+function OrganizerActions({ meeting_id, user_id, meetingInfo }: OrganizerActionsProps) {
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [finishModalOpen, setFinishModalOpen] = useState(false);
+
+  const handleCancelClick = () => {
+    setCancelModalOpen(true);
+  };
+
+  const handleFinishClick = () => {
+    setFinishModalOpen(true);
+  };
+
+  const handleCancelConfirm = () => {
+    console.log('Отмена встречи:', { meeting_id, user_id });
+    setCancelModalOpen(false);
+  };
+
+  const handleFinishConfirm = () => {
+    console.log('Завершение встречи:', { meeting_id, user_id });
+    setFinishModalOpen(false);
+  };
+
+  const handleModalClose = () => {
+    setCancelModalOpen(false);
+    setFinishModalOpen(false);
+  };
+
+  // Проверяем, началась ли встреча
+  const isMeetingStarted = meetingInfo?.start_at ? new Date(meetingInfo.start_at) <= new Date() : false;
+
+  return (
+    <>
+      <div className="organizer-actions">
+        <button
+          className="organizer-action-btn organizer-action-btn--cancel"
+          onClick={handleCancelClick}
+        >
+          Отменить встречу
+        </button>
+        <button
+          className="organizer-action-btn organizer-action-btn--finish"
+          onClick={handleFinishClick}
+          disabled={!isMeetingStarted}
+          title={isMeetingStarted ? '' : 'Встреча еще не началась'}
+        >
+          Завершить встречу
+        </button>
+      </div>
+
+      {/* Модальное окно отмены встречи */}
+      {cancelModalOpen && (
+        <div className="action-modal-overlay" onClick={handleModalClose}>
+          <div className="action-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="action-modal-title">Вы уверены что хотите отменить встречу?</h3>
+            <div className="action-modal-buttons">
+              <button
+                className="action-modal-btn action-modal-btn--confirm"
+                onClick={handleCancelConfirm}
+              >
+                Подтвердить
+              </button>
+              <button
+                className="action-modal-btn action-modal-btn--cancel"
+                onClick={handleModalClose}
+              >
+                Отменить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Модальное окно завершения встречи */}
+      {finishModalOpen && (
+        <div className="action-modal-overlay" onClick={handleModalClose}>
+          <div className="action-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="action-modal-title">Завершить встречу?</h3>
+            <div className="action-modal-buttons">
+              <button
+                className="action-modal-btn action-modal-btn--confirm"
+                onClick={handleFinishConfirm}
+              >
+                Подтвердить
+              </button>
+              <button
+                className="action-modal-btn action-modal-btn--cancel"
+                onClick={handleModalClose}
+              >
+                Отменить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function OneMeetingPage() {
   const { meeting_id } = useParams<{ meeting_id: string }>();
   const { user_id } = useSelector((state: RootState) => state.auth);
 
   const [regedUsers, setRegedUsers] = useState<MeetingRegedMissedUser[]>([]);
+  const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
   const [usersOpen, setUsersOpen] = useState(true);
 
   useEffect(() => {
     if (!meeting_id) return;
+    
+    // Загружаем список записанных пользователей
     fetch(`http://localhost:8000/meetings/${meeting_id}/reged_users`, {
       credentials: 'include',
     })
       .then((res) => res.json())
       .then((data: MeetingRegedMissedUser[]) => setRegedUsers(data))
       .catch(console.error);
+
+    // Загружаем информацию о встрече (creator_user_id, start_at, status)
+    fetch(`http://localhost:8000/meetings/${meeting_id}/info`, {
+      credentials: 'include',
+    })
+      .then((res) => res.json())
+      .then((data: MeetingInfo) => setMeetingInfo(data))
+      .catch(console.error);
   }, [meeting_id]);
+
+  // Проверяем является ли текущий пользователь создателем встречи
+  const isCreator = meetingInfo?.creator_user_id === user_id;
 
   return (
     <div className="meeting-page">
@@ -102,7 +229,16 @@ export default function OneMeetingPage() {
 
           <MeetingExpandedInfo meeting_id={Number(meeting_id)} />
 
-          <CancelButton meeting_id={meeting_id} user_id={user_id} />
+          {/* Показываем разные кнопки в зависимости от того, создатель ли пользователь */}
+          {isCreator ? (
+            <OrganizerActions 
+              meeting_id={meeting_id} 
+              user_id={user_id} 
+              meetingInfo={meetingInfo}
+            />
+          ) : (
+            <CancelButton meeting_id={meeting_id} user_id={user_id} />
+          )}
 
           {/* Секция записанных пользователей */}
           <div className="meeting-users-section">

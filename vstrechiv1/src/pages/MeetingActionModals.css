@@ -1,0 +1,129 @@
+/* Кнопки организатора */
+.organizer-actions {
+  display: flex;
+  gap: 12px;
+  margin: 20px 0;
+  justify-content: center;
+}
+
+.organizer-action-btn {
+  padding: 12px 24px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.organizer-action-btn--cancel {
+  background: #fff;
+  color: #e74c3c;
+  border-color: #e74c3c;
+}
+
+.organizer-action-btn--cancel:hover {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.organizer-action-btn--finish {
+  background: #000;
+  color: #fff;
+}
+
+.organizer-action-btn--finish:hover:not(:disabled) {
+  background: #333;
+}
+
+.organizer-action-btn--finish:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  color: #888;
+  cursor: not-allowed;
+}
+
+/* Модальные окна */
+.action-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: actionOverlayFadeIn 0.3s ease forwards;
+}
+
+@keyframes actionOverlayFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+.action-modal {
+  background: #FFFCF1;
+  border-radius: 20px;
+  padding: 30px 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  min-width: 300px;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: actionModalFadeIn 0.3s ease 0.1s forwards;
+}
+
+@keyframes actionModalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.action-modal-title {
+  margin: 0 0 24px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #000;
+  text-align: center;
+}
+
+.action-modal-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.action-modal-btn {
+  padding: 10px 20px;
+  border: 2px solid #000;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-modal-btn--confirm {
+  background: #000;
+  color: #FFFCF1;
+}
+
+.action-modal-btn--confirm:hover {
+  background: #333;
+}
+
+.action-modal-btn--cancel {
+  background: transparent;
+  color: #000;
+}
+
+.action-modal-btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

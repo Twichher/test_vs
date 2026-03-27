@@ -172,9 +172,15 @@ EXECUTE FUNCTION inc_meetings_and_period_meetings();
 -- Триггер #4: если в таблицу meeting_rating_info_table_26
 -- добавлена оценка какой то встречи то 
 -- ее рейтинг пересчитывается
+-- а также у организатора этой встречи увеличиваются счетчики оценок
 
 CREATE OR REPLACE FUNCTION update_meeting_rating_after_insert()
 RETURNS trigger AS $$
+DECLARE
+    in_trial_period  boolean;
+    v_start          TIMESTAMP;
+    v_end            TIMESTAMP;
+    v_creator_id     BIGINT;
 BEGIN
     -- Обновляем агрегаты по конкретному meeting_id
     UPDATE meeting_table_2 m
@@ -184,6 +190,42 @@ BEGIN
             / (m.count_of_ratings + 1),
         count_of_ratings = m.count_of_ratings + 1
     WHERE m.meeting_id = NEW.meeting_id;
+
+    -- Получаем создателя встречи
+    SELECT creator_user_id INTO v_creator_id
+    FROM meeting_table_2
+    WHERE meeting_id = NEW.meeting_id;
+
+    -- Проверяем промежуточный период
+    SELECT p.start_trial_period, p.end_trial_period
+    INTO v_start, v_end
+    FROM start_end_trial_period_table_25 p
+    ORDER BY p.period_id DESC
+    LIMIT 1;
+
+    IF FOUND AND NOW() BETWEEN v_start AND v_end THEN
+        in_trial_period := TRUE;
+    ELSE
+        in_trial_period := FALSE;
+    END IF;
+
+    -- Обновляем счетчики оценок у организатора
+    UPDATE user_extra_info_table_3 u
+    SET 
+        count_all_rating_organizer = count_all_rating_organizer + 1,
+        count_period_rating_organizer = 
+            CASE
+                WHEN in_trial_period THEN count_period_rating_organizer + 1
+                ELSE count_period_rating_organizer
+            END
+    WHERE u.user_id = v_creator_id
+      AND u.record_id = (
+            SELECT record_id
+            FROM user_extra_info_table_3 x
+            WHERE x.user_id = v_creator_id
+            ORDER BY x.date_of_stats DESC, x.record_id DESC
+            LIMIT 1
+      );
 
     RETURN NEW;
 END;
@@ -289,6 +331,8 @@ BEGIN
 		rating_as_organizer,
 		count_period_meetings_as_organizer,
 		intermediate_rating_as_organizer,
+		count_all_rating_organizer,
+		count_period_rating_organizer,
 		meetings_as_currency,
 		earned_currency,
 		date_of_stats
@@ -305,6 +349,8 @@ BEGIN
         rating_as_organizer,
         0, -- count_period_meetings_as_organizer
         0,                           -- intermediate_rating_as_organizer
+        count_all_rating_organizer,  -- сохраняем общий счетчик
+        0,                           -- count_period_rating_organizer (сбрасываем)
         meetings_as_currency,                          
 		earned_currency,							  
         NOW()
