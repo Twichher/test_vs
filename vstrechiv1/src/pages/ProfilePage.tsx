@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import type { RootState } from '../slices/store';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiX } from 'react-icons/fi';
 import NavbarLogin from '../components/NavbarLogin';
 import NavBar from '../components/NavBar';
@@ -23,6 +23,28 @@ export default function ProfilePage() {
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [withdrawConfirmed, setWithdrawConfirmed] = useState(false);
   const [earnedCurrency, setEarnedCurrency] = useState<number>(0);
+  
+  // Состояния для анимации появления блоков
+  const [showProfileSection, setShowProfileSection] = useState(false);
+  const [showRegHistory, setShowRegHistory] = useState(false);
+
+  // Плавное появление блоков
+  useEffect(() => {
+    // Сначала показываем ProfileCard и кнопку (сразу)
+    const profileTimer = setTimeout(() => {
+      setShowProfileSection(true);
+    }, 100);
+    
+    // Затем показываем RegHistoryMeet (с задержкой)
+    const regHistoryTimer = setTimeout(() => {
+      setShowRegHistory(true);
+    }, 400);
+    
+    return () => {
+      clearTimeout(profileTimer);
+      clearTimeout(regHistoryTimer);
+    };
+  }, []);
 
   const handlePhotoClick = (photoUrl: string, photos: string[]) => {
     setSelectedPhoto(photoUrl);
@@ -78,7 +100,7 @@ export default function ProfilePage() {
       <NavbarLogin />
       <NavBar onChange={() => {}} />
       <main className="profile-page-content">
-        <div className="profile-animate-block profile-animate-block--center">
+        <div className={`profile-section-wrapper ${showProfileSection ? 'profile-section-visible' : 'profile-section-hidden'}`}>
           <ProfileCard onPhotoClick={handlePhotoClick} />
           
           {/* Кнопка вывода валюты - под ProfileCard */}
@@ -91,7 +113,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </div>
-        <div className="profile-animate-block profile-animate-block--left">
+        <div className={`reg-history-wrapper ${showRegHistory ? 'reg-history-visible' : 'reg-history-hidden'}`}>
           <RegHistoryMeet />
         </div>
       </main>

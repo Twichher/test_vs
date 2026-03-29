@@ -22,7 +22,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;    /* ProfileCard по центру */
-    padding: 20px 20px 20px 140px; /* отступ слева для NavBar */
+    padding: 20px 20px 20px 110px; /* отступ слева для NavBar */
     gap: 24px;
   }
 
@@ -41,6 +41,41 @@
 
 .profile-animate-block--left {
   justify-content: flex-start;
+}
+
+/* Плавное появление секций */
+.profile-section-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.profile-section-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.profile-section-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reg-history-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.reg-history-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.reg-history-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
   
 

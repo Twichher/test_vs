@@ -1,0 +1,428 @@
+.create-meeting-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.create-meeting-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 20px;
+}
+
+.create-meeting-inner {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.create-meeting-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0;
+  text-align: center;
+}
+
+.create-meeting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Поля формы с плавным появлением */
+.create-meeting-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+}
+
+.field-hidden {
+  opacity: 0;
+  transform: translateY(15px);
+}
+
+.field-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.create-meeting-label {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+.create-meeting-tooltip {
+  color: #999;
+  cursor: help;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s ease;
+}
+
+.create-meeting-tooltip:hover {
+  color: #3ecfaa;
+}
+
+.create-meeting-input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.create-meeting-input:focus {
+  outline: none;
+  border-color: #3ecfaa;
+  box-shadow: 0 0 0 3px rgba(62, 207, 170, 0.1);
+}
+
+.create-meeting-input::placeholder {
+  color: #999;
+}
+
+.create-meeting-input--small {
+  min-height: 48px;
+}
+
+.create-meeting-input--large {
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Убираем стрелки у числового поля */
+.create-meeting-input--number {
+  width: 80px;
+  min-height: 48px;
+  text-align: center;
+}
+
+/* Ошибка валидации */
+.create-meeting-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.create-meeting-input.input-error {
+  border-color: #e74c3c;
+  background: #fdf2f2;
+}
+
+.create-meeting-error {
+  color: #e74c3c;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.create-meeting-input--medium {
+  min-height: 48px;
+}
+
+/* Поле для ввода даты (календарь) */
+.create-meeting-input--date {
+  width: 140px;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* Стилизация календаря для webkit */
+.create-meeting-input--date::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.create-meeting-input--date::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+
+/* Поле для ввода времени */
+.create-meeting-input--time {
+  width: 120px;
+  min-height: 48px;
+  cursor: pointer;
+}
+
+/* Стилизация иконки времени для webkit */
+.create-meeting-input--time::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 4px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.create-meeting-input--time::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
+/* Блок Дата и Время в одной строке */
+.create-meeting-field--datetime {
+  gap: 0;
+}
+
+.create-meeting-datetime-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.create-meeting-datetime-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.create-meeting-datetime-col .create-meeting-label {
+  margin: 0;
+}
+
+.create-meeting-datetime-separator {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+}
+
+.create-meeting-datetime-separator--large {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  padding: 0 4px;
+  margin-bottom: 14px; /* Выравнивание с полями ввода */
+}
+
+/* Чекбокс для 18+ */
+.create-meeting-field--checkbox {
+  margin-top: 8px;
+}
+
+.create-meeting-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 12px 16px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  background: #fff;
+  transition: all 0.2s ease;
+}
+
+.create-meeting-checkbox-label:hover {
+  background: #f5f5f5;
+}
+
+.create-meeting-label-text {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff0202;
+}
+
+.create-meeting-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: #fff;
+}
+
+.create-meeting-checkbox--checked {
+  background: #ff0202;
+  border-color: #ff0202;
+}
+
+.create-meeting-checkbox-check {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Блок загрузки фотографий */
+.create-meeting-photos-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.create-meeting-photo-thumb {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.create-meeting-photo-thumb:hover {
+  border-color: #3ecfaa;
+}
+
+.create-meeting-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.create-meeting-upload-btn {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  color: #333;
+}
+
+.create-meeting-upload-btn:hover {
+  background: #f5f5f5;
+  border-color: #3ecfaa;
+  color: #3ecfaa;
+}
+
+.create-meeting-file-input {
+  display: none;
+}
+
+
+/* Модальное окно с кнопкой удаления */
+.photo-modal--with-delete {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.photo-modal-delete-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-left: 20px;
+}
+
+.photo-modal-delete-btn {
+  width: 60px;
+  height: 60px;
+  border: none;
+  border-radius: 8px;
+  background: #e74c3c;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.photo-modal-delete-btn:hover {
+  background: #c0392b;
+  transform: scale(1.05);
+}
+
+.photo-modal-delete-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  text-align: center;
+  max-width: 80px;
+}
+
+
+/* Блок предупреждений */
+.create-meeting-warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.create-meeting-warning-row {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+.create-meeting-warning-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 2px solid #000;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  max-width: 200px;
+}
+
+.create-meeting-warning-item:hover {
+  background: #f5f5f5;
+}
+
+.create-meeting-warning-item--selected {
+  border-color: #3ecfaa;
+  background: rgba(62, 207, 170, 0.05);
+}
+
+.create-meeting-warning-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.create-meeting-warning-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #000;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.create-meeting-warning-checkbox--checked {
+  background: #3ecfaa;
+  border-color: #3ecfaa;
+}
+
+.create-meeting-warning-check {
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}

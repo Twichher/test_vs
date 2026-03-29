@@ -89,7 +89,7 @@ interface MeetingTypeOne {
                 {/* Кнопка создания встречи */}
                 <div
                   className="create-meeting-card"
-                  onClick={() => navigate('/meetings/create')}
+                  onClick={() => navigate('/meeting/create')}
                 >
                   <span className="create-meeting-text">Создать встречу</span>
                   <FiEdit2 size={24} />
@@ -100,7 +100,7 @@ interface MeetingTypeOne {
                     key={meeting.meeting_id}
                     onClick={() => {
                       console.log(meeting.meeting_id);
-                      navigate(`/meetings/info_reged/${meeting.meeting_id}`);
+                      navigate(`/meeting/info_reged/${meeting.meeting_id}`);
                     }}
                     style={{ cursor: 'pointer' }}
                   >
@@ -144,7 +144,7 @@ interface MeetingTypeOne {
                         console.log(meeting.meeting_id);
                         // Для canceled используем тот же путь что и для пропущенных встреч
                         const actionParam = meeting.status === 'canceled' ? 'missed' : 'attended';
-                        navigate(`/meetings/info_history/${meeting.meeting_id}?action=${actionParam}`);
+                        navigate(`/meeting/info_history/${meeting.meeting_id}?action=${actionParam}`);
                       }}
                       style={{ cursor: 'pointer' }}
                     >
@@ -185,7 +185,7 @@ interface MeetingTypeOne {
                     key={meeting.meeting_id}
                     onClick={() => {
                       console.log(meeting.meeting_id);
-                      navigate(`/meetings/info_reged/${meeting.meeting_id}`);
+                      navigate(`/meeting/info_reged/${meeting.meeting_id}`);
                     }}
                     style={{ cursor: 'pointer' }}
                   >
@@ -226,7 +226,7 @@ interface MeetingTypeOne {
                   className={meeting.user_action === 'missed' ? 'meeting-missed' : ''}
                   onClick={() => {
                     console.log(meeting.meeting_id);
-                    navigate(`/meetings/info_history/${meeting.meeting_id}?action=${meeting.user_action}`);
+                    navigate(`/meeting/info_history/${meeting.meeting_id}?action=${meeting.user_action}`);
                   }}
                   style={{ cursor: 'pointer' }}
                   >
