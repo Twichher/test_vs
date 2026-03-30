@@ -7,15 +7,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
 from jose import jwt
 
-from get_sql import FAQ_get_all_rows, MEETINGS_atted_get_all_info, MEETINGS_get_atted_missed_users, MEETINGS_get_reged_missed_users, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, \
+from get_sql import FAQ_get_all_rows, MEETINGS_atted_get_all_info, MEETINGS_get_atted_missed_users, MEETINGS_get_reged_missed_users, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, CATEGORIES_get_all, WARNINGS_get_all, MEETINGS_create, NOTIFICATIONS_create, NOTIFICATION_PHOTOS_create, MEETINGS_add_category, MEETINGS_add_warning, \
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id, USERS_get_settings_info, \
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
 MEETINGS_get_basic_info
 from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency
-from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, \
+from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
 UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse
-from minio_defs import upload_photo
+from minio_defs import upload_photo, upload_meeting_photo
+import base64
+import uuid
 from fastapi import UploadFile, File
 from important_info import SECRET_KEY, ALGORITHM
 
@@ -69,6 +71,147 @@ def get_faq():
         return result[1]
 
     return result
+
+
+@app.get("/categories", response_model=CategoriesResponse)
+def get_categories():
+    """
+    Получает список всех категорий встреч.
+    """
+    result = CATEGORIES_get_all()
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    
+    return {"categories": result}
+
+
+@app.get("/warnings", response_model=WarningsResponse)
+def get_warnings():
+    """
+    Получает список всех предупреждений для встреч.
+    """
+    result = WARNINGS_get_all()
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    
+    return {"warnings": result}
+
+
+@app.post("/meetings/create", response_model=CreateMeetingResponse)
+def create_meeting(
+    request: CreateMeetingRequest,
+    current_user_id: int = Depends(get_current_user)
+):
+    """
+    Создает новую встречу с уведомлением и фотографиями.
+    """
+    try:
+        # Получаем информацию о пользователе для district
+        user_info = USERS_get_info_by_id(current_user_id)
+        if isinstance(user_info, tuple):
+            raise HTTPException(status_code=500, detail=f"Failed to get user info: {user_info[1]}")
+        
+        user_district = user_info.get('district', '')
+        
+        # Формируем timestamps из даты и времени
+        start_at = f"{request.meeting_date} {request.start_time}:00"
+        end_at = f"{request.meeting_date} {request.end_time}:00"
+        
+        # 1. Создаем встречу в БД
+        meeting_id = MEETINGS_create(
+            creator_user_id=current_user_id,
+            title=request.title,
+            description=request.description,
+            max_people=request.max_people,
+            address=request.address,
+            city="Москва",
+            district=user_district,
+            adults_only=request.adults_only,
+            status="created",
+            start_at=start_at,
+            end_at=end_at
+        )
+        
+        if isinstance(meeting_id, tuple):
+            raise HTTPException(status_code=500, detail=f"Failed to create meeting: {meeting_id[1]}")
+        
+        if not meeting_id:
+            raise HTTPException(status_code=500, detail="Failed to create meeting: no ID returned")
+        
+        # 2. Добавляем категории к встрече
+        for category_id in request.category_ids:
+            result = MEETINGS_add_category(meeting_id, category_id)
+            if isinstance(result, tuple):
+                print(f"Warning: Failed to add category {category_id}: {result[1]}")
+        
+        # 3. Добавляем предупреждения к встрече
+        for group_id, option_id in request.selected_warnings.items():
+            result = MEETINGS_add_warning(meeting_id, option_id)
+            if isinstance(result, tuple):
+                print(f"Warning: Failed to add warning {option_id}: {result[1]}")
+        
+        # 4. Создаем уведомление
+        notification_id = NOTIFICATIONS_create(
+            meeting_id=meeting_id,
+            notification_type="встреча",
+            notification_text=request.email_message
+        )
+        
+        if isinstance(notification_id, tuple):
+            raise HTTPException(status_code=500, detail=f"Failed to create notification: {notification_id[1]}")
+        
+        # 5. Загружаем фото в MinIO и сохраняем в БД
+        photo_urls = []
+        for i, photo_base64 in enumerate(request.photos):
+            try:
+                # Парсим Base64 data URL
+                if ',' in photo_base64:
+                    header, encoded = photo_base64.split(',', 1)
+                else:
+                    encoded = photo_base64
+                
+                # Определяем content-type из header
+                content_type = 'image/jpeg'  # default
+                if 'data:' in photo_base64:
+                    content_type = photo_base64.split(';')[0].replace('data:', '')
+                
+                # Декодируем Base64
+                file_data = base64.b64decode(encoded)
+                
+                # Генерируем имя файла
+                extension = content_type.split('/')[-1] if '/' in content_type else 'jpg'
+                filename = f"meeting_{meeting_id}_photo_{i}.{extension}"
+                
+                # Загружаем в MinIO
+                upload_result = upload_meeting_photo(file_data, filename, content_type)
+                
+                if upload_result.get('success'):
+                    photo_url = upload_result['url']
+                    photo_urls.append(photo_url)
+                    
+                    # Сохраняем URL в БД
+                    photo_record = NOTIFICATION_PHOTOS_create(notification_id, photo_url)
+                    if isinstance(photo_record, tuple):
+                        print(f"Warning: Failed to save photo record: {photo_record[1]}")
+                else:
+                    print(f"Warning: Failed to upload photo {i}: {upload_result.get('error')}")
+                    
+            except Exception as e:
+                print(f"Warning: Error processing photo {i}: {str(e)}")
+        
+        return CreateMeetingResponse(
+            success=True,
+            meeting_id=meeting_id,
+            notification_id=notification_id,
+            message="Meeting created successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 #------------------------------------------------------------------------------------------------------

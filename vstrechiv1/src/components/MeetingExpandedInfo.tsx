@@ -131,7 +131,7 @@ export default function MeetingExpandedInfo({meeting_id} : MeetingExpandedInfoPr
       {/* Описание */}
       {info.meeting_description && (
         <p className="mei-description">
-          Описание: {info.meeting_description}
+           {info.meeting_description}
         </p>
       )}
 

@@ -303,12 +303,15 @@ CREATE INDEX IF NOT EXISTS idx_conflict_photos_conflict_id
 -------------------------------------------------------------------------------
 
 -- categories_table_10
+-- ссылка на фото нужно убрать
 
 CREATE TABLE IF NOT EXISTS categories_table_10 (
   category_id BIGSERIAL PRIMARY KEY,
   category_name VARCHAR(150) NOT NULL UNIQUE,
   photo_url TEXT NOT NULL DEFAULT 'http://127.0.0.1:9000/allphotos/no.jpg'
 );
+
+
 
 -------------------------------------------------------------------------------
 
@@ -373,6 +376,9 @@ CREATE TABLE IF NOT EXISTS warnings_table_13 (
   warning_id BIGSERIAL PRIMARY KEY,
   warning_name VARCHAR(150) NOT NULL UNIQUE
 );
+
+ALTER TABLE warnings_table_13 
+ADD COLUMN forAdults BOOLEAN NOT NULL DEFAULT TRUE; 
 
 -------------------------------------------------------------------------------
 

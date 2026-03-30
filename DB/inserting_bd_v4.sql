@@ -160,7 +160,7 @@ VALUES
 -- select * from user_table_1 where email = 'email1@gmail.com' 
 -- and password_hash = crypt('pass1', password_hash)
 
-select * from user_table_1 where user_id = 22;
+select * from user_extra_info_table_3 where user_id = 14;
 -------------------------------------------------------------------------------
 
 -- Table: meeting_table_2
@@ -551,6 +551,16 @@ VALUES
 	where meeting_id = 7 
 
 	select * from user_extra_info_table_3 where user_id = 1;
+
+	UPDATE user_extra_info_table_3
+	SET earned_currency = 0
+	WHERE record_id = (
+	    SELECT record_id
+	    FROM user_extra_info_table_3
+	    WHERE user_id = %s
+	    ORDER BY record_id DESC
+	    LIMIT 1
+	)
 -------------------------------------------------------------------------------
 
 -- Table: categories_table_10
@@ -573,6 +583,7 @@ VALUES
   ('танцы'),
   ('йога');
 
+select * from categories_table_10
 -------------------------------------------------------------------------------
 
 -- Table: meeting_categories_table_11
@@ -642,6 +653,7 @@ VALUES
   ('соблюдайте тишину'),
   ('стоимость делим на всех');
 
+select * from warnings_table_13;
 -------------------------------------------------------------------------------
 
 -- Table: user_photos_table_14

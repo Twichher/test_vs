@@ -108,6 +108,58 @@ class Category(BaseModel):
     category_name : str
 
 
+class CategoryWithPhoto(BaseModel):
+    """Модель категории с фото для отображения в списке"""
+    category_id: int
+    category_name: str
+    photo_url: str
+
+
+class CategoriesResponse(BaseModel):
+    """Ответ со списком категорий"""
+    categories: List[CategoryWithPhoto]
+
+
+class Warning(BaseModel):
+    """Модель предупреждения для встречи"""
+    warning_id: int
+    warning_name: str
+    forAdults: bool
+
+
+class WarningsResponse(BaseModel):
+    """Ответ со списком предупреждений"""
+    warnings: List[Warning]
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для создания встречи
+#------------------------------------------------------------------------------------------------------
+
+class CreateMeetingRequest(BaseModel):
+    """Запрос на создание встречи"""
+    title: str
+    description: str
+    max_people: int
+    address: str
+    meeting_date: str  # YYYY-MM-DD
+    start_time: str    # HH:MM
+    end_time: str      # HH:MM
+    email_message: str
+    adults_only: bool
+    category_ids: List[int]
+    selected_warnings: dict  # warning_group_id -> option_id
+    photos: List[str]  # Base64 data URLs
+
+
+class CreateMeetingResponse(BaseModel):
+    """Ответ при создании встречи"""
+    success: bool
+    meeting_id: int | None = None
+    notification_id: int | None = None
+    message: str | None = None
+
+
 #------------------------------------------------------------------------------------------------------
 # Модели для обновления данных пользователя (Settings)
 #------------------------------------------------------------------------------------------------------

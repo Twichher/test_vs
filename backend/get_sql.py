@@ -959,3 +959,224 @@ def MEETINGS_get_basic_info(meeting_id: int):
                 return cur.fetchone()
     except Exception as error:
         return (False, error, "MEETINGS_get_basic_info")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Categories
+#------------------------------------------------------------------------------------------------------
+
+def CATEGORIES_get_all():
+    """
+    Получает список всех категорий встреч из таблицы categories_table_10.
+    Возвращает: category_id, category_name, photo_url
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT 
+                    category_id,
+                    category_name,
+                    photo_url
+                FROM categories_table_10
+                ORDER BY category_id;
+                """)
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "CATEGORIES_get_all")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Warnings
+#------------------------------------------------------------------------------------------------------
+
+def WARNINGS_get_all():
+    """
+    Получает список всех предупреждений из таблицы warnings_table_13.
+    Возвращает: warning_id, warning_name, forAdults
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT 
+                    warning_id,
+                    warning_name,
+                    foradults as "forAdults"
+                FROM warnings_table_13
+                ORDER BY warning_id;
+                """)
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "WARNINGS_get_all")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Meeting Creation
+#------------------------------------------------------------------------------------------------------
+
+def MEETINGS_create(
+    creator_user_id: int,
+    title: str,
+    description: str,
+    max_people: int,
+    address: str,
+    city: str,
+    district: str,
+    adults_only: bool,
+    status: str,
+    start_at: str,
+    end_at: str
+):
+    """
+    Создает новую встречу в таблице meeting_table_2.
+    Возвращает meeting_id созданной встречи.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO meeting_table_2 (
+                    creator_user_id,
+                    title,
+                    description,
+                    max_people,
+                    address,
+                    city,
+                    district,
+                    adults_only,
+                    status,
+                    start_at,
+                    end_at
+                ) VALUES (
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                )
+                RETURNING meeting_id;
+                """, (
+                    creator_user_id,
+                    title,
+                    description,
+                    max_people,
+                    address,
+                    city,
+                    district,
+                    adults_only,
+                    status,
+                    start_at,
+                    end_at
+                ))
+                conn.commit()
+                result = cur.fetchone()
+                return result['meeting_id'] if result else None
+    except Exception as error:
+        return (False, error, "MEETINGS_create")
+
+
+def NOTIFICATIONS_create(
+    meeting_id: int,
+    notification_type: str,
+    notification_text: str
+):
+    """
+    Создает новое уведомление в таблице notifications_table_4.
+    Возвращает notification_id созданного уведомления.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO notifications_table_4 (
+                    meeting_id,
+                    notification_type,
+                    notification_text
+                ) VALUES (
+                    %s, %s, %s
+                )
+                RETURNING notification_id;
+                """, (
+                    meeting_id,
+                    notification_type,
+                    notification_text
+                ))
+                conn.commit()
+                result = cur.fetchone()
+                return result['notification_id'] if result else None
+    except Exception as error:
+        return (False, error, "NOTIFICATIONS_create")
+
+
+def NOTIFICATION_PHOTOS_create(
+    notification_id: int,
+    photo_url: str
+):
+    """
+    Создает запись о фото уведомления в таблице notification_photos_table_6.
+    Возвращает record_id созданной записи.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO notification_photos_table_6 (
+                    notification_id,
+                    photo_url
+                ) VALUES (
+                    %s, %s
+                )
+                RETURNING record_id;
+                """, (
+                    notification_id,
+                    photo_url
+                ))
+                conn.commit()
+                result = cur.fetchone()
+                return result['record_id'] if result else None
+    except Exception as error:
+        return (False, error, "NOTIFICATION_PHOTOS_create")
+
+
+def MEETINGS_add_category(meeting_id: int, category_id: int):
+    """
+    Добавляет категорию к встрече в таблице meeting_categories_table_11.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO meeting_categories_table_11 (
+                    meeting_id,
+                    category_id,
+                    category_value
+                ) VALUES (
+                    %s, %s, 10
+                )
+                RETURNING record_id;
+                """, (meeting_id, category_id))
+                conn.commit()
+                result = cur.fetchone()
+                return result['record_id'] if result else None
+    except Exception as error:
+        return (False, error, "MEETINGS_add_category")
+
+
+def MEETINGS_add_warning(meeting_id: int, warning_id: int):
+    """
+    Добавляет предупреждение к встрече в таблице meeting_warnings_table_21.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO meeting_warnings_table_21 (
+                    meeting_id,
+                    warning_id
+                ) VALUES (
+                    %s, %s
+                )
+                RETURNING record_id;
+                """, (meeting_id, warning_id))
+                conn.commit()
+                result = cur.fetchone()
+                return result['record_id'] if result else None
+    except Exception as error:
+        return (False, error, "MEETINGS_add_warning")

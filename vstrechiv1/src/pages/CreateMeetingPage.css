@@ -35,6 +35,36 @@
   gap: 24px;
 }
 
+/* Loading и Error состояния */
+.create-meeting-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #666;
+}
+
+.create-meeting-error-banner {
+  background: #ffe6e6;
+  border: 2px solid #ff0202;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  color: #ff0202;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.create-meeting-success-banner {
+  background: #e6f7f0;
+  border: 2px solid #3ecfaa;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  color: #2a9d6d;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
 /* Поля формы с плавным появлением */
 .create-meeting-field {
   display: flex;
@@ -231,6 +261,15 @@
   background: #f5f5f5;
 }
 
+.create-meeting-checkbox-label--locked {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.create-meeting-checkbox-label--locked:hover {
+  background: #fff;
+}
+
 .create-meeting-label-text {
   display: flex;
   align-items: center;
@@ -367,6 +406,12 @@
   gap: 12px;
 }
 
+.create-meeting-warnings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
 .create-meeting-warning-row {
   display: flex;
   gap: 12px;
@@ -377,15 +422,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 6px;
+  padding: 8px 10px;
   border: 2px solid #000;
   border-radius: 10px;
   background: #fff;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex: 1;
-  max-width: 200px;
+  min-width: 0;
+}
+
+.create-meeting-warnings-grid .create-meeting-warning-item {
+  max-width: none;
 }
 
 .create-meeting-warning-item:hover {
@@ -398,9 +446,10 @@
 }
 
 .create-meeting-warning-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: #333;
+  line-height: 1.3;
 }
 
 .create-meeting-warning-checkbox {
@@ -425,4 +474,123 @@
   color: #fff;
   font-size: 12px;
   font-weight: 700;
+}
+
+
+/* Сетка категорий */
+.create-meeting-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.create-meeting-category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.create-meeting-category-card:hover {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+}
+
+.create-meeting-category-card--active {
+  border-color: #3ecfaa;
+  background: rgba(62, 207, 170, 0.1);
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.2);
+}
+
+.create-meeting-category-card--active:hover {
+  background: rgba(62, 207, 170, 0.15);
+}
+
+.create-meeting-category-icon {
+  color: #333;
+  transition: color 0.2s ease;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-meeting-category-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.create-meeting-category-card--active .create-meeting-category-icon {
+  color: #3ecfaa;
+}
+
+.create-meeting-category-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+}
+
+.create-meeting-category-card--active .create-meeting-category-name {
+  color: #2a9d6d;
+}
+
+
+/* Кнопка создания встречи */
+.create-meeting-submit-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.create-meeting-submit-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.create-meeting-submit-error {
+  color: #ff0202;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.create-meeting-submit-btn {
+  padding: 12px 28px;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  background: #f5f5f5;
+  color: #999;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: all 0.3s ease;
+}
+
+.create-meeting-submit-btn--active {
+  background: #3ecfaa;
+  border-color: transparent;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(62, 207, 170, 0.4);
+}
+
+.create-meeting-submit-btn--active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+}
+
+.create-meeting-submit-btn--active:active {
+  transform: translateY(0);
 }
