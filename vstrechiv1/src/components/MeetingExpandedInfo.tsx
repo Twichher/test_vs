@@ -120,7 +120,7 @@ export default function MeetingExpandedInfo({meeting_id} : MeetingExpandedInfoPr
         <span>{info.registered_users_count}/{info.max_people}</span>
         <span className="mei-district">{info.district}</span>
       </div>
-
+          
       {/* Важно */}
       {info.warnings && (
         <p className="mei-warnings">

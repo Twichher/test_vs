@@ -156,6 +156,7 @@ interface MeetingTypeOne {
                         adults_only_18plus={meeting.adults_only_18plus}
                         start_at = {meeting.start_at}
                         end_at = {meeting.end_at}
+                        status={meeting.status}
                       />
                     </div>
                   ))
@@ -220,28 +221,39 @@ interface MeetingTypeOne {
               {attendedMeetings.length === 0 ? (
                 <p className="reg-history-empty">История пуста</p>
               ) : (
-                attendedMeetings.map((meeting) => (
-                  <div
-                  key={meeting.meeting_id}
-                  className={meeting.user_action === 'missed' ? 'meeting-missed' : ''}
-                  onClick={() => {
-                    console.log(meeting.meeting_id);
-                    navigate(`/meeting/info_history/${meeting.meeting_id}?action=${meeting.user_action}`);
-                  }}
-                  style={{ cursor: 'pointer' }}
-                  >
-                    <MeetingAsItem
-                      key={meeting.meeting_id}
-                      meeting_title={meeting.meeting_title}
-                      registered_users_count={meeting.registered_users_count}
-                      max_people_allowed={meeting.max_people_allowed}
-                      district={meeting.district}
-                      adults_only_18plus={meeting.adults_only_18plus}
-                      start_at = {meeting.start_at}
-                      end_at = {meeting.end_at}
-                    />
-                  </div>
-                ))
+                attendedMeetings.map((meeting) => {
+                  // Определяем класс для окраски
+                  let cardClass = '';
+                  if (meeting.user_action === 'missed') {
+                    cardClass = 'meeting-missed'; // Красный
+                  } else if (meeting.user_action === 'registered' && meeting.status === 'canceled') {
+                    cardClass = 'meeting-missed'; // Контейнер красный, но карточка будет черная
+                  }
+                  
+                  return (
+                    <div
+                    key={meeting.meeting_id}
+                    className={cardClass}
+                    onClick={() => {
+                      console.log(meeting.meeting_id);
+                      navigate(`/meeting/info_history/${meeting.meeting_id}?action=${meeting.user_action}`);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                    >
+                      <MeetingAsItem
+                        key={meeting.meeting_id}
+                        meeting_title={meeting.meeting_title}
+                        registered_users_count={meeting.registered_users_count}
+                        max_people_allowed={meeting.max_people_allowed}
+                        district={meeting.district}
+                        adults_only_18plus={meeting.adults_only_18plus}
+                        start_at = {meeting.start_at}
+                        end_at = {meeting.end_at}
+                        status={meeting.status}
+                      />
+                    </div>
+                  );
+                })
               )}
             </div>
           )}

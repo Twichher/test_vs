@@ -25,6 +25,53 @@ def USERS_update_miss_meeting(meeting_id: int, user_id: int):
         return (False, error, "USERS_update_miss_meeting")
 
 
+# функция отменяет встречу организатором (меняет статус на 'canceled')
+def MEETINGS_cancel_by_organizer(meeting_id: int, user_id: int):
+    """
+    Отменяет встречу организатором.
+    Проверяет, что пользователь является создателем встречи и статус позволяет отмену.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Проверяем, что пользователь - создатель встречи и статус допускает отмену
+                cur.execute("""
+                    SELECT creator_user_id, status
+                    FROM meeting_table_2
+                    WHERE meeting_id = %s
+                """, (meeting_id,))
+                meeting = cur.fetchone()
+                
+                if not meeting:
+                    return (False, "Встреча не найдена", "MEETINGS_cancel_by_organizer")
+                
+                if meeting["creator_user_id"] != user_id:
+                    return (False, "Только создатель может отменить встречу", "MEETINGS_cancel_by_organizer")
+                
+                if meeting["status"] not in ['created', 'in_progress']:
+                    return (False, f"Нельзя отменить встречу со статусом '{meeting['status']}'", "MEETINGS_cancel_by_organizer")
+                
+                # Обновляем статус на 'canceled'
+                cur.execute("""
+                    UPDATE meeting_table_2
+                    SET status = 'canceled'
+                    WHERE meeting_id = %s
+                    RETURNING meeting_id, status
+                """, (meeting_id,))
+                
+                result = cur.fetchone()
+                conn.commit()
+                
+                return {
+                    "meeting_id": result["meeting_id"],
+                    "status": result["status"],
+                    "success": True,
+                    "message": "Встреча успешно отменена"
+                }
+    except Exception as error:
+        return (False, error, "MEETINGS_cancel_by_organizer")
+
+
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
 #------------------------------------------------------------------------------------------------------

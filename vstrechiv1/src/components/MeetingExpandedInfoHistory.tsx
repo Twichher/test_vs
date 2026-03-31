@@ -65,7 +65,7 @@ export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpande
     if (!info) return <div className="meeting-expanded-info-card" />;
 
     return (
-    <div className={`meeting-expanded-info-card--reged ${userAction === 'missed' ? 'meeting-missed-card' : ''}`}>
+    <div className={`meeting-expanded-info-card--reged ${userAction === 'missed' ? 'meeting-missed-card' : ''} ${info?.status === 'canceled' ? 'meeting-canceled-card' : ''}`}>
         <h2 className="mei-title">
         {info.meeting_title}
         {info.adults_only && <span className="mei-badge">18+</span>}

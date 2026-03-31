@@ -18,6 +18,36 @@
     color: #1a1a1a;
   }
 
+  /* Стиль для отмененной создателем встречи */
+  .meeting-canceled-card {
+    background: #1a1a1a !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+
+  .meeting-canceled-card .mei-title,
+  .meeting-canceled-card .mei-organizer,
+  .meeting-canceled-card .mei-district,
+  .meeting-canceled-card .mei-row span,
+  .meeting-canceled-card .mei-warnings,
+  .meeting-canceled-card .mei-description {
+    color: #ffffff !important;
+  }
+
+  .meeting-canceled-card .mei-badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+  }
+
+  .meeting-canceled-card .mei-search-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+  }
+
+  .meeting-canceled-card .mei-search-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
 /* Модальное окно профиля */
 .profile-modal-overlay {
   position: fixed;

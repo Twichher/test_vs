@@ -72,4 +72,22 @@
     text-transform: capitalize;
   }
 
+/* Стиль для отмененной создателем встречи */
+.meeting-card--canceled {
+  background: #1a1a1a !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.meeting-card--canceled .meeting-title,
+.meeting-card--canceled .meeting-people,
+.meeting-card--canceled .meeting-district,
+.meeting-card--canceled .meeting-date {
+  color: #ffffff !important;
+}
+
+.meeting-card--canceled .meeting-badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
   

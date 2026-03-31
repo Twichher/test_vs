@@ -20,6 +20,7 @@ class MeetingTypeOne(BaseModel):
     category_ids : list[int]
     start_at : datetime
     end_at : datetime
+    creator_user_id : int
     status : str | None = None
     user_action : str | None = None
 

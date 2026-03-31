@@ -12,7 +12,7 @@ CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_a
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
 MEETINGS_get_basic_info
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
 UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse
 from minio_defs import upload_photo, upload_meeting_photo
@@ -335,6 +335,21 @@ def put_user_cancel_meeting(meeting_id : int, user_id : int):
         raise HTTPException(status_code=500, detail=result[1])
     
     return result   
+
+
+@app.put("/meetings/{meeting_id}/cancel")
+def cancel_meeting_by_organizer(meeting_id: int, user_id: int = Depends(get_current_user)):
+    """
+    Отменяет встречу организатором.
+    Проверяет, что текущий пользователь является создателем встречи.
+    """
+    result = MEETINGS_cancel_by_organizer(meeting_id, user_id)
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
+    return result
+
 
 @app.get("/meetings/{meeting_id}/reged_users", response_model=List[MeetingRegedMissedUser])
 def get_reged_missed_users(meeting_id : int):

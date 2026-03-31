@@ -50,7 +50,8 @@ def MEETINGS_get_created_lsit(district : str):
                     m.adults_only AS adults_only_18plus,
                     COALESCE(c.category_ids, '{}') AS category_ids,
                     m.start_at AS start_at,
-                    m.end_at AS end_at
+                    m.end_at AS end_at,
+                    m.creator_user_id
                 FROM meeting_table_2 m
 
                 LEFT JOIN (
@@ -161,7 +162,7 @@ def MEETINGS_get_all_info(meeting_id : int):
                     GROUP BY mw.meeting_id
                 ) w ON w.meeting_id = m.meeting_id
 
-                WHERE m.status = 'created'
+                WHERE m.status IN ('created', 'in_progress')
                 AND m.meeting_id = %s;
 
 
@@ -228,7 +229,7 @@ def MEETINGS_reged_get_all_info(meeting_id : int):
         return (False, error, "MEETINGS_reged_get_all_info")
     
 
-# выводим информацию о встрече в профиле для записей(встречи где поль-ль учавствовал), всю информацию, включая адрес
+# выводим информацию о встрече в профиле для записей(встречи где поль-ль учавствовал или встречи со статусом canceled), всю информацию, включая адрес
 def MEETINGS_atted_get_all_info(meeting_id : int):
     try:
         with psycopg.connect(DSN, row_factory=dict_row) as conn:
@@ -244,7 +245,13 @@ def MEETINGS_atted_get_all_info(meeting_id : int):
                     m.creator_user_id,
                     u.first_name             AS creator_first_name,
                     u.last_name              AS creator_last_name,
-                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    COALESCE(
+                        CASE 
+                            WHEN m.status = 'canceled' THEN registered_users.users_count
+                            ELSE attended_users.users_count
+                        END, 
+                        0
+                    ) AS registered_users_count,
                     m.max_people,
                     m.district,
                     m.adults_only,
@@ -258,13 +265,21 @@ def MEETINGS_atted_get_all_info(meeting_id : int):
                 JOIN user_table_1 u
                     ON u.user_id = m.creator_user_id
 
-                -- Количество посетивших
+                -- Для canceled встреч: считаем только registered
                 LEFT JOIN (
-                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    SELECT meeting_id, COUNT(*) AS users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'registered'
+                    GROUP BY meeting_id
+                ) registered_users ON registered_users.meeting_id = m.meeting_id AND m.status = 'canceled'
+
+                -- Для finished встреч: считаем attended
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS users_count
                     FROM meeting_rating_table_8
                     WHERE user_action = 'attended'
                     GROUP BY meeting_id
-                ) r ON r.meeting_id = m.meeting_id
+                ) attended_users ON attended_users.meeting_id = m.meeting_id AND m.status = 'finished'
 
                 -- Предупреждения
                 LEFT JOIN (
@@ -275,7 +290,7 @@ def MEETINGS_atted_get_all_info(meeting_id : int):
                     GROUP BY mw.meeting_id
                 ) w ON w.meeting_id = m.meeting_id
 
-                AND m.meeting_id = %s;
+                WHERE m.meeting_id = %s;
 
                 """, (meeting_id, ))
                 return cur.fetchone()
@@ -318,6 +333,7 @@ def MEETINGS_get_reged_missed_users(meeting_id : int):
     
 
 # по id встречи выводим тех кто был на завершенной встречи и тех кто пропустил ее
+# для canceled встреч выводим registered и missed (attended быть не может)
 def MEETINGS_get_atted_missed_users(meeting_id : int):
     try:
         with psycopg.connect(DSN, row_factory=dict_row) as conn:
@@ -339,8 +355,12 @@ def MEETINGS_get_atted_missed_users(meeting_id : int):
                     ) AS photo_url
                 FROM meeting_rating_table_8 mr
                 JOIN user_table_1 u ON u.user_id = mr.user_id
+                JOIN meeting_table_2 m ON m.meeting_id = mr.meeting_id
                 WHERE mr.meeting_id = %s
-                AND mr.user_action IN ('attended', 'missed')
+                AND (
+                    (m.status = 'canceled' AND mr.user_action IN ('registered', 'missed'))
+                    OR (m.status != 'canceled' AND mr.user_action IN ('attended', 'missed'))
+                )
                 ORDER BY u.last_name, u.first_name;
         
                 """, (meeting_id, ))
@@ -493,7 +513,8 @@ def USERS_get_MEETINGS_info_reged(user_id : int):
                     m.adults_only AS adults_only_18plus,
                     m.start_at AS start_at,
                     m.end_at AS end_at,
-                    COALESCE(c.category_ids, '{}') AS category_ids
+                    COALESCE(c.category_ids, '{}') AS category_ids,
+                    m.creator_user_id
                 FROM meeting_table_2 m
 
                 -- Фильтр: только встречи где записан конкретный пользователь
@@ -524,7 +545,11 @@ def USERS_get_MEETINGS_info_reged(user_id : int):
     except Exception as error:
         return (False, error, "USERS_get_MEETINGS_info_reged")
 
-# получаем краткую инф-ю о встречах на которые пользователь сходил и они закончились
+# получаем краткую инф-ю о встречах в истории пользователя
+# Логика:
+# - attended: всегда в истории (серый)
+# - missed: всегда в истории (красный)
+# - registered: только если встреча canceled (черный)
 def USERS_get_MEETINGS_info_finished(user_id : int):
     try:
         with psycopg.connect(DSN, row_factory=dict_row) as conn:
@@ -534,7 +559,14 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                 SELECT
                     m.meeting_id,
                     m.title AS meeting_title,
-                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    COALESCE(
+                        CASE 
+                            WHEN m.status = 'canceled' THEN canceled_users.users_count
+                            WHEN m.status = 'finished' THEN finished_users.users_count
+                            ELSE active_users.users_count
+                        END, 
+                        0
+                    ) AS registered_users_count,
                     m.max_people AS max_people_allowed,
                     m.district,
                     m.adults_only AS adults_only_18plus,
@@ -542,21 +574,44 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     m.end_at AS end_at,
                     m.status AS status,
                     ur.user_action AS user_action,
-                    COALESCE(c.category_ids, '{}') AS category_ids
+                    COALESCE(c.category_ids, '{}') AS category_ids,
+                    m.creator_user_id
                 FROM meeting_table_2 m
 
-                -- Фильтр: только встречи где записан конкретный пользователь
+                -- Все встречи где пользователь имеет запись
                 JOIN meeting_rating_table_8 ur
                     ON ur.meeting_id = m.meeting_id
                     AND ur.user_id = %s
-                    AND ur.user_action IN ('attended', 'missed')
+                    AND (
+                        -- attended/missed: всегда в истории
+                        ur.user_action IN ('attended', 'missed')
+                        -- registered: только если встреча отменена
+                        OR (ur.user_action = 'registered' AND m.status = 'canceled')
+                    )
 
+                -- Для canceled встреч: считаем только registered
                 LEFT JOIN (
-                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    SELECT meeting_id, COUNT(*) AS users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'registered'
+                    GROUP BY meeting_id
+                ) canceled_users ON canceled_users.meeting_id = m.meeting_id AND m.status = 'canceled'
+
+                -- Для finished встреч: считаем attended
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS users_count
                     FROM meeting_rating_table_8
                     WHERE user_action = 'attended'
                     GROUP BY meeting_id
-                ) r ON r.meeting_id = m.meeting_id
+                ) finished_users ON finished_users.meeting_id = m.meeting_id AND m.status = 'finished'
+
+                -- Для активных встреч (created/in_progress) где user missed: считаем registered
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'registered'
+                    GROUP BY meeting_id
+                ) active_users ON active_users.meeting_id = m.meeting_id AND m.status IN ('created', 'in_progress')
 
                 LEFT JOIN (
                     SELECT meeting_id, ARRAY_AGG(category_id) AS category_ids
@@ -842,7 +897,8 @@ def ORGANIZER_get_active_meetings(user_id: int):
                     m.start_at AS start_at,
                     m.end_at AS end_at,
                     m.status AS status,
-                    COALESCE(c.category_ids, '{}') AS category_ids
+                    COALESCE(c.category_ids, '{}') AS category_ids,
+                    m.creator_user_id
                 FROM meeting_table_2 m
                 
                 LEFT JOIN (
@@ -876,22 +932,38 @@ def ORGANIZER_get_history_meetings(user_id: int):
                 SELECT
                     m.meeting_id,
                     m.title AS meeting_title,
-                    COALESCE(r.registered_users_count, 0) AS registered_users_count,
+                    COALESCE(
+                        CASE 
+                            WHEN m.status = 'canceled' THEN registered_users.users_count
+                            ELSE attended_users.users_count
+                        END, 
+                        0
+                    ) AS registered_users_count,
                     m.max_people AS max_people_allowed,
                     m.district,
                     m.adults_only AS adults_only_18plus,
                     m.start_at AS start_at,
                     m.end_at AS end_at,
                     m.status AS status,
-                    COALESCE(c.category_ids, '{}') AS category_ids
+                    COALESCE(c.category_ids, '{}') AS category_ids,
+                    m.creator_user_id
                 FROM meeting_table_2 m
                 
+                -- Для canceled встреч: считаем только registered
                 LEFT JOIN (
-                    SELECT meeting_id, COUNT(*) AS registered_users_count
+                    SELECT meeting_id, COUNT(*) AS users_count
+                    FROM meeting_rating_table_8
+                    WHERE user_action = 'registered'
+                    GROUP BY meeting_id
+                ) registered_users ON registered_users.meeting_id = m.meeting_id AND m.status = 'canceled'
+                
+                -- Для finished встреч: считаем attended
+                LEFT JOIN (
+                    SELECT meeting_id, COUNT(*) AS users_count
                     FROM meeting_rating_table_8
                     WHERE user_action = 'attended'
                     GROUP BY meeting_id
-                ) r ON r.meeting_id = m.meeting_id
+                ) attended_users ON attended_users.meeting_id = m.meeting_id AND m.status = 'finished'
                 
                 LEFT JOIN (
                     SELECT meeting_id, ARRAY_AGG(category_id) AS category_ids

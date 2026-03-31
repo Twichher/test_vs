@@ -12,7 +12,7 @@ import './ProfilePage.css';
 import './WithdrawModal.css';
 
 export default function ProfilePage() {
-  const { isAuth, user_id } = useSelector((state: RootState) => state.auth);
+  const { isAuth, user_id, is_organizer } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
   
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -103,15 +103,17 @@ export default function ProfilePage() {
         <div className={`profile-section-wrapper ${showProfileSection ? 'profile-section-visible' : 'profile-section-hidden'}`}>
           <ProfileCard onPhotoClick={handlePhotoClick} />
           
-          {/* Кнопка вывода валюты - под ProfileCard */}
-          <div className="withdraw-currency-section">
-            <button 
-              className="withdraw-currency-btn"
-              onClick={handleWithdrawClick}
-            >
-              Вывести заработанную валюту
-            </button>
-          </div>
+          {/* Кнопка вывода валюты - только для организаторов */}
+          {is_organizer && (
+            <div className="withdraw-currency-section">
+              <button 
+                className="withdraw-currency-btn"
+                onClick={handleWithdrawClick}
+              >
+                Вывести заработанную валюту
+              </button>
+            </div>
+          )}
         </div>
         <div className={`reg-history-wrapper ${showRegHistory ? 'reg-history-visible' : 'reg-history-hidden'}`}>
           <RegHistoryMeet />

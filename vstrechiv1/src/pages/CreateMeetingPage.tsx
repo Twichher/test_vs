@@ -1,7 +1,8 @@
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import type { RootState } from '../slices/store';
-import { useEffect, useState, useRef } from 'react';
+import type { RootState, AppDispatch } from '../slices/store';
+import { initDraft, saveDraft, clearDraft, updateDraftField } from '../slices/draftSlice';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { FiHelpCircle, FiUpload, FiX, FiTrash2 } from 'react-icons/fi';
 import NavbarLogin from '../components/NavbarLogin';
 import NavBar from '../components/NavBar';
@@ -35,24 +36,26 @@ interface WarningGroup {
 
 export default function CreateMeetingPage() {
   const { isAuth, is_organizer, district, user_id } = useSelector((state: RootState) => state.auth);
+  const { meetingDraft } = useSelector((state: RootState) => state.draft);
+  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
 
-  // Состояния формы
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [maxPeople, setMaxPeople] = useState('');
+  // Состояния формы (инициализируем из черновика если есть)
+  const [title, setTitle] = useState(meetingDraft?.title ?? '');
+  const [description, setDescription] = useState(meetingDraft?.description ?? '');
+  const [maxPeople, setMaxPeople] = useState(meetingDraft?.maxPeople ?? '');
   const [maxPeopleError, setMaxPeopleError] = useState(false);
-  const [address, setAddress] = useState('');
-  const [meetingDate, setMeetingDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [emailMessage, setEmailMessage] = useState('');
-  const [adultsOnly, setAdultsOnly] = useState(false);
+  const [address, setAddress] = useState(meetingDraft?.address ?? '');
+  const [meetingDate, setMeetingDate] = useState(meetingDraft?.meetingDate ?? '');
+  const [startTime, setStartTime] = useState(meetingDraft?.startTime ?? '');
+  const [endTime, setEndTime] = useState(meetingDraft?.endTime ?? '');
+  const [emailMessage, setEmailMessage] = useState(meetingDraft?.emailMessage ?? '');
+  const [adultsOnly, setAdultsOnly] = useState(meetingDraft?.adultsOnly ?? false);
   const [adultsOnlyLocked, setAdultsOnlyLocked] = useState(false);
-  const [photos, setPhotos] = useState<string[]>([]);
+  const [photos, setPhotos] = useState<string[]>(meetingDraft?.photos ?? []);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState<number | null>(null);
-  const [selectedWarnings, setSelectedWarnings] = useState<Record<number, number>>({}); // warning_id -> option_id
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [selectedWarnings, setSelectedWarnings] = useState<Record<number, number>>(meetingDraft?.selectedWarnings ?? {});
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(meetingDraft?.selectedCategoryIds ?? []);
   const [isFormValid, setIsFormValid] = useState(false);
   
   // Состояния для создания встречи
@@ -86,6 +89,54 @@ export default function CreateMeetingPage() {
   const [showCategoriesField, setShowCategoriesField] = useState(false);
   const [showCategorySelectionField, setShowCategorySelectionField] = useState(false);
 
+  // Инициализация черновика из localStorage при загрузке страницы
+  useEffect(() => {
+    if (user_id) {
+      dispatch(initDraft({ userId: user_id }));
+    }
+  }, [user_id, dispatch]);
+
+  // Применяем загруженный черновик к состояниям формы
+  useEffect(() => {
+    if (meetingDraft) {
+      setTitle(meetingDraft.title);
+      setDescription(meetingDraft.description);
+      setMaxPeople(meetingDraft.maxPeople);
+      setAddress(meetingDraft.address);
+      setMeetingDate(meetingDraft.meetingDate);
+      setStartTime(meetingDraft.startTime);
+      setEndTime(meetingDraft.endTime);
+      setEmailMessage(meetingDraft.emailMessage);
+      setAdultsOnly(meetingDraft.adultsOnly);
+      setPhotos(meetingDraft.photos);
+      setSelectedWarnings(meetingDraft.selectedWarnings);
+      setSelectedCategoryIds(meetingDraft.selectedCategoryIds);
+    }
+  }, []); // Запускаем только при монтировании
+
+  // Сохранение изменений в черновик (debounced через useEffect)
+  useEffect(() => {
+    if (!user_id) return;
+    
+    dispatch(saveDraft({
+      userId: user_id,
+      draft: {
+        title,
+        description,
+        maxPeople,
+        address,
+        meetingDate,
+        startTime,
+        endTime,
+        emailMessage,
+        adultsOnly,
+        photos,
+        selectedWarnings,
+        selectedCategoryIds,
+      },
+    }));
+  }, [title, description, maxPeople, address, meetingDate, startTime, endTime, emailMessage, adultsOnly, photos, selectedWarnings, selectedCategoryIds, user_id, dispatch]);
+
   // Загрузка категорий и предупреждений с бэкенда
   useEffect(() => {
     const fetchData = async () => {
@@ -112,6 +163,17 @@ export default function CreateMeetingPage() {
         const groupedWarnings = groupWarningsByName(warnings);
         console.log(groupedWarnings)
         setWarningGroups(groupedWarnings);
+        
+        // Проверяем, нужно ли заблокировать adultsOnly на основе загруженных предупреждений
+        const hasAdultsWarning = Object.entries(selectedWarnings).some(([groupId, optionId]) => {
+          const group = groupedWarnings.find((g) => g.warning_id === parseInt(groupId));
+          const option = group?.options.find((o) => o.option_id === optionId);
+          return option?.forAdults === true;
+        });
+        if (hasAdultsWarning) {
+          setAdultsOnly(true);
+          setAdultsOnlyLocked(true);
+        }
         
         setLoadError(null);
       } catch (error) {
@@ -345,6 +407,10 @@ export default function CreateMeetingPage() {
       
       if (result.success) {
         setCreateSuccess(true);
+        // Очищаем черновик после успешного создания
+        if (user_id) {
+          dispatch(clearDraft({ userId: user_id }));
+        }
         // Перенаправляем на страницу пользователя через 2 секунды
         setTimeout(() => {
           navigate(`/user/${user_id}`);

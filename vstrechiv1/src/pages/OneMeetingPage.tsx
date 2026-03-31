@@ -91,8 +91,11 @@ interface OrganizerActionsProps {
 }
 
 function OrganizerActions({ meeting_id, user_id, meetingInfo }: OrganizerActionsProps) {
+  const navigate = useNavigate();
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [finishModalOpen, setFinishModalOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const handleCancelClick = () => {
     setCancelModalOpen(true);
@@ -102,9 +105,41 @@ function OrganizerActions({ meeting_id, user_id, meetingInfo }: OrganizerActions
     setFinishModalOpen(true);
   };
 
-  const handleCancelConfirm = () => {
-    console.log('Отмена встречи:', { meeting_id, user_id });
-    setCancelModalOpen(false);
+  const handleCancelConfirm = async () => {
+    const meetingIdNum = Number(meeting_id);
+    if (!meeting_id || isNaN(meetingIdNum) || meetingIdNum <= 0 || !user_id) {
+      console.error('Неверные параметры для отмены встречи');
+      return;
+    }
+
+    if (isCanceling) return;
+
+    setIsCanceling(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/meetings/${meetingIdNum}/cancel`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Ошибка при отмене встречи');
+      }
+
+      const result = await response.json();
+      console.log('Встреча отменена:', result);
+      
+      // Перенаправляем на страницу пользователя
+      navigate(`/user/${user_id}`, { replace: true });
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert(error instanceof Error ? error.message : 'Не удалось отменить встречу');
+      setIsCanceling(false);
+      setCancelModalOpen(false);
+    }
   };
 
   const handleFinishConfirm = () => {
@@ -113,6 +148,7 @@ function OrganizerActions({ meeting_id, user_id, meetingInfo }: OrganizerActions
   };
 
   const handleModalClose = () => {
+    if (isCanceling || isFinishing) return; // Не закрываем модалку во время обработки
     setCancelModalOpen(false);
     setFinishModalOpen(false);
   };
@@ -148,12 +184,14 @@ function OrganizerActions({ meeting_id, user_id, meetingInfo }: OrganizerActions
               <button
                 className="action-modal-btn action-modal-btn--confirm"
                 onClick={handleCancelConfirm}
+                disabled={isCanceling}
               >
-                Подтвердить
+                {isCanceling ? 'Отмена...' : 'Подтвердить'}
               </button>
               <button
                 className="action-modal-btn action-modal-btn--cancel"
                 onClick={handleModalClose}
+                disabled={isCanceling}
               >
                 Отменить
               </button>

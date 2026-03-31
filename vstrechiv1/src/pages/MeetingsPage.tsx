@@ -22,6 +22,7 @@ interface MeetingTypeOne {
   start_at: string;
   end_at: string;
   category_ids: number[];
+  creator_user_id: number;
 }
 
 interface MeetingInfo {
@@ -103,10 +104,12 @@ const MeetingsPage: React.FC = () => {
           return;
         }
   
-        // 3. Фильтруем — убираем встречи куда уже записан или отписался от них
+        // 3. Фильтруем — убираем:
+        //    - встречи куда уже записан или отписался
+        //    - встречи, созданные текущим пользователем
         setRegedMeetingIds((currentReged) => {
           const filtered = data.filter(
-            (m) => !currentReged.includes(m.meeting_id)
+            (m) => !currentReged.includes(m.meeting_id) && m.creator_user_id !== user_id
           );
           setMeetings(filtered);
           setOriginalMeetings(filtered);

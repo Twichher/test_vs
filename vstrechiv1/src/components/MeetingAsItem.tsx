@@ -10,6 +10,7 @@ interface MeetingAsItemProps {
   start_at: string;
   end_at: string;
   isReged?: boolean;
+  status?: string;
 }
 
 const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
@@ -20,7 +21,8 @@ const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
   adults_only_18plus,
   start_at,
   end_at,
-  isReged = false, 
+  isReged = false,
+  status,
 }) => {
   const startDate = new Date(start_at);
   const endDate = new Date(end_at);
@@ -39,8 +41,10 @@ const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
     minute: '2-digit',
   })}`;
 
+  const isCanceled = status === 'canceled';
+
   return (
-    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''}`}>
+    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''} ${isCanceled ? 'meeting-card--canceled' : ''}`}>
       {adults_only_18plus && <span className="meeting-badge">18+</span>}
       <h3 className="meeting-title">{meeting_title}</h3>
 
