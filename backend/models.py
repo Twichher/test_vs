@@ -267,6 +267,7 @@ class NotificationItem(BaseModel):
     sent_at: datetime
     notification_type: str
     notification_text: str
+    meeting_id: int | None = None  # ID встречи (NULL если уведомление не связано со встречей)
     meeting_title: str | None = None  # может быть NULL если уведомление не связано со встречей
     meeting_start_at: datetime | None = None
     meeting_end_at: datetime | None = None

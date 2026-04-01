@@ -670,3 +670,45 @@ AFTER UPDATE OF status ON meeting_table_2
 FOR EACH ROW
 WHEN (NEW.status = 'canceled' AND OLD.status IS DISTINCT FROM 'canceled')
 EXECUTE FUNCTION create_notification_on_meeting_canceled();
+
+-------------------------------------------------------------------------------
+
+-- Триггер #13: при завершении встречи (изменение status на 'finished')
+-- создает уведомление для организатора о необходимости отметить участников
+
+CREATE OR REPLACE FUNCTION create_notification_on_meeting_finished()
+RETURNS trigger AS $$
+DECLARE
+    v_notification_id BIGINT;
+BEGIN
+    -- Проверяем что статус изменился на 'finished'
+    IF NEW.status = 'finished' AND OLD.status IS DISTINCT FROM 'finished' THEN
+        
+        -- Создаем уведомление для организатора
+        INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+        VALUES (
+            NEW.meeting_id,
+            'завершение встречи для организатора',
+            'Встреча "' || NEW.title || '", проведенная Вами с ' || 
+            TO_CHAR(NEW.start_at, 'DD.MM.YYYY HH24:MI') || ' до ' || 
+            TO_CHAR(NEW.end_at, 'DD.MM.YYYY HH24:MI') || 
+            ' завершена! Теперь отметьте тех, кто на ней был из списка зарегистрированных, а затем оцените их как собеседников по шкале от 1 до 10, где 1 - ужасный собеседник, а 10 - прекрасный человек, объект для подражания, есть чему поучиться!'
+        )
+        RETURNING notification_id INTO v_notification_id;
+        
+        -- Связываем уведомление с организатором
+        INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+        VALUES (v_notification_id, NEW.creator_user_id, 'unread')
+        ON CONFLICT (notification_id, user_id) DO NOTHING;
+        
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_notification_on_meeting_finished
+AFTER UPDATE OF status ON meeting_table_2
+FOR EACH ROW
+WHEN (NEW.status = 'finished' AND OLD.status IS DISTINCT FROM 'finished')
+EXECUTE FUNCTION create_notification_on_meeting_finished();

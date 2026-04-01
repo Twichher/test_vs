@@ -183,14 +183,48 @@ interface FinishModalProps {
 }
 
 function FinishModal({ isOpen, onClose, meeting_id, user_id }: FinishModalProps) {
+  const [isFinishing, setIsFinishing] = useState(false);
+
   if (!isOpen) return null;
 
-  const handleFinishConfirm = () => {
-    console.log('Завершение встречи:', { meeting_id, user_id });
-    onClose();
+  const handleFinishConfirm = async () => {
+    const meetingIdNum = Number(meeting_id);
+    if (!meeting_id || isNaN(meetingIdNum) || meetingIdNum <= 0 || !user_id) {
+      console.error('Неверные параметры для завершения встречи');
+      return;
+    }
+
+    if (isFinishing) return;
+
+    setIsFinishing(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/meetings/${meetingIdNum}/finish`,
+        {
+          method: 'PUT',
+          credentials: 'include',
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Ошибка при завершении встречи');
+      }
+
+      const result = await response.json();
+      console.log('Встреча завершена:', result);
+      
+      // Перенаправляем на страницу пользователя
+      window.location.href = `/user/${user_id}`;
+    } catch (error) {
+      console.error('Ошибка:', error);
+      alert(error instanceof Error ? error.message : 'Не удалось завершить встречу');
+      setIsFinishing(false);
+    }
   };
 
   const handleModalClose = () => {
+    if (isFinishing) return;
     onClose();
   };
 
@@ -202,12 +236,14 @@ function FinishModal({ isOpen, onClose, meeting_id, user_id }: FinishModalProps)
           <button
             className="action-modal-btn action-modal-btn--confirm"
             onClick={handleFinishConfirm}
+            disabled={isFinishing}
           >
-            Подтвердить
+            {isFinishing ? 'Завершение...' : 'Подтвердить'}
           </button>
           <button
             className="action-modal-btn action-modal-btn--cancel"
             onClick={handleModalClose}
+            disabled={isFinishing}
           >
             Отменить
           </button>

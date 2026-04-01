@@ -217,6 +217,50 @@
   }
 }
 
+/* Специальный стиль для уведомлений о завершении встречи - синий переливающийся */
+.notification-button--blue.notification-button--unread {
+  background: linear-gradient(135deg, #4a90d9 0%, #2171b5 25%, #4a90d9 50%, #2171b5 75%, #4a90d9 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-blue 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(33, 113, 181, 0.4);
+}
+
+/* Анимация для синего градиента */
+@keyframes gradient-shift-blue {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Эффект свечения для синих уведомлений */
+.notification-button--blue .notification-button__glow {
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  animation: glow-pulse-blue 1.5s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-blue {
+  0%, 100% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+}
+
 /* Анимация для красного градиента */
 @keyframes gradient-shift-canceled {
   0% {

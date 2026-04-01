@@ -72,6 +72,52 @@ def MEETINGS_cancel_by_organizer(meeting_id: int, user_id: int):
         return (False, error, "MEETINGS_cancel_by_organizer")
 
 
+def MEETINGS_finish_by_organizer(meeting_id: int, user_id: int):
+    """
+    Завершает встречу организатором.
+    Проверяет, что пользователь является создателем встречи и статус позволяет завершение.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Проверяем, что пользователь - создатель встречи и статус допускает завершение
+                cur.execute("""
+                    SELECT creator_user_id, status
+                    FROM meeting_table_2
+                    WHERE meeting_id = %s
+                """, (meeting_id,))
+                meeting = cur.fetchone()
+                
+                if not meeting:
+                    return (False, "Встреча не найдена", "MEETINGS_finish_by_organizer")
+                
+                if meeting["creator_user_id"] != user_id:
+                    return (False, "Только создатель может завершить встречу", "MEETINGS_finish_by_organizer")
+                
+                if meeting["status"] not in ['created', 'in_progress']:
+                    return (False, f"Нельзя завершить встречу со статусом '{meeting['status']}'", "MEETINGS_finish_by_organizer")
+                
+                # Обновляем статус на 'finished'
+                cur.execute("""
+                    UPDATE meeting_table_2
+                    SET status = 'finished'
+                    WHERE meeting_id = %s
+                    RETURNING meeting_id, status
+                """, (meeting_id,))
+                
+                result = cur.fetchone()
+                conn.commit()
+                
+                return {
+                    "meeting_id": result["meeting_id"],
+                    "status": result["status"],
+                    "success": True,
+                    "message": "Встреча успешно завершена"
+                }
+    except Exception as error:
+        return (False, error, "MEETINGS_finish_by_organizer")
+
+
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
 #------------------------------------------------------------------------------------------------------

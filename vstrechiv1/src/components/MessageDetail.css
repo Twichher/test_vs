@@ -89,6 +89,32 @@
   }
 }
 
+/* Хедер для уведомлений о завершении встречи - синий переливающийся */
+.message-detail__header--blue {
+  background: linear-gradient(135deg, #4a90d9 0%, #2171b5 25%, #4a90d9 50%, #2171b5 75%, #4a90d9 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-blue 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(33, 113, 181, 0.4);
+}
+
+@keyframes gradient-shift-blue {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @keyframes header-gradient-meeting {
   0% {
     background-position: 0% 50%;
@@ -402,4 +428,185 @@
     order: 1;
     min-height: 300px;
   }
+}
+
+/* === СТИЛИ ДЛЯ КОМПОНЕНТА ОЦЕНКИ УЧАСТНИКОВ (MessageDetailOrganizerFinishedMeet) === */
+
+/* Секция со списком пользователей */
+.message-detail__users-section {
+  margin-top: 24px;
+}
+
+.message-detail__users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* Строка пользователя */
+.message-detail__user-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #4a90d9;
+}
+
+/* Информация о пользователе */
+.message-detail__user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.message-detail__user-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.message-detail__search-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #4a90d9;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.2s ease, color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-detail__search-btn:hover {
+  background: rgba(74, 144, 217, 0.1);
+  color: #2171b5;
+}
+
+/* Кнопки был/не был */
+.message-detail__attendance-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.message-detail__attend-btn {
+  padding: 8px 16px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+  color: #666;
+}
+
+.message-detail__attend-btn:hover {
+  border-color: #999;
+  color: #333;
+}
+
+/* Активное состояние "был" - яркий зеленый без анимации */
+.message-detail__attend-btn--yes-active {
+  background: #00c853;
+  border-color: #00c853;
+  color: #fff;
+}
+
+.message-detail__attend-btn--yes-active:hover {
+  background: #00b34a;
+  border-color: #00b34a;
+}
+
+/* Активное состояние "не был" - красный */
+.message-detail__attend-btn--no-active {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  color: #fff;
+}
+
+.message-detail__attend-btn--no-active:hover {
+  background: #c0392b;
+  border-color: #c0392b;
+}
+
+/* Шкала оценки 1-10 */
+.message-detail__rating-scale {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.message-detail__rating-scale--disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.message-detail__rating-number {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.message-detail__rating-number:hover {
+  border-color: #4a90d9;
+  color: #4a90d9;
+}
+
+/* Подсветка при наведении (слабый желтый) */
+.message-detail__rating-number--highlighted {
+  background: #fff9c4;
+  border-color: #fff176;
+}
+
+/* Выбранная оценка (желтая обводка) */
+.message-detail__rating-number--selected {
+  background: #ffeb3b;
+  border-color: #ffc107;
+  color: #1a1a1a;
+}
+
+/* Кнопка отправки результатов */
+.message-detail__submit-btn {
+  margin-top: 24px;
+  width: 100%;
+  padding: 14px 24px;
+  background: #4a90d9;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.message-detail__submit-btn:hover:not(:disabled) {
+  background: #2171b5;
+  transform: translateY(-2px);
+}
+
+.message-detail__submit-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Индикатор загрузки */
+.message-detail__loading {
+  padding: 24px;
+  text-align: center;
+  color: #666;
 }
