@@ -13,6 +13,7 @@ import OneMeetingPageHistory from './pages/OneMeetingPageHistory';
 import SettingsPage from './pages/SettingsPage';
 import StatsPage from './pages/StatsPage';
 import CreateMeetingPage from './pages/CreateMeetingPage';
+import MessagesPage from './pages/MessagesPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -42,6 +43,7 @@ function App() {
       <Route path="/user/:user_id" element={<ProfilePage />} />
       <Route path="/settings" element={<SettingsPage />} />
       <Route path="/stats" element={<StatsPage />} />
+      <Route path="/messages" element={<MessagesPage />} />
       <Route path="/meeting/info_reged/:meeting_id" element={<OneMeetingPage />} />
       <Route path="/meeting/info_history/:meeting_id" element={<OneMeetingPageHistory />} />
       <Route path="/meeting/create" element={<CreateMeetingPage />} />

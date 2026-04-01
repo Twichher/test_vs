@@ -523,3 +523,81 @@ BEFORE INSERT ON meeting_rating_table_8
 FOR EACH ROW
 WHEN (NEW.user_action = 'registered')
 EXECUTE FUNCTION check_max_people();
+
+-------------------------------------------------------------------------------
+
+-- Триггер #10: при регистрации пользователя на встречу (user_action='registered')
+-- создает уведомление для пользователя в таблице user_notifications_table_5
+-- notification_id берется из notifications_table_4 по meeting_id (самое раннее)
+
+CREATE OR REPLACE FUNCTION create_notification_on_registration()
+RETURNS trigger AS $$
+DECLARE
+    v_notification_id BIGINT;
+BEGIN
+    -- Находим самое раннее уведомление для этой встречи
+    SELECT notification_id INTO v_notification_id
+    FROM notifications_table_4
+    WHERE meeting_id = NEW.meeting_id
+    ORDER BY created_at ASC
+    LIMIT 1;
+
+    -- Если уведомление найдено, создаем запись для пользователя
+    IF v_notification_id IS NOT NULL THEN
+        INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+        VALUES (v_notification_id, NEW.user_id, 'unread')
+        ON CONFLICT (notification_id, user_id) DO NOTHING;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_notification_on_registration
+AFTER INSERT ON meeting_rating_table_8
+FOR EACH ROW
+WHEN (NEW.user_action = 'registered')
+EXECUTE FUNCTION create_notification_on_registration();
+
+-------------------------------------------------------------------------------
+
+-- Триггер #11: при отмене записи пользователем (изменение user_action с 'registered' на 'missed')
+-- создает уведомление в таблице notifications_table_4 и связывает его с пользователем
+
+CREATE OR REPLACE FUNCTION create_notification_on_cancel()
+RETURNS trigger AS $$
+DECLARE
+    v_notification_id BIGINT;
+    v_meeting_title TEXT;
+BEGIN
+    -- Проверяем что статус изменился с 'registered' на 'missed'
+    IF OLD.user_action = 'registered' AND NEW.user_action = 'missed' THEN
+        -- Получаем название встречи
+        SELECT title INTO v_meeting_title
+        FROM meeting_table_2
+        WHERE meeting_id = NEW.meeting_id;
+
+        -- Создаем уведомление в notifications_table_4
+        INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+        VALUES (
+            NEW.meeting_id,
+            'вы отменили',
+            'Вы отменили запись на встречу'
+        )
+        RETURNING notification_id INTO v_notification_id;
+
+        -- Связываем уведомление с пользователем
+        INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+        VALUES (v_notification_id, NEW.user_id, 'unread')
+        ON CONFLICT (notification_id, user_id) DO NOTHING;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_notification_on_cancel
+AFTER UPDATE OF user_action ON meeting_rating_table_8
+FOR EACH ROW
+WHEN (OLD.user_action = 'registered' AND NEW.user_action = 'missed')
+EXECUTE FUNCTION create_notification_on_cancel();

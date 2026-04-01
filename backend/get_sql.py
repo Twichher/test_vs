@@ -1252,3 +1252,47 @@ def MEETINGS_add_warning(meeting_id: int, warning_id: int):
                 return result['record_id'] if result else None
     except Exception as error:
         return (False, error, "MEETINGS_add_warning")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Notifications
+#------------------------------------------------------------------------------------------------------
+
+# получаем все уведомления для пользователя
+def USERS_get_notifications(user_id: int):
+    """
+    Получает все уведомления для пользователя из user_notifications_table_5
+    с присоединенными данными из notifications_table_4, meeting_table_2 и notification_photos_table_6
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    un.record_id,
+                    un.notification_id,
+                    un.user_id,
+                    un.status,
+                    un.sent_at,
+                    n.notification_type,
+                    n.notification_text,
+                    m.title AS meeting_title,
+                    m.start_at AS meeting_start_at,
+                    m.end_at AS meeting_end_at,
+                    COALESCE(
+                        (
+                            SELECT ARRAY_AGG(np.photo_url ORDER BY np.record_id)
+                            FROM notification_photos_table_6 np
+                            WHERE np.notification_id = n.notification_id
+                        ),
+                        ARRAY[]::TEXT[]
+                    ) AS photo_urls
+                FROM user_notifications_table_5 un
+                JOIN notifications_table_4 n ON n.notification_id = un.notification_id
+                LEFT JOIN meeting_table_2 m ON m.meeting_id = n.meeting_id
+                WHERE un.user_id = %s
+                ORDER BY un.sent_at DESC;
+                """, (user_id,))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "USERS_get_notifications")

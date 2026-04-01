@@ -252,3 +252,22 @@ class StatsResponse(BaseModel):
     district: str | None = None  # Примененный фильтр
     rating_type: str  # Примененный тип рейтинга
     user_type: str  # Примененный тип пользователя
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для уведомлений
+#------------------------------------------------------------------------------------------------------
+
+class NotificationItem(BaseModel):
+    """Модель уведомления для пользователя"""
+    record_id: int
+    notification_id: int
+    user_id: int
+    status: str  # 'read' или 'unread'
+    sent_at: datetime
+    notification_type: str
+    notification_text: str
+    meeting_title: str | None = None  # может быть NULL если уведомление не связано со встречей
+    meeting_start_at: datetime | None = None
+    meeting_end_at: datetime | None = None
+    photo_urls: list[str] = []  # список URL фотографий из notification_photos_table_6

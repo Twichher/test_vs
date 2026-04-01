@@ -298,6 +298,21 @@ insert into notifications_table_4
 (notification_type, notification_text)
 VAlUES
 ('Верификация', 'Вам нужно пройти верификацию!')
+
+select meeting_id,user_action from meeting_rating_table_8 where user_id = 1;
+
+select title,status from meeting_table_2 where meeting_id = 6
+
+insert into meeting_rating_table_8 (meeting_id, user_id, user_action)
+values (8, 2, 'missed');
+
+--Разработка уведомлений--
+select * from notifications_table_4;
+select * from user_notifications_table_5;
+select * from notification_photos_table_6;
+select * from meeting_rating_table_8 where user_id = 1;
+
+delete from meeting_rating_table_8 where user_id = 1 and meeting_id = 11
 -------------------------------------------------------------------------------
 
 -- Table: user_extra_info_table_3

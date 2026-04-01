@@ -89,4 +89,94 @@
     gap: 12px;
     justify-content: start; /* ← прижимает колонки влево */
   }
+
+/* === АНИМАЦИИ === */
+
+/* Плавное появление страницы */
+.meeting-page {
+  opacity: 0;
+  transition: opacity 0.4s ease-out;
+}
+
+.meeting-page--visible {
+  opacity: 1;
+}
+
+/* Индикатор загрузки */
+.meeting-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  gap: 20px;
+}
+
+.meeting-loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid #e0e0e0;
+  border-top: 4px solid #3ecfaa;
+  border-radius: 50%;
+  animation: meeting-spin 1s linear infinite;
+}
+
+@keyframes meeting-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.meeting-loading-text {
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Плавное появление элементов */
+.meeting-fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: meeting-fade-in-up 0.5s ease-out forwards;
+}
+
+.meeting-fade-in--1 {
+  animation-delay: 0.1s;
+}
+
+.meeting-fade-in--2 {
+  animation-delay: 0.2s;
+}
+
+.meeting-fade-in--3 {
+  animation-delay: 0.3s;
+}
+
+@keyframes meeting-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Плавное появление карточек пользователей */
+.meeting-user-item {
+  opacity: 0;
+  transform: scale(0.95);
+  animation: meeting-user-appear 0.4s ease-out forwards;
+}
+
+@keyframes meeting-user-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
   

@@ -1,0 +1,381 @@
+/* MessageDetail.css - Стили для компонентов сообщений */
+
+/* Основной контейнер сообщения */
+.message-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.3s ease;
+  position: relative;
+  overflow-y: auto;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Кнопка закрытия сообщения */
+.message-detail__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #888;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease, color 0.2s ease;
+  z-index: 10;
+}
+
+.message-detail__close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #333;
+}
+
+/* Хедер сообщения - базовый стиль */
+.message-detail__header {
+  padding: 20px 24px 12px;
+  color: white;
+}
+
+/* Хедер для регистрации на встречу - зеленый переливающийся (как у карточки) */
+.message-detail__header--meeting {
+  background: linear-gradient(135deg, #3ecfaa 0%, #2db894 50%, #3ecfaa 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-meeting 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(0, 255, 136, 0.4);
+}
+
+/* Хедер для отмены встречи - красный переливающийся (как у карточки) */
+.message-detail__header--canceled {
+  background: linear-gradient(135deg, #ff4d4d 0%, #cc0000 25%, #ff4d4d 50%, #cc0000 75%, #ff4d4d 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-canceled 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(255, 77, 77, 0.4);
+}
+
+@keyframes header-gradient-meeting {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradient-shift-meeting {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes gradient-shift-canceled {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.message-detail__meeting-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  color: white;
+}
+
+.message-detail__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.message-detail__separator {
+  opacity: 0.6;
+}
+
+/* Разделитель */
+.message-detail__divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(62, 207, 170, 0.3), transparent);
+  margin: 0 24px;
+}
+
+/* Содержимое сообщения */
+.message-detail__content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.message-detail__text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
+  white-space: pre-line;
+  margin: 0 0 24px 0;
+}
+
+/* Секция с сообщением организатора */
+.message-detail__organizer-message {
+  margin: 24px 0;
+}
+
+/* Заголовки секций (жирные) */
+.message-detail__section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.message-detail__organizer-text {
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
+  white-space: pre-line;
+  margin: 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #3ecfaa;
+}
+
+/* Секция с фото */
+.message-detail__photos-section {
+  margin: 24px 0;
+}
+
+.message-detail__photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.message-detail__photo-thumb {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-detail__photo-thumb:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.message-detail__photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Финальный текст */
+.message-detail__footer-text {
+  font-size: 14px;
+  color: #666;
+  font-style: italic;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* === МОДАЛЬНОЕ ОКНО ФОТО === */
+
+.photo-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: modalFadeIn 0.3s ease forwards;
+}
+
+@keyframes modalFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.85);
+  }
+}
+
+.photo-modal {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  width: 800px;
+  height: 600px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+  opacity: 0;
+  transform: scale(0.95);
+  animation: modalScaleIn 0.3s ease forwards;
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Кнопка закрытия модального окна */
+.photo-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  color: #333;
+  z-index: 10;
+  padding: 8px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.photo-modal__close:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Список миниатюр слева */
+.photo-modal__thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  width: 100px;
+  padding-right: 4px;
+}
+
+.photo-modal__thumbnails::-webkit-scrollbar {
+  width: 4px;
+}
+
+.photo-modal__thumbnails::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 2px;
+}
+
+.photo-modal__thumb {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.photo-modal__thumb:hover {
+  opacity: 1;
+}
+
+.photo-modal__thumb--active {
+  border-color: #3ecfaa;
+  opacity: 1;
+}
+
+/* Главное фото в центре */
+.photo-modal__main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.photo-modal__main-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+  .photo-modal {
+    width: 90vw;
+    height: 70vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .photo-modal {
+    flex-direction: column;
+    width: 95vw;
+    height: 80vh;
+  }
+  
+  .photo-modal__thumbnails {
+    flex-direction: row;
+    width: 100%;
+    height: 100px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    order: 2;
+  }
+  
+  .photo-modal__main {
+    order: 1;
+    min-height: 300px;
+  }
+}

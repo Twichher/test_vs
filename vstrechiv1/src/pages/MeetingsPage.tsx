@@ -42,6 +42,14 @@ interface MeetingInfo {
   meeting_description: string;
 }
 
+// Компонент загрузки
+const LoadingSpinner: React.FC = () => (
+  <div className="meetings-loading">
+    <div className="meetings-loading-spinner"></div>
+    <p className="meetings-loading-text">Загрузка встреч...</p>
+  </div>
+);
+
 const MeetingsPage: React.FC = () => {
   const { isAuth, district , user_id} = useSelector((state: RootState) => state.auth);
 
@@ -51,6 +59,7 @@ const MeetingsPage: React.FC = () => {
   const [search, setSearch] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [authError, setAuthError] = useState<boolean>(false);
+  const [pageVisible, setPageVisible] = useState<boolean>(false);
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
@@ -71,6 +80,12 @@ const MeetingsPage: React.FC = () => {
 
 
 
+
+  // Плавное появление страницы
+  useEffect(() => {
+    const timer = setTimeout(() => setPageVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // 1. Получаем id встреч, куда уже записан пользователь или отменил которые встречи
@@ -226,7 +241,7 @@ const MeetingsPage: React.FC = () => {
   
   
   return (
-    <div className="meetings-page">
+    <div className={`meetings-page ${pageVisible ? 'meetings-page--visible' : ''}`}>
       {isAuth ? <NavbarLogin /> : <NavbarNoLogin />}
 
       <main className="meetings-content">
@@ -236,6 +251,7 @@ const MeetingsPage: React.FC = () => {
           </p>
         ) : (
           <>
+            {/* Эти 3 элемента появляются мгновенно: NavBar, поиск, фильтр */}
             <NavBar onChange={() => {}} />
 
             <div className="meetings-toolbar">
@@ -255,13 +271,14 @@ const MeetingsPage: React.FC = () => {
             </div>
 
             {loading ? (
-              <p className="meetings-status">Загрузка...</p>
+              <LoadingSpinner />
             ) : (
-              <div className="meetings-grid">
+              <div className="meetings-grid meetings-fade-in">
               {meetings.map((meeting, index) => (
                 <div
                   key={meeting.meeting_id}
-                  className="meeting-wrapper"
+                  className="meeting-wrapper meeting-item-appear"
+                  style={{ animationDelay: `${index * 0.03}s` }}
                   style={getExpandedStyle(index)}
                   onClick={() => handleCardClick(meeting.meeting_id)}
                 >

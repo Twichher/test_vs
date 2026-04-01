@@ -11,6 +11,16 @@ import Footer from '../components/Footer';
 import './OneMeetingPage.css';
 import './MeetingActionModals.css';
 
+// Компонент загрузки
+function LoadingSpinner() {
+  return (
+    <div className="meeting-loading">
+      <div className="meeting-loading-spinner"></div>
+      <p className="meeting-loading-text">Загрузка...</p>
+    </div>
+  );
+}
+
 interface MeetingRegedMissedUser {
   user_id: number;
   first_name: string;
@@ -233,79 +243,109 @@ export default function OneMeetingPage() {
   const [regedUsers, setRegedUsers] = useState<MeetingRegedMissedUser[]>([]);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo | null>(null);
   const [usersOpen, setUsersOpen] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pageVisible, setPageVisible] = useState(false);
+
+  useEffect(() => {
+    // Плавное появление страницы
+    const timer = setTimeout(() => setPageVisible(true), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!meeting_id) return;
     
-    // Загружаем список записанных пользователей
-    fetch(`http://localhost:8000/meetings/${meeting_id}/reged_users`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data: MeetingRegedMissedUser[]) => setRegedUsers(data))
-      .catch(console.error);
-
-    // Загружаем информацию о встрече (creator_user_id, start_at, status)
-    fetch(`http://localhost:8000/meetings/${meeting_id}/info`, {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data: MeetingInfo) => setMeetingInfo(data))
-      .catch(console.error);
+    setIsLoading(true);
+    
+    Promise.all([
+      // Загружаем список записанных пользователей
+      fetch(`http://localhost:8000/meetings/${meeting_id}/reged_users`, {
+        credentials: 'include',
+      }).then((res) => res.json()),
+      // Загружаем информацию о встрече
+      fetch(`http://localhost:8000/meetings/${meeting_id}/info`, {
+        credentials: 'include',
+      }).then((res) => res.json()),
+    ])
+      .then(([usersData, infoData]) => {
+        setRegedUsers(usersData);
+        setMeetingInfo(infoData);
+        setIsLoading(false);
+      })
+      .catch((error) => {
+        console.error(error);
+        setIsLoading(false);
+      });
   }, [meeting_id]);
 
   // Проверяем является ли текущий пользователь создателем встречи
   const isCreator = meetingInfo?.creator_user_id === user_id;
 
   return (
-    <div className="meeting-page">
+    <div className={`meeting-page ${pageVisible ? 'meeting-page--visible' : ''}`}>
       <NavbarLogin />
       <NavBar onChange={() => {}} />
 
       <main className="meeting-page-content">
         <div className="meeting-page-inner">
 
-          <MeetingExpandedInfo meeting_id={Number(meeting_id)} />
-
-          {/* Показываем разные кнопки в зависимости от того, создатель ли пользователь */}
-          {isCreator ? (
-            <OrganizerActions 
-              meeting_id={meeting_id} 
-              user_id={user_id} 
-              meetingInfo={meetingInfo}
-            />
+          {isLoading ? (
+            <LoadingSpinner />
           ) : (
-            <CancelButton meeting_id={meeting_id} user_id={user_id} />
-          )}
-
-          {/* Секция записанных пользователей */}
-          <div className="meeting-users-section">
-            <button
-              className="meeting-users-header"
-              onClick={() => setUsersOpen((prev) => !prev)}
-            >
-              <span>Записаны</span>
-              {usersOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-            </button>
-
-            {usersOpen && (
-              <div className="meeting-users-grid">
-                {regedUsers.map((u) => (
-                  <UserComponent
-                    key={u.user_id}
-                    user_id={u.user_id}
-                    first_name={u.first_name}
-                    last_name={u.last_name}
-                    is_organizer={u.is_organizer}
-                    user_action={u.user_action}
-                    photo_url={u.photo_url}
-                    isCurrentUser={u.user_id === user_id}
-
-                  />
-                ))}
+            <>
+              <div className="meeting-fade-in meeting-fade-in--1">
+                <MeetingExpandedInfo meeting_id={Number(meeting_id)} />
               </div>
-            )}
-          </div>
+
+              <div className="meeting-fade-in meeting-fade-in--2">
+                {/* Показываем разные кнопки в зависимости от того, создатель ли пользователь */}
+                {isCreator ? (
+                  <OrganizerActions 
+                    meeting_id={meeting_id} 
+                    user_id={user_id} 
+                    meetingInfo={meetingInfo}
+                  />
+                ) : (
+                  <CancelButton meeting_id={meeting_id} user_id={user_id} />
+                )}
+              </div>
+
+              <div className="meeting-fade-in meeting-fade-in--3">
+                {/* Секция записанных пользователей */}
+                <div className="meeting-users-section">
+                  <button
+                    className="meeting-users-header"
+                    onClick={() => setUsersOpen((prev) => !prev)}
+                  >
+                    <span>Записаны</span>
+                    {usersOpen ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+                  </button>
+
+                  {usersOpen && (
+                    <div className="meeting-users-grid">
+                      {regedUsers.map((u, index) => (
+                        <div 
+                          key={u.user_id} 
+                          className="meeting-user-item"
+                          style={{ animationDelay: `${index * 0.05}s` }}
+                        >
+                          <UserComponent
+                            user_id={u.user_id}
+                            first_name={u.first_name}
+                            last_name={u.last_name}
+                            is_organizer={u.is_organizer}
+                            user_action={u.user_action}
+                            photo_url={u.photo_url}
+                            isCurrentUser={u.user_id === user_id}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
 
         </div>
       </main>

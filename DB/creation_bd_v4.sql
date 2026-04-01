@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS meeting_table_2 (
 
   max_people   INTEGER NOT NULL CHECK (max_people > 0),
 
-  address      VARCHAR(255),-- как это not null?
+	  address      VARCHAR(255),-- как это not null?
   city         VARCHAR(120),-- как это not null?
   district     VARCHAR(120),-- как это not null?
 
@@ -170,6 +170,10 @@ CREATE TABLE IF NOT EXISTS notifications_table_4 (
 CREATE INDEX IF NOT EXISTS idx_notifications_meeting_id
   ON notifications_table_4 (meeting_id);
 
+  
+select * from notifications_table_4;
+select * from user_notifications_table_5;
+select * from meeting_rating_table_8 where user_id = 1
 -------------------------------------------------------------------------------
 
 -- Table: user_notifications_table_5
@@ -275,6 +279,11 @@ CREATE TABLE IF NOT EXISTS meeting_rating_table_8 (
 
   CONSTRAINT ux_meeting_rating_meeting_user UNIQUE (meeting_id, user_id)
 );
+
+-- Изменение: добавляем DEFAULT NOW() для registered_at в meeting_rating_table_8
+-- (таблица уже существует, используем ALTER TABLE)
+ALTER TABLE meeting_rating_table_8
+ALTER COLUMN registered_at SET DEFAULT NOW();
 
 CREATE INDEX IF NOT EXISTS idx_meeting_rating_meeting_id
   ON meeting_rating_table_8 (meeting_id);
@@ -634,4 +643,6 @@ CREATE INDEX IF NOT EXISTS idx_meeting_rating_meeting_id_26
 
 CREATE INDEX IF NOT EXISTS idx_meeting_rating_user_id_26
   ON meeting_rating_info_table_26 (user_id);
+
+
 

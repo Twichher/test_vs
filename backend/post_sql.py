@@ -369,3 +369,45 @@ def USERS_reset_earned_currency(user_id: int):
                 return result[0]
     except Exception as error:
         return (False, error, "USERS_reset_earned_currency")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Notifications
+#------------------------------------------------------------------------------------------------------
+
+# обновление статуса уведомления на 'read'
+def USERS_mark_notification_as_read(record_id: int, user_id: int):
+    """
+    Отмечает уведомление как прочитанное (status = 'read')
+    Проверяет, что уведомление принадлежит указанному пользователю
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Проверяем что уведомление принадлежит пользователю
+                cur.execute("""
+                    SELECT record_id FROM user_notifications_table_5
+                    WHERE record_id = %s AND user_id = %s
+                """, (record_id, user_id))
+                
+                if not cur.fetchone():
+                    return (False, "Уведомление не найдено или не принадлежит пользователю", "USERS_mark_notification_as_read")
+                
+                # Обновляем статус
+                cur.execute("""
+                    UPDATE user_notifications_table_5
+                    SET status = 'read'
+                    WHERE record_id = %s
+                    RETURNING record_id, status
+                """, (record_id,))
+                
+                result = cur.fetchone()
+                conn.commit()
+                
+                return {
+                    "record_id": result["record_id"],
+                    "status": result["status"],
+                    "success": True
+                }
+    except Exception as error:
+        return (False, error, "USERS_mark_notification_as_read")
