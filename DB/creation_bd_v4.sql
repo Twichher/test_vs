@@ -140,14 +140,7 @@ ALTER TABLE user_extra_info_table_3
 ADD COLUMN IF NOT EXISTS count_period_rating_organizer INTEGER NOT NULL DEFAULT 0 
 CHECK (count_period_rating_organizer >= 0);
 
--- Обновляем существующие строки (на всякий случай, хотя DEFAULT уже должен был установить 0)
-UPDATE user_extra_info_table_3 
-SET count_all_rating_organizer = 0 
-WHERE count_all_rating_organizer IS NULL;
 
-UPDATE user_extra_info_table_3 
-SET count_period_rating_organizer = 0 
-WHERE count_period_rating_organizer IS NULL;
 
 -------------------------------------------------------------------------------
 
@@ -161,7 +154,7 @@ CREATE TABLE IF NOT EXISTS notifications_table_4 (
     REFERENCES meeting_table_2(meeting_id)
     ON DELETE SET NULL,
 
-  notification_type VARCHAR(50) NOT NULL, --встреча, правила, новости, верификация
+  notification_type VARCHAR(50) NOT NULL, --встреча, вы отменили
   notification_text TEXT NOT NULL,
 
   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()

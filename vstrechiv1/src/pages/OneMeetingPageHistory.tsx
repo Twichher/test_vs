@@ -6,6 +6,7 @@ import { FiChevronDown, FiChevronUp } from 'react-icons/fi';
 import NavbarLogin from '../components/NavbarLogin';
 import NavBar from '../components/NavBar';
 import UserComponent from '../components/UserComponent';
+import ProfileModal from '../components/ProfileModal';
 import Footer from '../components/Footer';
 import './OneMeetingPageHistory.css'
 import MeetingExpandedInfoHistory from '../components/MeetingExpandedInfoHistory';
@@ -40,6 +41,26 @@ export default function OneMeetingPageHistory() {
     const [usersOpen, setUsersOpen] = useState(true);
     const [isLoading, setIsLoading] = useState(true);
     const [pageVisible, setPageVisible] = useState(false);
+    
+    // Состояние для модального окна профиля пользователя (из списка)
+    const [profileModalOpen, setProfileModalOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<MeetingRegedMissedUser | null>(null);
+    
+    // Состояние для модального окна профиля организатора
+    const [organizerModalOpen, setOrganizerModalOpen] = useState(false);
+    const [selectedOrganizer, setSelectedOrganizer] = useState<{userId: number, firstName: string, lastName: string} | null>(null);
+    
+    const handleUserClick = (user: MeetingRegedMissedUser) => {
+      return () => {
+        setSelectedUser(user);
+        setProfileModalOpen(true);
+      };
+    };
+    
+    const handleOrganizerClick = (userId: number, firstName: string, lastName: string) => {
+      setSelectedOrganizer({ userId, firstName, lastName });
+      setOrganizerModalOpen(true);
+    };
   
     useEffect(() => {
       // Плавное появление страницы
@@ -84,7 +105,10 @@ export default function OneMeetingPageHistory() {
             ) : (
               <>
                 <div className="meeting-fade-in meeting-fade-in--1">
-                  <MeetingExpandedInfoHistory meeting_id={Number(meeting_id)} />
+                  <MeetingExpandedInfoHistory 
+                    meeting_id={Number(meeting_id)} 
+                    onOrganizerClick={handleOrganizerClick}
+                  />
                 </div>
   
                 <div className="meeting-fade-in meeting-fade-in--2">
@@ -114,6 +138,7 @@ export default function OneMeetingPageHistory() {
                               user_action={u.user_action}
                               photo_url={u.photo_url}
                               isCurrentUser={u.user_id === user_id}
+                              onClick={handleUserClick(u)}
                             />
                           </div>
                         ))}
@@ -128,6 +153,24 @@ export default function OneMeetingPageHistory() {
         </main>
 
         <Footer />
+        
+        {/* Модальное окно профиля пользователя (из списка) */}
+        <ProfileModal
+          isOpen={profileModalOpen}
+          onClose={() => setProfileModalOpen(false)}
+          userId={selectedUser?.user_id ?? null}
+          firstName={selectedUser?.first_name ?? ''}
+          lastName={selectedUser?.last_name ?? ''}
+        />
+        
+        {/* Модальное окно профиля организатора */}
+        <ProfileModal
+          isOpen={organizerModalOpen}
+          onClose={() => setOrganizerModalOpen(false)}
+          userId={selectedOrganizer?.userId ?? null}
+          firstName={selectedOrganizer?.firstName ?? ''}
+          lastName={selectedOrganizer?.lastName ?? ''}
+        />
       </div>
     );
 }

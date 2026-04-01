@@ -1,7 +1,6 @@
 import { BsPerson } from 'react-icons/bs';
 import './UserComponent.css';
-import { useEffect, useState } from 'react';
-import ProfileCard from './ProfileCard';
+import { useState } from 'react';
 import { FiX } from 'react-icons/fi';
 
 interface UserComponentProps {
@@ -12,6 +11,7 @@ interface UserComponentProps {
   user_action: string;
   photo_url: string | null;
   isCurrentUser?: boolean;
+  onClick?: () => void;
 }
 
 export default function UserComponent({
@@ -21,10 +21,9 @@ export default function UserComponent({
   is_organizer: _is_organizer,
   user_action,
   photo_url,
-  isCurrentUser
+  isCurrentUser,
+  onClick
 }: UserComponentProps) {
-    const [modalOpen, setModalOpen] = useState(false);
-
     // Состояние для модального окна фото
     const [photoModalOpen, setPhotoModalOpen] = useState(false);
     const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
@@ -36,22 +35,17 @@ export default function UserComponent({
       setPhotoModalOpen(true);
     };
 
-    useEffect(() => {
-      if (!modalOpen) return;
-    
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Escape') setModalOpen(false);
-      };
-    
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [modalOpen]);
+    const handleClick = () => {
+      if (onClick) {
+        onClick();
+      }
+    };
 
     return (
         <>
       <div
         className={`user-component ${isCurrentUser ? 'user-component--current' : ''} ${user_action === 'missed' ? 'user-component--missed' : ''}`}
-        onClick={() => setModalOpen(true)}
+        onClick={handleClick}
       >
         {/* Аватар */}
         <div className="user-component-avatar">
@@ -68,22 +62,6 @@ export default function UserComponent({
           <span>{last_name}</span>
         </div>
       </div>
-
-      {/* Модальное окно профиля */}
-      {modalOpen && (
-        <div className="user-modal-overlay" onClick={() => setModalOpen(false)}>
-          <div className="user-modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="user-modal-close" onClick={() => setModalOpen(false)}><FiX size={24} /></button>
-            <ProfileCard
-              userId={user_id}
-              firstname={first_name}
-              lastname={last_name}
-              
-              onPhotoClick={handlePhotoClick}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Модальное окно фото */}
       {photoModalOpen && (

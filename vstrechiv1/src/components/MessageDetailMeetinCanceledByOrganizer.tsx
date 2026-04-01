@@ -15,12 +15,12 @@ interface NotificationItem {
   photo_urls: string[];
 }
 
-interface MessageDetailUserCancelMeetingProps {
+interface MessageDetailMeetinCanceledByOrganizerProps {
   notification: NotificationItem;
   onClose: () => void;
 }
 
-export default function MessageDetailUserCancelMeeting({ notification, onClose }: MessageDetailUserCancelMeetingProps) {
+export default function MessageDetailMeetinCanceledByOrganizer({ notification, onClose }: MessageDetailMeetinCanceledByOrganizerProps) {
   const formattedSentDate = new Date(notification.sent_at).toLocaleString('ru-RU', {
     day: 'numeric',
     month: 'long',
@@ -43,10 +43,11 @@ export default function MessageDetailUserCancelMeeting({ notification, onClose }
   const startDate = formatMeetingDate(notification.meeting_start_at);
   const endDate = formatMeetingDate(notification.meeting_end_at);
 
-  // Формируем текст сообщения об отмене
-  const messageText = notification.meeting_title
-    ? `Вы отменили запись на встречу "${notification.meeting_title}", которая должна была пройти с ${startDate} по ${endDate}. Мы сожалеем что вы не сможете посетить эту встречу.`
-    : 'Вы отменили запись на встречу. Мы сожалеем что вы не сможете посетить эту встречу.';
+  // Формируем текст сообщения из notification_text или генерируем
+  const messageText = notification.notification_text || 
+    (notification.meeting_title
+      ? `Мы сожалеем, но встреча "${notification.meeting_title}", которая должна была пройти с ${startDate} по ${endDate}, была отменена организатором. Приносим извинений.`
+      : 'Мы сожалеем, но встреча была отменена организатором. Приносим извинений.');
 
   return (
     <div className="message-detail">
@@ -55,8 +56,8 @@ export default function MessageDetailUserCancelMeeting({ notification, onClose }
         <FiX size={24} />
       </button>
 
-      {/* Хедер с красным переливающимся градиентом */}
-      <div className="message-detail__header message-detail__header--canceled">
+      {/* Хедер с черным переливающимся градиентом */}
+      <div className="message-detail__header message-detail__header--black">
         {notification.meeting_title && (
           <h2 className="message-detail__meeting-title">{notification.meeting_title}</h2>
         )}

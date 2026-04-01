@@ -49,7 +49,7 @@ export default function MessageDetailUserRegMeetings({ notification, onClose }: 
 
   // Формируем текст сообщения
   const messageText = notification.meeting_title
-    ? `Ты записался на встречу "${notification.meeting_title}", которая пройдет с ${startDate} по ${endDate}.`
+    ? `Вы записались на встречу "${notification.meeting_title}", которая пройдет с ${startDate} по ${endDate}.`
     : '';
 
   const handlePhotoClick = (photoUrl: string) => {
@@ -111,7 +111,7 @@ export default function MessageDetailUserRegMeetings({ notification, onClose }: 
 
         {/* Финальное пожелание */}
         <p className="message-detail__footer-text">
-          Мы желаем тебе отлично провести время! После встречи не забудь поставить оценку!
+          Мы желаем Вам отлично провести время! После встречи не забудьте поставить оценку!
         </p>
       </div>
 

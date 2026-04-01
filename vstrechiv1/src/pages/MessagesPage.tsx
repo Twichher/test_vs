@@ -6,6 +6,8 @@ import NavBar from '../components/NavBar';
 import Footer from '../components/Footer';
 import MessageDetailUserRegMeetings from '../components/MessageDetailUserRegMeetings';
 import MessageDetailUserCancelMeeting from '../components/MessageDetailUserCancelMeeting';
+import MessageDetailOrganizerCancelMeeting from '../components/MessageDetailOrganizerCancelMeeting';
+import MessageDetailMeetinCanceledByOrganizer from '../components/MessageDetailMeetinCanceledByOrganizer';
 import './MessagesPage.css';
 
 interface NotificationItem {
@@ -39,10 +41,12 @@ function NotificationButton({ notification, isSelected, onClick }: NotificationB
 
   const isMeetingType = notification.notification_type === 'Встреча';
   const isCanceledType = notification.notification_type === 'вы отменили';
+  const isOrganizerCanceledType = notification.notification_type === 'организатор отменил';
+  const isMeetingCanceledByOrganizerType = notification.notification_type === 'встреча отменена организатором';
 
   return (
     <button
-      className={`notification-button ${notification.status === 'unread' ? 'notification-button--unread' : 'notification-button--read'} ${isMeetingType ? 'notification-button--meeting' : ''} ${isCanceledType ? 'notification-button--canceled' : ''} ${isSelected ? 'notification-button--selected' : ''}`}
+      className={`notification-button ${notification.status === 'unread' ? 'notification-button--unread' : 'notification-button--read'} ${isMeetingType ? 'notification-button--meeting' : ''} ${isCanceledType ? 'notification-button--canceled' : ''} ${isOrganizerCanceledType || isMeetingCanceledByOrganizerType ? 'notification-button--black' : ''} ${isSelected ? 'notification-button--selected' : ''}`}
       onClick={onClick}
     >
       <div className="notification-button__type">{notification.notification_type}</div>
@@ -69,6 +73,10 @@ function MessageDetailFactory({
       return <MessageDetailUserRegMeetings notification={notification} onClose={onClose} />;
     case 'вы отменили':
       return <MessageDetailUserCancelMeeting notification={notification} onClose={onClose} />;
+    case 'организатор отменил':
+      return <MessageDetailOrganizerCancelMeeting notification={notification} onClose={onClose} />;
+    case 'встреча отменена организатором':
+      return <MessageDetailMeetinCanceledByOrganizer notification={notification} onClose={onClose} />;
     default:
       // Для остальных типов используем базовый компонент регистрации
       return <MessageDetailUserRegMeetings notification={notification} onClose={onClose} />;

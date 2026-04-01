@@ -1,11 +1,10 @@
 import './MeetingExpandedInfoHistory.css'
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { FiCalendar, FiSearch, FiX } from 'react-icons/fi';
+import { FiCalendar, FiSearch } from 'react-icons/fi';
 import { BsPerson } from 'react-icons/bs';
 import { PiUsersFill } from 'react-icons/pi';
 import { TbMapPin } from 'react-icons/tb';
-import ProfileCard from './ProfileCard';
 
 interface MeetingInfoV2 {
     meeting_id: number;
@@ -27,28 +26,14 @@ interface MeetingInfoV2 {
   }
 
 interface MeetingExpandedInfoProps {
-    meeting_id : number
+    meeting_id : number;
+    onOrganizerClick?: (userId: number, firstName: string, lastName: string) => void;
 }
 
-export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpandedInfoProps){
+export default function MeetingExpandedInfoHistory({meeting_id, onOrganizerClick} : MeetingExpandedInfoProps){
     const [info, setInfo] = useState<MeetingInfoV2 | null>(null);
     const [searchParams] = useSearchParams();
     const userAction = searchParams.get('action');
-
-    const [profileModalUserId, setProfileModalUserId] = useState<number | null>(null); // state для модалки и открытие по клику
-    const [profileModalfirstname, setProfileModalFirstName] = useState<string | undefined>(undefined)
-    const [profileModallastname, setProfileModalLastName] = useState<string | undefined>(undefined)
-
-    // Состояние для модального окна фото
-    const [photoModalOpen, setPhotoModalOpen] = useState(false);
-    const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
-    const [allPhotos, setAllPhotos] = useState<string[]>([]);
-
-    const handlePhotoClick = (photoUrl: string, photos: string[]) => {
-      setSelectedPhoto(photoUrl);
-      setAllPhotos(photos);
-      setPhotoModalOpen(true);
-    };
 
     useEffect(() => {
       fetch(`http://localhost:8000/meetings/${meeting_id}/atted_info`, {
@@ -63,6 +48,17 @@ export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpande
     }, [meeting_id]);
 
     if (!info) return <div className="meeting-expanded-info-card" />;
+
+    const handleOrganizerClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      if (onOrganizerClick) {
+        onOrganizerClick(
+          info.creator_user_id,
+          info.creator_first_name,
+          info.creator_last_name
+        );
+      }
+    };
 
     return (
     <div className={`meeting-expanded-info-card--reged ${userAction === 'missed' ? 'meeting-missed-card' : ''} ${info?.status === 'canceled' ? 'meeting-canceled-card' : ''}`}>
@@ -99,13 +95,7 @@ export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpande
         </span>
         <button
           className="mei-search-btn"
-          onClick={(e) => {
-            console.log(info.creator_user_id);
-            e.stopPropagation();
-            setProfileModalUserId(info.creator_user_id);
-            setProfileModalLastName(info.creator_last_name)
-            setProfileModalFirstName(info.creator_first_name)
-        }}
+          onClick={handleOrganizerClick}
         >
           <FiSearch size={16} />
         </button>
@@ -137,47 +127,6 @@ export default function MeetingExpandedInfoHistory({meeting_id} : MeetingExpande
           Описание: {info.meeting_description}
         </p>
       )}
-
-    {profileModalUserId !== null && (
-        <div className="profile-modal-overlay" onClick={() => setProfileModalUserId(null)}>
-          <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="profile-modal-close" onClick={() => setProfileModalUserId(null)}>
-              <FiX size={24} />
-            </button>
-            <ProfileCard userId={profileModalUserId} firstname={profileModalfirstname} lastname={profileModallastname} onPhotoClick={handlePhotoClick} />
-          </div>
-        </div>
-      )}
-
-      {/* Модальное окно фото */}
-      {photoModalOpen && (
-        <div className="photo-modal-overlay" onClick={() => setPhotoModalOpen(false)}>
-          <div className="photo-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="photo-modal-close" onClick={() => setPhotoModalOpen(false)}>
-              <FiX size={24} />
-            </button>
-
-            <div className="photo-modal-thumbnails">
-              {[...allPhotos].reverse().map((url, index) => (
-                <img
-                  key={index}
-                  src={url}
-                  alt={`photo-${index}`}
-                  className={`photo-modal-thumb ${selectedPhoto === url ? 'photo-modal-thumb--active' : ''}`}
-                  onClick={() => setSelectedPhoto(url)}
-                />
-              ))}
-            </div>
-
-            <div className="photo-modal-main">
-              {selectedPhoto && (
-                <img src={selectedPhoto} alt="selected" className="photo-modal-main-img" />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
     )
 }

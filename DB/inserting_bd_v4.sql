@@ -308,7 +308,8 @@ values (8, 2, 'missed');
 
 --Разработка уведомлений--
 select * from notifications_table_4;
-select * from user_notifications_table_5;
+select * from user_notifications_table_5 where user_id = 1;
+update user_notifications_table_5 set status = 'unread' where record_id = 2
 select * from notification_photos_table_6;
 select * from meeting_rating_table_8 where user_id = 1;
 

@@ -63,6 +63,32 @@
   box-shadow: 0 3px 12px rgba(255, 77, 77, 0.4);
 }
 
+/* Хедер для уведомлений об отмене встречи организатором - черный переливающийся */
+.message-detail__header--black {
+  background: linear-gradient(135deg, #2a2a2a 0%, #000000 25%, #1a1a1a 50%, #000000 75%, #2a2a2a 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-black 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+@keyframes gradient-shift-black {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 @keyframes header-gradient-meeting {
   0% {
     background-position: 0% 50%;
@@ -214,14 +240,12 @@
   object-fit: cover;
 }
 
-/* Финальный текст */
+/* Финальный текст - такой же стиль как у основного текста */
 .message-detail__footer-text {
-  font-size: 14px;
-  color: #666;
-  font-style: italic;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #333;
   margin-top: 24px;
-  padding-top: 16px;
-  border-top: 1px solid #e0e0e0;
 }
 
 /* === МОДАЛЬНОЕ ОКНО ФОТО === */

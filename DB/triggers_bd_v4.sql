@@ -601,3 +601,72 @@ AFTER UPDATE OF user_action ON meeting_rating_table_8
 FOR EACH ROW
 WHEN (OLD.user_action = 'registered' AND NEW.user_action = 'missed')
 EXECUTE FUNCTION create_notification_on_cancel();
+
+-------------------------------------------------------------------------------
+
+-- Триггер #12: при отмене встречи организатором (изменение status на 'canceled')
+-- создает 2 типа уведомлений:
+-- 1. Для организатора: "Вы отменили встречу..."
+-- 2. Для участников со статусом 'registered': "Мы сожалеем, но встреча..."
+
+CREATE OR REPLACE FUNCTION create_notification_on_meeting_canceled()
+RETURNS trigger AS $$
+DECLARE
+    v_notification_id_org BIGINT;
+    v_notification_id_users BIGINT;
+    v_user_id BIGINT;
+BEGIN
+    -- Проверяем что статус изменился на 'canceled'
+    IF NEW.status = 'canceled' AND OLD.status IS DISTINCT FROM 'canceled' THEN
+        
+        -- 1. Создаем уведомление для организатора
+        INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+        VALUES (
+            NEW.meeting_id,
+            'организатор отменил',
+            'Вы отменили встречу "' || NEW.title || '", которая должна была пройти с ' || 
+            TO_CHAR(NEW.start_at, 'DD.MM.YYYY HH24:MI') || ' по ' || 
+            TO_CHAR(NEW.end_at, 'DD.MM.YYYY HH24:MI') || 
+            '. Мы очень сожалеем, что у вас не получилось провести встречу.'
+        )
+        RETURNING notification_id INTO v_notification_id_org;
+        
+        -- Связываем уведомление с организатором
+        INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+        VALUES (v_notification_id_org, NEW.creator_user_id, 'unread')
+        ON CONFLICT (notification_id, user_id) DO NOTHING;
+        
+        -- 2. Создаем уведомление для участников (только один раз)
+        INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+        VALUES (
+            NEW.meeting_id,
+            'встреча отменена организатором',
+            'Мы сожалеем, но встреча "' || NEW.title || '", которая должна была пройти с ' || 
+            TO_CHAR(NEW.start_at, 'DD.MM.YYYY HH24:MI') || ' по ' || 
+            TO_CHAR(NEW.end_at, 'DD.MM.YYYY HH24:MI') || 
+            ', была отменена организатором. Приносим извинения.'
+        )
+        RETURNING notification_id INTO v_notification_id_users;
+        
+        -- Связываем уведомление со всеми участниками со статусом 'registered'
+        INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+        SELECT 
+            v_notification_id_users,
+            mrt.user_id,
+            'unread'
+        FROM meeting_rating_table_8 mrt
+        WHERE mrt.meeting_id = NEW.meeting_id
+          AND mrt.user_action = 'registered'
+        ON CONFLICT (notification_id, user_id) DO NOTHING;
+        
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_notification_on_meeting_canceled
+AFTER UPDATE OF status ON meeting_table_2
+FOR EACH ROW
+WHEN (NEW.status = 'canceled' AND OLD.status IS DISTINCT FROM 'canceled')
+EXECUTE FUNCTION create_notification_on_meeting_canceled();

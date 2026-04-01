@@ -173,6 +173,50 @@
   box-shadow: 0 3px 12px rgba(255, 77, 77, 0.4);
 }
 
+/* Специальный стиль для уведомлений об отмене организатором - черный переливающийся */
+.notification-button--black.notification-button--unread {
+  background: linear-gradient(135deg, #2a2a2a 0%, #000000 25%, #1a1a1a 50%, #000000 75%, #2a2a2a 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-black 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Анимация для черного градиента */
+@keyframes gradient-shift-black {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Эффект свечения для черных уведомлений */
+.notification-button--black .notification-button__glow {
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  animation: glow-pulse-black 1.5s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-black {
+  0%, 100% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+}
+
 /* Анимация для красного градиента */
 @keyframes gradient-shift-canceled {
   0% {
