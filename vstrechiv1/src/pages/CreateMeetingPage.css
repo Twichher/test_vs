@@ -594,3 +594,48 @@
 .create-meeting-submit-btn--active:active {
   transform: translateY(0);
 }
+
+/* Toast-уведомление об успешном создании */
+.create-meeting-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+.create-meeting-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #3ecfaa;
+  color: #ffffff;
+  padding: 16px 28px;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(62, 207, 170, 0.4);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.create-meeting-toast-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  font-size: 16px;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

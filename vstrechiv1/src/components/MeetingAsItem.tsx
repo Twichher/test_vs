@@ -42,9 +42,10 @@ const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
   })}`;
 
   const isCanceled = status === 'canceled';
+  const isInProgress = status === 'in_progress';
 
   return (
-    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''} ${isCanceled ? 'meeting-card--canceled' : ''}`}>
+    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''} ${isCanceled ? 'meeting-card--canceled' : ''} ${isInProgress ? 'meeting-card--in-progress' : ''}`}>
       {adults_only_18plus && <span className="meeting-badge">18+</span>}
       <h3 className="meeting-title">{meeting_title}</h3>
 

@@ -673,16 +673,20 @@ EXECUTE FUNCTION create_notification_on_meeting_canceled();
 
 -------------------------------------------------------------------------------
 
--- Триггер #13: при завершении встречи (изменение status на 'finished')
+-- Триггер #13: при завершении встречи организатором (изменение status на 'in_progress')
 -- создает уведомление для организатора о необходимости отметить участников
+
+-- Сначала удаляем старый триггер если есть
+DROP TRIGGER IF EXISTS trg_create_notification_on_meeting_finished ON meeting_table_2;
 
 CREATE OR REPLACE FUNCTION create_notification_on_meeting_finished()
 RETURNS trigger AS $$
 DECLARE
     v_notification_id BIGINT;
 BEGIN
-    -- Проверяем что статус изменился на 'finished'
-    IF NEW.status = 'finished' AND OLD.status IS DISTINCT FROM 'finished' THEN
+    -- Проверяем что статус изменился на 'in_progress' (организатор нажал "Завершить встречу")
+    -- и предыдущий статус был 'created' (не 'in_progress' уже)
+    IF NEW.status = 'in_progress' AND OLD.status = 'created' THEN
         
         -- Создаем уведомление для организатора
         INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
@@ -707,8 +711,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Создаем триггер без условия WHEN - проверка внутри функции
 CREATE TRIGGER trg_create_notification_on_meeting_finished
 AFTER UPDATE OF status ON meeting_table_2
 FOR EACH ROW
-WHEN (NEW.status = 'finished' AND OLD.status IS DISTINCT FROM 'finished')
 EXECUTE FUNCTION create_notification_on_meeting_finished();

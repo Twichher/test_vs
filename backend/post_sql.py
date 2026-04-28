@@ -76,6 +76,7 @@ def MEETINGS_finish_by_organizer(meeting_id: int, user_id: int):
     """
     Завершает встречу организатором.
     Проверяет, что пользователь является создателем встречи и статус позволяет завершение.
+    Статус меняется на 'in_progress' (встреча идёт/завершена, ожидает оценки участников).
     """
     try:
         with psycopg.connect(DSN, row_factory=dict_row) as conn:
@@ -94,13 +95,13 @@ def MEETINGS_finish_by_organizer(meeting_id: int, user_id: int):
                 if meeting["creator_user_id"] != user_id:
                     return (False, "Только создатель может завершить встречу", "MEETINGS_finish_by_organizer")
                 
-                if meeting["status"] not in ['created', 'in_progress']:
+                if meeting["status"] != 'created':
                     return (False, f"Нельзя завершить встречу со статусом '{meeting['status']}'", "MEETINGS_finish_by_organizer")
                 
-                # Обновляем статус на 'finished'
+                # Обновляем статус на 'in_progress'
                 cur.execute("""
                     UPDATE meeting_table_2
-                    SET status = 'finished'
+                    SET status = 'in_progress'
                     WHERE meeting_id = %s
                     RETURNING meeting_id, status
                 """, (meeting_id,))
@@ -116,6 +117,78 @@ def MEETINGS_finish_by_organizer(meeting_id: int, user_id: int):
                 }
     except Exception as error:
         return (False, error, "MEETINGS_finish_by_organizer")
+
+
+def MEETINGS_save_participants_ratings(record_id: int, meeting_id: int, organizer_user_id: int, ratings: list):
+    """
+    Сохраняет оценки участников встречи организатором.
+    - Вставляет оценки в user_ratings_table_15 (только для attended)
+    - Обновляет user_action в meeting_rating_table_8 (для missed)
+    - Обновляет israted = 1 в user_notifications_table_5 по record_id
+    - Меняет статус встречи на 'finished'
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Проверяем, что пользователь - создатель встречи
+                cur.execute("""
+                    SELECT creator_user_id
+                    FROM meeting_table_2
+                    WHERE meeting_id = %s
+                """, (meeting_id,))
+                meeting = cur.fetchone()
+                
+                if not meeting:
+                    return (False, "Встреча не найдена", "MEETINGS_save_participants_ratings")
+                
+                if meeting["creator_user_id"] != organizer_user_id:
+                    return (False, "Только создатель может оценивать участников", "MEETINGS_save_participants_ratings")
+                
+                # Обрабатываем каждую оценку
+                for rating in ratings:
+                    user_id = rating.get("user_id")
+                    user_action = rating.get("user_action")
+                    rating_value = rating.get("rating_value")
+                    
+                    # Обновляем user_action в meeting_rating_table_8
+                    # Для "missed" от организатора используем "missedbyorg"
+                    db_user_action = 'missedbyorg' if user_action == 'missed' else user_action
+                    cur.execute("""
+                        UPDATE meeting_rating_table_8
+                        SET user_action = %s
+                        WHERE meeting_id = %s AND user_id = %s
+                    """, (db_user_action, meeting_id, user_id))
+                    
+                    # Если пользователь был на встрече и есть оценка, добавляем в user_ratings_table_15
+                    if user_action == 'attended' and rating_value is not None:
+                        cur.execute("""
+                            INSERT INTO user_ratings_table_15 
+                            (rated_user_id, rater_user_id, rating_value, meeting_id)
+                            VALUES (%s, %s, %s, %s)
+                        """, (user_id, organizer_user_id, rating_value, meeting_id))
+                
+                # Обновляем israted в уведомлении организатора по record_id
+                cur.execute("""
+                    UPDATE user_notifications_table_5
+                    SET israted = 1
+                    WHERE record_id = %s
+                """, (record_id,))
+                
+                # Меняем статус встречи на 'finished'
+                cur.execute("""
+                    UPDATE meeting_table_2
+                    SET status = 'finished'
+                    WHERE meeting_id = %s
+                """, (meeting_id,))
+                
+                conn.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Оценки успешно сохранены"
+                }
+    except Exception as error:
+        return (False, error, "MEETINGS_save_participants_ratings")
 
 
 #------------------------------------------------------------------------------------------------------

@@ -41,9 +41,19 @@ interface MeetingInfo {
 // Компонент кнопки отмены записи
 interface CancelButtonProps {
   onClick: () => void;
+  meetingStatus?: string | null;
 }
 
-function CancelButton({ onClick }: CancelButtonProps) {
+function CancelButton({ onClick, meetingStatus }: CancelButtonProps) {
+  // Если встреча уже завершена (in_progress), не показываем кнопку отмены
+  if (meetingStatus === 'in_progress') {
+    return (
+      <div className="meeting-cancel-message">
+        Встреча завершена. Ожидайте информации об оценке.
+      </div>
+    );
+  }
+  
   return (
     <button
       className="meeting-cancel-btn"
@@ -72,6 +82,19 @@ function OrganizerActions({
 }: OrganizerActionsProps) {
   // Проверяем, началась ли встреча
   const isMeetingStarted = meetingInfo?.start_at ? new Date(meetingInfo.start_at) <= new Date() : false;
+  
+  // Если встреча уже в статусе in_progress, не показываем кнопки управления
+  const isInProgress = meetingInfo?.status === 'in_progress';
+  
+  if (isInProgress) {
+    return (
+      <div className="organizer-actions">
+        <div className="organizer-actions-message">
+          Встреча завершена. Ожидается оценка участников.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="organizer-actions">
@@ -394,7 +417,10 @@ export default function OneMeetingPage() {
                     onOpenFinishModal={() => setFinishModalOpen(true)}
                   />
                 ) : (
-                  <CancelButton onClick={handleCancelRegClick} />
+                  <CancelButton 
+                    onClick={handleCancelRegClick} 
+                    meetingStatus={meetingInfo?.status}
+                  />
                 )}
               </div>
 

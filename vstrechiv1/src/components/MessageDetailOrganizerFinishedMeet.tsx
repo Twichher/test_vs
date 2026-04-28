@@ -25,6 +25,7 @@ interface NotificationItem {
   meeting_end_at: string | null;
   notification_text: string;
   photo_urls: string[];
+  israted?: number; // 0 - не оценено, 1 - оценено (только для уведомлений с оценкой)
 }
 
 interface UserRating {
@@ -36,12 +37,15 @@ interface UserRating {
 interface MessageDetailOrganizerFinishedMeetProps {
   notification: NotificationItem;
   onClose: () => void;
+  onRateSuccess?: (record_id: number) => void;
 }
 
-export default function MessageDetailOrganizerFinishedMeet({ notification, onClose }: MessageDetailOrganizerFinishedMeetProps) {
+export default function MessageDetailOrganizerFinishedMeet({ notification, onClose, onRateSuccess }: MessageDetailOrganizerFinishedMeetProps) {
   const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
   const [userRatings, setUserRatings] = useState<Record<number, UserRating>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localIsrated, setLocalIsrated] = useState(notification.israted ?? 0);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{userId: number, firstName: string, lastName: string} | null>(null);
   const [hoveredRating, setHoveredRating] = useState<Record<number, number | null>>({});
@@ -116,10 +120,15 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const meetingId = notification.meeting_id;
+    const recordId = notification.record_id;
     if (!meetingId) {
       console.error('meeting_id not found');
+      return;
+    }
+    if (!recordId) {
+      console.error('record_id not found');
       return;
     }
     
@@ -130,8 +139,36 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
       meeting_id: meetingId,
     }));
 
-    console.log('Результаты оценки:', results);
-    // Здесь можно добавить отправку на сервер
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('http://localhost:8000/meetings/save-ratings', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          record_id: recordId,
+          meeting_id: meetingId,
+          ratings: results,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || 'Ошибка при сохранении оценок');
+      }
+
+      // Успешно сохранено — плавно переключаемся на состояние "уже оценено"
+      setLocalIsrated(1);
+      // Обновляем родительское состояние, чтобы при повторном открытии уведомление оставалось отмеченным
+      onRateSuccess?.(notification.record_id);
+    } catch (error) {
+      console.error('Error saving ratings:', error);
+      alert(error instanceof Error ? error.message : 'Не удалось сохранить оценки');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isSubmitDisabled = Object.values(userRatings).some(
@@ -164,7 +201,13 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
       <div className="message-detail__content">
         <p className="message-detail__text">{notification.notification_text}</p>
 
-        {/* Список пользователей для оценки */}
+        {/* Проверка: если пользователь уже оценил, показываем сообщение */}
+        {localIsrated === 1 ? (
+          <div className="message-detail__already-rated">
+            <p>Вы уже оценили пользователей.</p>
+          </div>
+        ) : (
+          /* Список пользователей для оценки */
         <div className="message-detail__users-section">
           <h3 className="message-detail__section-title">Зарегистрированные участники:</h3>
           
@@ -245,12 +288,13 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
             <button
               className="message-detail__submit-btn"
               onClick={handleSubmit}
-              disabled={isSubmitDisabled}
+              disabled={isSubmitDisabled || isSubmitting}
             >
-              Отправить результаты
+              {isSubmitting ? 'Сохранение...' : 'Отправить результаты'}
             </button>
           )}
         </div>
+        )}
       </div>
 
       {/* Модальное окно профиля пользователя */}

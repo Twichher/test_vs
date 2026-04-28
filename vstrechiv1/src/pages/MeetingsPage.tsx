@@ -23,6 +23,7 @@ interface MeetingTypeOne {
   end_at: string;
   category_ids: number[];
   creator_user_id: number;
+  status?: string;
 }
 
 interface MeetingInfo {
@@ -379,6 +380,7 @@ const MeetingsPage: React.FC = () => {
                         start_at = {meeting.start_at}
                         end_at = {meeting.end_at}
                         isReged={newlyRegisteredIds.includes(meeting.meeting_id)}
+                        status={meeting.status}
                       />
                     )}
                   </div>

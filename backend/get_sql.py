@@ -220,7 +220,7 @@ def MEETINGS_reged_get_all_info(meeting_id : int):
                     GROUP BY mw.meeting_id
                 ) w ON w.meeting_id = m.meeting_id
 
-                WHERE m.status = 'created'
+                WHERE m.status IN ('created', 'in_progress')
                 AND m.meeting_id = %s;
 
                 """, (meeting_id, ))
@@ -321,7 +321,7 @@ def MEETINGS_get_reged_missed_users(meeting_id : int):
                 FROM meeting_rating_table_8 mr
                 JOIN user_table_1 u ON u.user_id = mr.user_id
                 WHERE mr.meeting_id = %s
-                AND mr.user_action IN ('registered', 'missed')
+                AND mr.user_action IN ('registered', 'missed', 'missedbyorg')
                 ORDER BY u.last_name, u.first_name;
 
 
@@ -391,8 +391,8 @@ def MEETINGS_get_atted_missed_users(meeting_id : int):
                 JOIN meeting_table_2 m ON m.meeting_id = mr.meeting_id
                 WHERE mr.meeting_id = %s
                 AND (
-                    (m.status = 'canceled' AND mr.user_action IN ('registered', 'missed'))
-                    OR (m.status != 'canceled' AND mr.user_action IN ('attended', 'missed'))
+                    (m.status = 'canceled' AND mr.user_action IN ('registered', 'missed', 'missedbyorg'))
+                    OR (m.status != 'canceled' AND mr.user_action IN ('attended', 'missed', 'missedbyorg'))
                 )
                 ORDER BY u.last_name, u.first_name;
         
@@ -547,7 +547,8 @@ def USERS_get_MEETINGS_info_reged(user_id : int):
                     m.start_at AS start_at,
                     m.end_at AS end_at,
                     COALESCE(c.category_ids, '{}') AS category_ids,
-                    m.creator_user_id
+                    m.creator_user_id,
+                    m.status
                 FROM meeting_table_2 m
 
                 -- Фильтр: только встречи где записан конкретный пользователь
@@ -569,7 +570,7 @@ def USERS_get_MEETINGS_info_reged(user_id : int):
                     GROUP BY meeting_id
                 ) c ON c.meeting_id = m.meeting_id
 
-                WHERE m.status = 'created'
+                WHERE m.status IN ('created', 'in_progress')
                 ORDER BY m.meeting_id;
 
                 """, (user_id,))
@@ -617,7 +618,7 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     AND ur.user_id = %s
                     AND (
                         -- attended/missed: всегда в истории
-                        ur.user_action IN ('attended', 'missed')
+                        ur.user_action IN ('attended', 'missed', 'missedbyorg')
                         -- registered: только если встреча отменена
                         OR (ur.user_action = 'registered' AND m.status = 'canceled')
                     )
@@ -1307,6 +1308,7 @@ def USERS_get_notifications(user_id: int):
                     un.user_id,
                     un.status,
                     un.sent_at,
+                    un.israted,
                     n.notification_type,
                     n.notification_text,
                     n.meeting_id,

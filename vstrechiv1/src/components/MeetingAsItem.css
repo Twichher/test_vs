@@ -90,4 +90,14 @@
   color: #ffffff;
 }
 
+/* Стиль для встречи в статусе in_progress (завершена организатором, ожидает оценки) */
+.meeting-card--in-progress {
+  background: linear-gradient(160deg, #4a90d9 0%, #2171b5 100%);
+  box-shadow: 0 4px 15px rgba(33, 113, 181, 0.4);
+}
+
+.meeting-card--in-progress:hover {
+  box-shadow: 0 8px 20px rgba(33, 113, 181, 0.5);
+}
+
   

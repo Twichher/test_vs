@@ -53,6 +53,18 @@
     transform: translateY(-1px);
   }
 
+  /* Сообщение когда встреча завершена для зарегистрированного пользователя */
+  .meeting-cancel-message {
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #4a90d9 0%, #2171b5 100%);
+    color: #fff;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    box-shadow: 0 3px 12px rgba(33, 113, 181, 0.4);
+  }
+
   .meeting-users-section {
     width: 100%;
     display: flex;

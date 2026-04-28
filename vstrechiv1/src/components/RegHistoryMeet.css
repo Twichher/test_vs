@@ -64,6 +64,15 @@
     background: #eca3a3;
   }
 
+  /* Пропущенные по решению организатора — оранжевый */
+  .meeting-missedbyorg .meeting-card {
+    background: #ffcc80;
+  }
+
+  .meeting-missedbyorg .meeting-card:hover {
+    background: #ffcc80;
+  }
+
   /* Отмененные создателем встречи — черный (переопределяет красный) */
   .meeting-missed .meeting-card.meeting-card--canceled,
   .meeting-card.meeting-card--canceled {

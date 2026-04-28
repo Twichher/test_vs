@@ -610,3 +610,20 @@
   text-align: center;
   color: #666;
 }
+
+/* Сообщение когда пользователь уже оценил */
+.message-detail__already-rated {
+  margin-top: 24px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #4a90d9 0%, #2171b5 100%);
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 3px 12px rgba(33, 113, 181, 0.3);
+}
+
+.message-detail__already-rated p {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}

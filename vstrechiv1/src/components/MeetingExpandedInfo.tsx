@@ -57,8 +57,10 @@ export default function MeetingExpandedInfo({meeting_id, onOrganizerClick} : Mee
       }
     };
 
+    const isInProgress = info.status === 'in_progress';
+
     return (
-    <div className="meeting-expanded-info-card">
+    <div className={`meeting-expanded-info-card ${isInProgress ? 'meeting-expanded-info-card--in-progress' : ''}`}>
         <h2 className="mei-title">
         {info.meeting_title}
         {info.adults_only && <span className="mei-badge">18+</span>}

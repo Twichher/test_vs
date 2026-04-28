@@ -96,6 +96,9 @@ CREATE INDEX IF NOT EXISTS idx_meeting_creator_user_id
 CREATE INDEX IF NOT EXISTS idx_meeting_start_at
   ON meeting_table_2 (start_at);
 
+select * from meeting_table_2 where meeting_id = 14;
+
+
 -------------------------------------------------------------------------------
 
 -- Table: user_extra_info_table_3
@@ -154,7 +157,7 @@ CREATE TABLE IF NOT EXISTS notifications_table_4 (
     REFERENCES meeting_table_2(meeting_id)
     ON DELETE SET NULL,
 
-  notification_type VARCHAR(50) NOT NULL, --встреча, вы отменили
+  notification_type VARCHAR(50) NOT NULL, --встреча, вы отменили, организатор отменил, встреча отменена организатором,  
   notification_text TEXT NOT NULL,
 
   created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
@@ -197,6 +200,22 @@ CREATE INDEX IF NOT EXISTS idx_user_notifications_user_id
 CREATE INDEX IF NOT EXISTS idx_user_notifications_notification_id
   ON user_notifications_table_5 (notification_id);
 
+ALTER TABLE user_notifications_table_5 
+ADD COLUMN israted BIGINT NOT NULL DEFAULT 0 
+	CHECK (israted IN (0, 1)); -- костыль. Для всех сообщений всегда 0
+	-- но для уведомлений где нужно ставить оценку играет роль. 
+	-- 0 - пользователь еще не оценивал 
+	-- 1 - пользователь оценил 
+
+select * from user_notifications_table_5
+where user_id = 11
+
+select * from notifications_table_4
+where notification_id = 31
+
+update user_notifications_table_5
+set israted = 0
+where notification_id = 31;
 -------------------------------------------------------------------------------
 
 -- Table: notification_photos_table_6
@@ -284,6 +303,12 @@ CREATE INDEX IF NOT EXISTS idx_meeting_rating_meeting_id
 CREATE INDEX IF NOT EXISTS idx_meeting_rating_user_id
   ON meeting_rating_table_8 (user_id);
 
+  ALTER TABLE meeting_rating_table_8
+  DROP CONSTRAINT IF EXISTS meeting_rating_table_8_user_action_check;
+
+   ALTER TABLE meeting_rating_table_8
+  ADD CONSTRAINT meeting_rating_table_8_user_action_check
+  CHECK (user_action IN ('registered', 'attended', 'missed', 'missedbyorg'));
 -------------------------------------------------------------------------------
 
 -- Table: conflict_photos_table_9
@@ -380,7 +405,7 @@ CREATE TABLE IF NOT EXISTS warnings_table_13 (
 );
 
 ALTER TABLE warnings_table_13 
-ADD COLUMN forAdults BOOLEAN NOT NULL DEFAULT TRUE; 
+ADD COLUMN forAdults BOOLEAN NOT NULL DEFAULT TRUE;
 
 -------------------------------------------------------------------------------
 
@@ -438,6 +463,7 @@ CREATE INDEX IF NOT EXISTS idx_user_ratings_rated_user_id
 CREATE INDEX IF NOT EXISTS idx_user_ratings_rater_user_id
   ON user_ratings_table_15 (rater_user_id);
 
+select * from user_ratings_table_15 where meeting_id = 18
 -------------------------------------------------------------------------------
 
 -- Table: verification_table_16

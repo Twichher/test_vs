@@ -44,7 +44,7 @@ export default function UserComponent({
     return (
         <>
       <div
-        className={`user-component ${isCurrentUser ? 'user-component--current' : ''} ${user_action === 'missed' ? 'user-component--missed' : ''}`}
+        className={`user-component ${isCurrentUser ? 'user-component--current' : ''} ${user_action === 'missed' ? 'user-component--missed' : ''} ${user_action === 'missedbyorg' ? 'user-component--missedbyorg' : ''}`}
         onClick={handleClick}
       >
         {/* Аватар */}

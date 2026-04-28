@@ -18,6 +18,7 @@ interface NotificationItem {
   notification_type: string;
   sent_at: string;
   status: 'read' | 'unread';
+  israted?: number; // 0 - не оценено, 1 - оценено (для уведомлений с оценкой)
   meeting_id: number | null;
   meeting_title: string | null;
   meeting_start_at: string | null;
@@ -65,10 +66,12 @@ function NotificationButton({ notification, isSelected, onClick }: NotificationB
 // Фабрика компонентов для отображения разных типов сообщений
 function MessageDetailFactory({ 
   notification, 
-  onClose 
+  onClose,
+  onRateSuccess,
 }: { 
   notification: NotificationItem; 
   onClose: () => void;
+  onRateSuccess?: (record_id: number) => void;
 }) {
   // Выбираем компонент в зависимости от типа уведомления
   switch (notification.notification_type) {
@@ -81,7 +84,7 @@ function MessageDetailFactory({
     case 'встреча отменена организатором':
       return <MessageDetailMeetinCanceledByOrganizer notification={notification} onClose={onClose} />;
     case 'завершение встречи для организатора':
-      return <MessageDetailOrganizerFinishedMeet notification={notification} onClose={onClose} />;
+      return <MessageDetailOrganizerFinishedMeet notification={notification} onClose={onClose} onRateSuccess={onRateSuccess} />;
     default:
       // Для остальных типов используем базовый компонент регистрации
       return <MessageDetailUserRegMeetings notification={notification} onClose={onClose} />;
@@ -94,6 +97,18 @@ export default function MessagesPage() {
   const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pageVisible, setPageVisible] = useState(false);
+
+  // Обновляем israted в уведомлении после успешной оценки участников
+  const handleRateSuccess = (record_id: number) => {
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.record_id === record_id ? { ...n, israted: 1 } : n
+      )
+    );
+    setSelectedNotification((prev) =>
+      prev && prev.record_id === record_id ? { ...prev, israted: 1 } : prev
+    );
+  };
 
   // Плавное появление страницы
   useEffect(() => {
@@ -205,6 +220,7 @@ export default function MessagesPage() {
             <MessageDetailFactory
               notification={selectedNotification}
               onClose={() => setSelectedNotification(null)}
+              onRateSuccess={handleRateSuccess}
             />
           ) : (
             <div className="message-detail--empty">

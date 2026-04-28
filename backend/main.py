@@ -12,9 +12,9 @@ CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_a
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
 MEETINGS_get_basic_info, USERS_get_notifications
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, USERS_mark_notification_as_read
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, USERS_mark_notification_as_read
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
-UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem
+UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest
 from minio_defs import upload_photo, upload_meeting_photo
 import base64
 import uuid
@@ -358,6 +358,30 @@ def finish_meeting_by_organizer(meeting_id: int, user_id: int = Depends(get_curr
     Проверяет, что текущий пользователь является создателем встречи.
     """
     result = MEETINGS_finish_by_organizer(meeting_id, user_id)
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
+    return result
+
+
+@app.post("/meetings/save-ratings")
+def save_participants_ratings(
+    request: SaveRatingsRequest,
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Сохраняет оценки участников встречи организатором.
+    - Вставляет оценки в user_ratings_table_15 (для attended)
+    - Обновляет user_action в meeting_rating_table_8 (для missed)
+    - Обновляет israted = 1 в user_notifications_table_5
+    """
+    result = MEETINGS_save_participants_ratings(
+        record_id=request.record_id,
+        meeting_id=request.meeting_id,
+        organizer_user_id=user_id,
+        ratings=[r.model_dump() for r in request.ratings]
+    )
     
     if isinstance(result, tuple):
         raise HTTPException(status_code=400, detail=str(result[1]))

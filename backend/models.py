@@ -91,14 +91,14 @@ class UserResp(BaseModel):
 class UsersStatsReq(BaseModel):
     meetings_visited_as_guest: int
     count_period_meetings_guest : int
-    rating_as_guest : int
+    rating_as_guest : float
     count_all_rating_guest : int
-    intermediate_rating_as_guest : int
+    intermediate_rating_as_guest : float
     count_period_rating_guest : int
     meetings_created_as_organizer : int
-    rating_as_organizer : int
+    rating_as_organizer : float
     count_period_meetings_as_organizer : int
-    intermediate_rating_as_organizer : int
+    intermediate_rating_as_organizer : float
     photo_urls : list[str]
 
 class RegUserToMeetingRequest(BaseModel):
@@ -265,6 +265,7 @@ class NotificationItem(BaseModel):
     user_id: int
     status: str  # 'read' или 'unread'
     sent_at: datetime
+    israted: int = 0  # 0 - не оценено, 1 - оценено (для уведомлений с оценкой)
     notification_type: str
     notification_text: str
     meeting_id: int | None = None  # ID встречи (NULL если уведомление не связано со встречей)
@@ -272,3 +273,21 @@ class NotificationItem(BaseModel):
     meeting_start_at: datetime | None = None
     meeting_end_at: datetime | None = None
     photo_urls: list[str] = []  # список URL фотографий из notification_photos_table_6
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для оценки участников
+#------------------------------------------------------------------------------------------------------
+
+class ParticipantRating(BaseModel):
+    """Оценка одного участника встречи"""
+    user_id: int
+    user_action: str | None = None  # 'attended', 'missed' (сам отменил) или 'missedbyorg' (организатор отметил как отсутствующего)
+    rating_value: int | None = None  # 1-10 (только для attended)
+    meeting_id: int
+
+class SaveRatingsRequest(BaseModel):
+    """Запрос на сохранение оценок участников встречи"""
+    record_id: int  # record_id в user_notifications_table_5 для обновления israted
+    meeting_id: int
+    ratings: List[ParticipantRating]

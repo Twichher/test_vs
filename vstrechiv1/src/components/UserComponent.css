@@ -58,6 +58,16 @@
   .user-component--missed {
     background: #ffe4e4;
   }
+
+  .user-component--missedbyorg {
+    background: #fff3e0;
+    border-color: #ff9800;
+  }
+
+  .user-component--missedbyorg:hover {
+    box-shadow: 0 6px 20px rgba(255, 152, 0, 0.35);
+    border-color: #f57c00;
+  }
   
   /* Стили для модального окна профиля (рендерится на уровне страницы) */
 .profile-modal-overlay {

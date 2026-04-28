@@ -112,6 +112,7 @@ interface MeetingTypeOne {
                       adults_only_18plus={meeting.adults_only_18plus}
                       start_at = {meeting.start_at}
                       end_at = {meeting.end_at}
+                      status={meeting.status}
                     />
                   </div>
                 ))}
@@ -198,6 +199,7 @@ interface MeetingTypeOne {
                       adults_only_18plus={meeting.adults_only_18plus}
                       start_at = {meeting.start_at}
                       end_at = {meeting.end_at}
+                      status={meeting.status}
                     />
                   </div>
                 ))
@@ -226,6 +228,8 @@ interface MeetingTypeOne {
                   let cardClass = '';
                   if (meeting.user_action === 'missed') {
                     cardClass = 'meeting-missed'; // Красный
+                  } else if (meeting.user_action === 'missedbyorg') {
+                    cardClass = 'meeting-missedbyorg'; // Оранжевый
                   } else if (meeting.user_action === 'registered' && meeting.status === 'canceled') {
                     cardClass = 'meeting-missed'; // Контейнер красный, но карточка будет черная
                   }

@@ -411,17 +411,16 @@ export default function CreateMeetingPage() {
         if (user_id) {
           dispatch(clearDraft({ userId: user_id }));
         }
-        // Перенаправляем на страницу пользователя через 2 секунды
+        // Показываем toast и перенаправляем на страницу профиля через 1 секунду
         setTimeout(() => {
           navigate(`/user/${user_id}`);
-        }, 2000);
+        }, 1000);
       } else {
         throw new Error(result.message || 'Ошибка при создании встречи');
       }
     } catch (error) {
       console.error('Error creating meeting:', error);
       setCreateError(error instanceof Error ? error.message : 'Ошибка при создании встречи');
-    } finally {
       setIsCreating(false);
     }
   };
@@ -742,7 +741,7 @@ export default function CreateMeetingPage() {
               {/* Кнопка создания встречи */}
               <div className={`create-meeting-field create-meeting-submit-wrapper ${showCategorySelectionField ? 'field-visible' : 'field-hidden'}`}>
                 {createError && (
-                  <div className="create-meeting-submit-error">Ошибка при создании встречи</div>
+                  <div className="create-meeting-submit-error">{createError}</div>
                 )}
                 <button
                   type="button"
@@ -798,6 +797,16 @@ export default function CreateMeetingPage() {
       </main>
 
       <Footer />
+
+      {/* Toast-уведомление об успешном создании */}
+      {createSuccess && (
+        <div className="create-meeting-toast">
+          <div className="create-meeting-toast-content">
+            <span className="create-meeting-toast-icon">✓</span>
+            <span className="create-meeting-toast-text">Встреча успешно создана</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
