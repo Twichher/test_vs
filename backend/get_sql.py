@@ -548,14 +548,15 @@ def USERS_get_MEETINGS_info_reged(user_id : int):
                     m.end_at AS end_at,
                     COALESCE(c.category_ids, '{}') AS category_ids,
                     m.creator_user_id,
-                    m.status
+                    m.status,
+                    ur.user_action
                 FROM meeting_table_2 m
 
-                -- Фильтр: только встречи где записан конкретный пользователь
+                -- Фильтр: встречи где пользователь записан (registered) или отменил (missed)
                 JOIN meeting_rating_table_8 ur
                     ON ur.meeting_id = m.meeting_id
                     AND ur.user_id = %s
-                    AND ur.user_action = 'registered'
+                    AND ur.user_action IN ('registered', 'missed')
 
                 LEFT JOIN (
                     SELECT meeting_id, COUNT(*) AS registered_users_count
@@ -597,7 +598,6 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                         CASE 
                             WHEN m.status = 'canceled' THEN canceled_users.users_count
                             WHEN m.status = 'finished' THEN finished_users.users_count
-                            ELSE active_users.users_count
                         END, 
                         0
                     ) AS registered_users_count,
@@ -639,20 +639,13 @@ def USERS_get_MEETINGS_info_finished(user_id : int):
                     GROUP BY meeting_id
                 ) finished_users ON finished_users.meeting_id = m.meeting_id AND m.status = 'finished'
 
-                -- Для активных встреч (created/in_progress) где user missed: считаем registered
-                LEFT JOIN (
-                    SELECT meeting_id, COUNT(*) AS users_count
-                    FROM meeting_rating_table_8
-                    WHERE user_action = 'registered'
-                    GROUP BY meeting_id
-                ) active_users ON active_users.meeting_id = m.meeting_id AND m.status IN ('created', 'in_progress')
-
                 LEFT JOIN (
                     SELECT meeting_id, ARRAY_AGG(category_id) AS category_ids
                     FROM meeting_categories_table_11
                     GROUP BY meeting_id
                 ) c ON c.meeting_id = m.meeting_id
 
+                WHERE m.status IN ('finished', 'canceled')
                 ORDER BY m.meeting_id;
 
                 """, (user_id,))
@@ -1315,6 +1308,11 @@ def USERS_get_notifications(user_id: int):
                     m.title AS meeting_title,
                     m.start_at AS meeting_start_at,
                     m.end_at AS meeting_end_at,
+                    m.address AS meeting_address,
+                    m.max_people AS meeting_max_people,
+                    m.district AS meeting_district,
+                    m.adults_only AS meeting_adults_only,
+                    m.description AS meeting_description,
                     COALESCE(
                         (
                             SELECT ARRAY_AGG(np.photo_url ORDER BY np.record_id)

@@ -716,3 +716,88 @@ CREATE TRIGGER trg_create_notification_on_meeting_finished
 AFTER UPDATE OF status ON meeting_table_2
 FOR EACH ROW
 EXECUTE FUNCTION create_notification_on_meeting_finished();
+
+
+--------------------------------------------------------------------------------
+-- Триггер #14: при изменении голосов в конфликте (conflict_table_7)
+-- автоматически меняет статус конфликта на 'yes' или 'no'
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION update_conflict_status_on_vote()
+RETURNS trigger AS $$
+BEGIN
+    -- Срабатываем только если конфликт еще в статусе 'in_progress'
+    IF NEW.status = 'in_progress' THEN
+        -- Условие 1: "за" набрало больше 50% от total_allowed_to_vote
+        IF NEW.voted_for_count > 0.5 * NEW.total_allowed_to_vote THEN
+            NEW.status := 'yes';
+            NEW.finished_at := NOW();
+        
+        -- Условие 2: даже если все оставшиеся проголосуют "за",
+        -- не наберется 50% (то есть максимум "за" <= 50%)
+        ELSIF (NEW.total_allowed_to_vote - NEW.total_voted) + NEW.voted_for_count <= 0.5 * NEW.total_allowed_to_vote THEN
+            NEW.status := 'no';
+            NEW.finished_at := NOW();
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_conflict_status_on_vote
+BEFORE UPDATE ON conflict_table_7
+FOR EACH ROW
+EXECUTE FUNCTION update_conflict_status_on_vote();
+
+
+--------------------------------------------------------------------------------
+-- Триггер #15: при изменении статуса конфликта на 'yes'
+-- меняем user_action с 'missedbyorg' на 'attended' в meeting_rating_table_8
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION update_user_action_on_conflict_yes()
+RETURNS trigger AS $$
+BEGIN
+    IF NEW.status = 'yes' AND OLD.status = 'in_progress' THEN
+        UPDATE meeting_rating_table_8
+        SET user_action = 'attended'
+        WHERE meeting_id = NEW.meeting_id
+          AND user_id = NEW.user_id
+          AND user_action = 'missedbyorg';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_user_action_on_conflict_yes
+AFTER UPDATE ON conflict_table_7
+FOR EACH ROW
+EXECUTE FUNCTION update_user_action_on_conflict_yes();
+
+
+--------------------------------------------------------------------------------
+-- Триггер #16: при изменении статуса конфликта на 'no'
+-- меняем user_action с 'missedbyorg' на 'missed' в meeting_rating_table_8
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION update_user_action_on_conflict_no()
+RETURNS trigger AS $$
+BEGIN
+    IF NEW.status = 'no' AND OLD.status = 'in_progress' THEN
+        UPDATE meeting_rating_table_8
+        SET user_action = 'missed'
+        WHERE meeting_id = NEW.meeting_id
+          AND user_id = NEW.user_id
+          AND user_action = 'missedbyorg';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_user_action_on_conflict_no
+AFTER UPDATE ON conflict_table_7
+FOR EACH ROW
+EXECUTE FUNCTION update_user_action_on_conflict_no();

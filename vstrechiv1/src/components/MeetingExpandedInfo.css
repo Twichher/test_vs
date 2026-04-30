@@ -18,6 +18,12 @@
     background: linear-gradient(160deg, #4a90d9 0%, #2171b5 100%);
     box-shadow: 0 4px 15px rgba(33, 113, 181, 0.4);
   }
+
+  /* Красный фон для пропущенных встреч */
+  .meeting-missed-card {
+    background: #eca3a3 !important;
+    color: #1a1a1a;
+  }
   
   .mei-title {
     font-size: 22px;

@@ -42,14 +42,20 @@ interface MeetingInfo {
 interface CancelButtonProps {
   onClick: () => void;
   meetingStatus?: string | null;
+  userAction?: string | null;
 }
 
-function CancelButton({ onClick, meetingStatus }: CancelButtonProps) {
+function CancelButton({ onClick, meetingStatus, userAction }: CancelButtonProps) {
+  // Если пользователь уже пропустил встречу (missed) и она в статусе created — скрываем кнопку
+  if (userAction === 'missed' && meetingStatus === 'created') {
+    return null;
+  }
+
   // Если встреча уже завершена (in_progress), не показываем кнопку отмены
   if (meetingStatus === 'in_progress') {
     return (
       <div className="meeting-cancel-message">
-        Встреча завершена. Ожидайте информации об оценке.
+        Встреча завершена. Ожидайте уведомление о завершении.
       </div>
     );
   }
@@ -403,6 +409,7 @@ export default function OneMeetingPage() {
                 <MeetingExpandedInfo 
                   meeting_id={Number(meeting_id)} 
                   onOrganizerClick={handleOrganizerClick}
+                  userAction={regedUsers.find(u => u.user_id === user_id)?.user_action ?? null}
                 />
               </div>
 
@@ -420,6 +427,7 @@ export default function OneMeetingPage() {
                   <CancelButton 
                     onClick={handleCancelRegClick} 
                     meetingStatus={meetingInfo?.status}
+                    userAction={regedUsers.find(u => u.user_id === user_id)?.user_action ?? null}
                   />
                 )}
               </div>

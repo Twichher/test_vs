@@ -18,6 +18,7 @@ interface MeetingTypeOne {
     category_ids: number[];
     status?: string;
     user_action?: string;
+    users_count?: number;
   }
 
   export default function RegHistoryMeet() {
@@ -182,27 +183,35 @@ interface MeetingTypeOne {
               {regedMeetings.length === 0 ? (
                 <p className="reg-history-empty">Нет активных записей</p>
               ) : (
-                regedMeetings.map((meeting) => (
-                  <div
-                    key={meeting.meeting_id}
-                    onClick={() => {
-                      console.log(meeting.meeting_id);
-                      navigate(`/meeting/info_reged/${meeting.meeting_id}`);
-                    }}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <MeetingAsItem
-                      meeting_title={meeting.meeting_title}
-                      registered_users_count={meeting.registered_users_count}
-                      max_people_allowed={meeting.max_people_allowed}
-                      district={meeting.district}
-                      adults_only_18plus={meeting.adults_only_18plus}
-                      start_at = {meeting.start_at}
-                      end_at = {meeting.end_at}
-                      status={meeting.status}
-                    />
-                  </div>
-                ))
+                regedMeetings.map((meeting) => {
+                  const isMissed = meeting.user_action === 'missed';
+                  const wrapperClass = isMissed ? 'meeting-missed' : '';
+                  const usersCount = isMissed
+                    ? meeting.users_count ?? meeting.registered_users_count
+                    : meeting.registered_users_count;
+                  return (
+                    <div
+                      key={meeting.meeting_id}
+                      className={wrapperClass}
+                      onClick={() => {
+                        console.log(meeting.meeting_id);
+                        navigate(`/meeting/info_reged/${meeting.meeting_id}`);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <MeetingAsItem
+                        meeting_title={meeting.meeting_title}
+                        registered_users_count={usersCount}
+                        max_people_allowed={meeting.max_people_allowed}
+                        district={meeting.district}
+                        adults_only_18plus={meeting.adults_only_18plus}
+                        start_at={meeting.start_at}
+                        end_at={meeting.end_at}
+                        status={meeting.status}
+                      />
+                    </div>
+                  );
+                })
               )}
             </div>
           )}

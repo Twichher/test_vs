@@ -143,8 +143,14 @@ ALTER TABLE user_extra_info_table_3
 ADD COLUMN IF NOT EXISTS count_period_rating_organizer INTEGER NOT NULL DEFAULT 0 
 CHECK (count_period_rating_organizer >= 0);
 
+update user_extra_info_table_3
+set meetings_as_currency = 3
+where user_id = 2 
 
-
+select * from user_extra_info_table_3 
+where user_id = 2
+order by date_of_stats DESC
+limit 1
 -------------------------------------------------------------------------------
 
 -- Table: notifications_table_4
@@ -208,14 +214,11 @@ ADD COLUMN israted BIGINT NOT NULL DEFAULT 0
 	-- 1 - пользователь оценил 
 
 select * from user_notifications_table_5
-where user_id = 11
-
-select * from notifications_table_4
-where notification_id = 31
+where record_id = 35
 
 update user_notifications_table_5
-set israted = 0
-where notification_id = 31;
+set status = 'unread'
+where record_id = 35;
 -------------------------------------------------------------------------------
 
 -- Table: notification_photos_table_6
@@ -269,6 +272,15 @@ CREATE INDEX IF NOT EXISTS idx_conflict_meeting_id
 CREATE INDEX IF NOT EXISTS idx_conflict_user_id
   ON conflict_table_7 (user_id);
 
+ -- 1. Добавляем колонку type_conflict с дефолтным значением
+  ALTER TABLE conflict_table_7
+  ADD COLUMN IF NOT EXISTS type_conflict VARCHAR(20) NOT NULL DEFAULT 'normal_order';
+
+  -- 2. Добавляем CHECK constraint (только 2 допустимых значения)
+  ALTER TABLE conflict_table_7
+  ADD CONSTRAINT chk_conflict_type CHECK (type_conflict IN ('normal_order', 'extra_order'));
+
+select * from conflict_table_7;
 -------------------------------------------------------------------------------
 
 -- Table: meeting_rating_table_8
@@ -309,6 +321,8 @@ CREATE INDEX IF NOT EXISTS idx_meeting_rating_user_id
    ALTER TABLE meeting_rating_table_8
   ADD CONSTRAINT meeting_rating_table_8_user_action_check
   CHECK (user_action IN ('registered', 'attended', 'missed', 'missedbyorg'));
+
+  select * from meeting_rating_table_8 where meeting_id = 8
 -------------------------------------------------------------------------------
 
 -- Table: conflict_photos_table_9
@@ -327,6 +341,13 @@ CREATE TABLE IF NOT EXISTS conflict_photos_table_9 (
 CREATE INDEX IF NOT EXISTS idx_conflict_photos_conflict_id
   ON conflict_photos_table_9 (conflict_id);
 
+-- 1. Убираем NOT NULL у proof_photo_url (теперь может быть NULL)
+ALTER TABLE conflict_photos_table_9
+ALTER COLUMN proof_photo_url DROP NOT NULL;
+
+-- 2. Добавляем новую колонку proof_text
+ALTER TABLE conflict_photos_table_9
+ADD COLUMN IF NOT EXISTS proof_text TEXT;
 -------------------------------------------------------------------------------
 
 -- categories_table_10
@@ -665,3 +686,10 @@ CREATE INDEX IF NOT EXISTS idx_meeting_rating_user_id_26
 
 
 
+select * from meeting_rating_info_table_26 where meeting_id = 24;
+
+select * from meeting_rating_table_8 where meeting_id = 24;
+
+select * from user_ratings_table_15 where meeting_id = 24;
+
+select * from conflict_table_7 where meeting_id = 24;

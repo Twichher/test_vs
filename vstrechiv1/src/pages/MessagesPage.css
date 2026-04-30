@@ -261,6 +261,51 @@
   }
 }
 
+/* Специальный стиль для уведомлений об оценке встречи - фиолетовый переливающийся */
+.notification-button--purple.notification-button--unread {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 25%, #9b59b6 50%, #8e44ad 75%, #9b59b6 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-purple 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(155, 89, 182, 0.4);
+}
+
+/* Прочитанные фиолетовые уведомления наследуют серый стиль от .notification-button--read */
+
+@keyframes gradient-shift-purple {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Эффект свечения для фиолетовых уведомлений */
+.notification-button--purple .notification-button__glow {
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  animation: glow-pulse-purple 1.5s ease-in-out infinite;
+}
+
+@keyframes glow-pulse-purple {
+  0%, 100% {
+    transform: scale(0.6);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 1;
+  }
+}
+
 /* Анимация для красного градиента */
 @keyframes gradient-shift-canceled {
   0% {
@@ -386,8 +431,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
 }
 
 .notification-button__date {

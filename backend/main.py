@@ -12,9 +12,9 @@ CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_a
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
 MEETINGS_get_basic_info, USERS_get_notifications
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, USERS_mark_notification_as_read
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
-UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest
+UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest
 from minio_defs import upload_photo, upload_meeting_photo
 import base64
 import uuid
@@ -201,6 +201,27 @@ def create_meeting(
             except Exception as e:
                 print(f"Warning: Error processing photo {i}: {str(e)}")
         
+        # 6. Создаем уведомление для организатора о создании встречи
+        organizer_notification_id = NOTIFICATIONS_create(
+            meeting_id=meeting_id,
+            notification_type="создание встречи",
+            notification_text=request.email_message
+        )
+        
+        if isinstance(organizer_notification_id, tuple):
+            print(f"Warning: Failed to create organizer notification: {organizer_notification_id[1]}")
+        else:
+            # 7. Отправляем уведомление организатору
+            send_result = NOTIFICATIONS_send_to_user(organizer_notification_id, current_user_id)
+            if isinstance(send_result, tuple):
+                print(f"Warning: Failed to send notification to organizer: {send_result[1]}")
+            
+            # 8. Копируем фото в уведомление организатора
+            if photo_urls:
+                copy_result = NOTIFICATION_PHOTOS_copy_by_notification(notification_id, organizer_notification_id)
+                if isinstance(copy_result, tuple):
+                    print(f"Warning: Failed to copy photos to organizer notification: {copy_result[1]}")
+        
         return CreateMeetingResponse(
             success=True,
             meeting_id=meeting_id,
@@ -322,8 +343,12 @@ def get_meeting_basic_info(meeting_id: int, user_id: int = Depends(get_current_u
 def post_reg_user_to_meeting(meeting_id : int, user_id : int, body : RegUserToMeetingRequest):
     result = USERS_post_reg_to_meet(meeting_id , user_id, body.user_action)
 
-    if isinstance(result, tuple): 
-        raise HTTPException(status_code=500, detail=result[1])
+    if isinstance(result, tuple):
+        error_message = str(result[1])
+        # Если ошибка про нехватку валюты — возвращаем 400
+        if "Вам не хватает встреч" in error_message:
+            raise HTTPException(status_code=400, detail=error_message)
+        raise HTTPException(status_code=500, detail=error_message)
     
     return result
 
@@ -381,6 +406,32 @@ def save_participants_ratings(
         meeting_id=request.meeting_id,
         organizer_user_id=user_id,
         ratings=[r.model_dump() for r in request.ratings]
+    )
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
+    return result
+
+
+@app.post("/meetings/save-user-ratings")
+def save_user_ratings(
+    request: SaveUserRatingsRequest,
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Сохраняет оценки от участника встречи.
+    - Вставляет оценку встречи в meeting_rating_info_table_26
+    - Вставляет оценки пользователей в user_ratings_table_15
+    - Обновляет israted = 1 в user_notifications_table_5
+    """
+    result = MEETINGS_save_user_ratings(
+        record_id=request.record_id,
+        meeting_id=request.meeting_id,
+        user_id=user_id,
+        meeting_rating=request.meeting_rating,
+        user_ratings=[r.model_dump() for r in request.user_ratings],
+        has_extra_people=request.has_extra_people
     )
     
     if isinstance(result, tuple):

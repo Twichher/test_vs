@@ -72,7 +72,8 @@ const MeetingsPage: React.FC = () => {
 
   const [joinModalOpen, setJoinModalOpen] = useState(false);// state для модалки для регистрации на встречу
   const [newlyRegisteredIds, setNewlyRegisteredIds] = useState<number[]>([]); // state для зарегистрированных встреч
-  const [joinError, setJoinError] = useState(false); // state для ошибки при регистрации
+  const [joinErrorMessage, setJoinErrorMessage] = useState<string | null>(null); // сообщение об ошибке при регистрации
+  const [showCurrencyToast, setShowCurrencyToast] = useState(false); // toast для ошибки валюты
 
   // Состояние для модального окна фото
   const [photoModalOpen, setPhotoModalOpen] = useState(false);
@@ -451,8 +452,8 @@ const MeetingsPage: React.FC = () => {
                   </strong>.
                 </p>
 
-                {joinError && (
-                  <p className="join-modal-error">Ошибка регистрации</p>
+                {joinErrorMessage && (
+                  <p className="join-modal-error">{joinErrorMessage}</p>
                 )}
 
                 <div className="join-modal-buttons">
@@ -472,9 +473,24 @@ const MeetingsPage: React.FC = () => {
                         .then(() => {
                           setNewlyRegisteredIds((prev) => [...prev, expandedInfo.meeting_id]);
                           setJoinModalOpen(false);
-                          setJoinError(false);
+                          setJoinErrorMessage(null);
                         })
-                        .catch(() => setJoinError(true));
+                        .catch(async (err) => {
+                          // Пытаемся прочитать тело ошибки
+                          try {
+                            const errorData = await err.json?.() || {};
+                            const detail = errorData.detail || err.message || '';
+                            if (detail.includes('Вам не хватает встреч')) {
+                              setJoinErrorMessage('Вам не хватает встреч.');
+                              setShowCurrencyToast(true);
+                              setTimeout(() => setShowCurrencyToast(false), 2000);
+                            } else {
+                              setJoinErrorMessage('Ошибка регистрации');
+                            }
+                          } catch {
+                            setJoinErrorMessage('Ошибка регистрации');
+                          }
+                        });
                     }}
                   >
                     Зарегистрироваться
@@ -484,7 +500,7 @@ const MeetingsPage: React.FC = () => {
                     className="join-modal-btn join-modal-btn--cancel"
                     onClick={() => {
                       setJoinModalOpen(false);
-                      setJoinError(false);
+                      setJoinErrorMessage(null);
                       }
                     }
                   >
@@ -497,6 +513,18 @@ const MeetingsPage: React.FC = () => {
           )}
 
 
+
+      {/* Toast для ошибки недостатка валюты */}
+      {showCurrencyToast && (
+        <div className="currency-toast-overlay">
+          <div className="currency-toast">
+            <span className="currency-toast__text">Вам не хватает встреч.</span>
+            <button className="currency-toast__close" onClick={() => setShowCurrencyToast(false)}>
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

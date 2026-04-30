@@ -27,9 +27,10 @@ interface MeetingInfoV2 {
 interface MeetingExpandedInfoProps {
     meeting_id : number;
     onOrganizerClick?: (userId: number, firstName: string, lastName: string) => void;
+    userAction?: string | null;
 }
 
-export default function MeetingExpandedInfo({meeting_id, onOrganizerClick} : MeetingExpandedInfoProps){
+export default function MeetingExpandedInfo({meeting_id, onOrganizerClick, userAction} : MeetingExpandedInfoProps){
     const [info, setInfo] = useState<MeetingInfoV2 | null>(null);
 
     useEffect(() => {
@@ -58,9 +59,10 @@ export default function MeetingExpandedInfo({meeting_id, onOrganizerClick} : Mee
     };
 
     const isInProgress = info.status === 'in_progress';
+    const isMissed = userAction === 'missed';
 
     return (
-    <div className={`meeting-expanded-info-card ${isInProgress ? 'meeting-expanded-info-card--in-progress' : ''}`}>
+    <div className={`meeting-expanded-info-card ${isInProgress ? 'meeting-expanded-info-card--in-progress' : ''} ${isMissed ? 'meeting-missed-card' : ''}`}>
         <h2 className="mei-title">
         {info.meeting_title}
         {info.adults_only && <span className="mei-badge">18+</span>}

@@ -272,6 +272,11 @@ class NotificationItem(BaseModel):
     meeting_title: str | None = None  # может быть NULL если уведомление не связано со встречей
     meeting_start_at: datetime | None = None
     meeting_end_at: datetime | None = None
+    meeting_address: str | None = None
+    meeting_max_people: int | None = None
+    meeting_district: str | None = None
+    meeting_adults_only: bool | None = None
+    meeting_description: str | None = None
     photo_urls: list[str] = []  # список URL фотографий из notification_photos_table_6
 
 
@@ -291,3 +296,21 @@ class SaveRatingsRequest(BaseModel):
     record_id: int  # record_id в user_notifications_table_5 для обновления israted
     meeting_id: int
     ratings: List[ParticipantRating]
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для оценки встречи и пользователей от участника
+#------------------------------------------------------------------------------------------------------
+
+class UserToUserRating(BaseModel):
+    """Оценка одного пользователя другим пользователем"""
+    rated_user_id: int
+    rating_value: int  # 1-10
+
+class SaveUserRatingsRequest(BaseModel):
+    """Запрос на сохранение оценок от участника встречи"""
+    record_id: int  # record_id в user_notifications_table_5 для обновления israted
+    meeting_id: int
+    meeting_rating: int | None = None  # 1-10 (оценка самой встречи)
+    user_ratings: List[UserToUserRating] = []  # оценки других пользователей
+    has_extra_people: bool | None = None  # True = проголосовал "за" missedbyorg, False/None = проголосовал "против" или не голосовал

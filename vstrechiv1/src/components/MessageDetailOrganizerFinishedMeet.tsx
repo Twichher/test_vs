@@ -46,6 +46,7 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localIsrated, setLocalIsrated] = useState(notification.israted ?? 0);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{userId: number, firstName: string, lastName: string} | null>(null);
   const [hoveredRating, setHoveredRating] = useState<Record<number, number | null>>({});
@@ -120,7 +121,8 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
     }));
   };
 
-  const handleSubmit = async () => {
+  const handleConfirmSubmit = async () => {
+    setShowConfirmModal(false);
     const meetingId = notification.meeting_id;
     const recordId = notification.record_id;
     if (!meetingId) {
@@ -287,7 +289,7 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
           {!isLoading && registeredUsers.length > 0 && (
             <button
               className="message-detail__submit-btn"
-              onClick={handleSubmit}
+              onClick={() => setShowConfirmModal(true)}
               disabled={isSubmitDisabled || isSubmitting}
             >
               {isSubmitting ? 'Сохранение...' : 'Отправить результаты'}
@@ -296,6 +298,24 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
         </div>
         )}
       </div>
+
+      {/* Модальное окно подтверждения отправки */}
+      {showConfirmModal && (
+        <div className="confirm-modal-overlay" onClick={() => setShowConfirmModal(false)}>
+          <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="confirm-modal__title">Вы уверены?</h3>
+            <p className="confirm-modal__text">Вы уверены, что хотите отправить результаты?</p>
+            <div className="confirm-modal__buttons">
+              <button className="confirm-modal__btn confirm-modal__btn--yes" onClick={handleConfirmSubmit}>
+                Да
+              </button>
+              <button className="confirm-modal__btn confirm-modal__btn--no" onClick={() => setShowConfirmModal(false)}>
+                Нет
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Модальное окно профиля пользователя */}
       <ProfileModal
