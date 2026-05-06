@@ -203,7 +203,7 @@
 }
 
 .message-detail__text {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.7;
   color: #333;
   white-space: pre-line;
@@ -217,14 +217,14 @@
 
 /* Заголовки секций (жирные) */
 .message-detail__section-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: #1a1a1a;
   margin: 0 0 12px 0;
 }
 
 .message-detail__organizer-text {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.7;
   color: #333;
   white-space: pre-line;
@@ -242,8 +242,8 @@
 
 .message-detail__photos-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 0px;
 }
 
 .message-detail__photo-thumb {
@@ -268,7 +268,7 @@
 
 /* Финальный текст - такой же стиль как у основного текста */
 .message-detail__footer-text {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.7;
   color: #333;
   margin-top: 24px;
@@ -463,7 +463,7 @@
 }
 
 .message-detail__user-name {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: #1a1a1a;
 }
@@ -496,7 +496,7 @@
   padding: 8px 16px;
   border: 2px solid #ddd;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -554,7 +554,7 @@
   border: 2px solid #ddd;
   border-radius: 6px;
   background: #fff;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   color: #666;
   cursor: pointer;
@@ -588,7 +588,7 @@
   color: #fff;
   border: none;
   border-radius: 12px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
@@ -600,8 +600,17 @@
 }
 
 .message-detail__submit-btn:disabled {
-  background: #ccc;
+  background: #ccc !important;
   cursor: not-allowed;
+}
+
+/* Оранжевая кнопка отправки (конфликт) */
+.message-detail__submit-btn--orange {
+  background: #ff9800;
+}
+
+.message-detail__submit-btn--orange:hover:not(:disabled) {
+  background: #f57c00;
 }
 
 /* Индикатор загрузки */
@@ -642,7 +651,7 @@
 .message-detail__info-row {
   display: flex;
   gap: 8px;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
 }
 
@@ -671,6 +680,32 @@
   }
   50% {
     background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Оранжевый переливающийся градиент для хедера (конфликт missedbyorg) */
+.message-detail__header--orange {
+  background: linear-gradient(135deg, #ff9800 0%, #f57c00 25%, #ff9800 50%, #f57c00 75%, #ff9800 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-orange 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(255, 152, 0, 0.4);
+}
+
+@keyframes gradient-shift-orange {
+  0% {
+    background-position: 0% 50%;
+  }
+  25% {
+    background-position: 100% 50%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  75% {
+    background-position: 0% 100%;
   }
   100% {
     background-position: 0% 50%;
@@ -767,7 +802,7 @@
 }
 
 .message-detail__extra-people-text {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: #333;
 }
@@ -780,7 +815,7 @@
 .message-detail__extra-btn {
   padding: 8px 20px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -823,7 +858,7 @@
 
 /* Текст "Спасибо за помощь!" */
 .message-detail__thanks-text {
-  font-size: 15px;
+  font-size: 16px;
   color: #555;
   margin: 12px 0 0 0;
   padding: 12px 16px;
@@ -834,11 +869,189 @@
 
 /* Текст "Вы единственный участник встречи!" */
 .message-detail__solo-text {
-  font-size: 15px;
+  font-size: 16px;
   color: #555;
   margin: 0;
   padding: 12px 16px;
   background: #f8f9fa;
   border-radius: 12px;
   border-left: 4px solid #9b59b6;
+}
+
+
+/* === СТИЛИ ДЛЯ ЗАГРУЗКИ ФОТО (MessageDetailConflictSolution) === */
+
+/* Текстовое поле с зеленым акцентом */
+.message-detail__textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  font-size: 15px;
+  font-family: inherit;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.message-detail__textarea:focus {
+  outline: none;
+  border-color: #3ecfaa;
+  box-shadow: 0 0 0 3px rgba(62, 207, 170, 0.1);
+}
+
+.message-detail__textarea::placeholder {
+  color: #999;
+}
+
+/* Ряд фотографий */
+.message-detail__photos-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* Миниатюра фото */
+.message-detail__photo-thumb {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.message-detail__photo-thumb:hover {
+  border-color: #3ecfaa;
+}
+
+.message-detail__photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Кнопка загрузки */
+.message-detail__upload-btn {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #000;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  color: #333;
+}
+
+.message-detail__upload-btn:hover {
+  background: #f5f5f5;
+  border-color: #3ecfaa;
+  color: #3ecfaa;
+}
+
+/* Скрытый input */
+.message-detail__file-input {
+  display: none;
+}
+
+/* Модальное окно просмотра фото с удалением */
+.message-detail__photo-modal {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  width: 700px;
+  height: 520px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  z-index: 10001;
+}
+
+.message-detail__photo-modal-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.message-detail__photo-modal-main img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.message-detail__photo-modal-thumbnails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  width: 96px;
+  padding-right: 4px;
+}
+
+.message-detail__photo-modal-thumb {
+  width: 84px;
+  height: 84px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease, opacity 0.2s ease;
+  opacity: 0.7;
+}
+
+.message-detail__photo-modal-thumb:hover {
+  opacity: 1;
+}
+
+.message-detail__photo-modal-thumb--active {
+  border-color: #3ecfaa;
+  opacity: 1;
+}
+
+/* Секция удаления */
+.message-detail__photo-modal-delete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 80px;
+}
+
+.message-detail__photo-modal-delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #e74c3c;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-detail__photo-modal-delete-btn:hover {
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.message-detail__photo-modal-delete-text {
+  font-size: 12px;
+  color: #e74c3c;
+  text-align: center;
 }

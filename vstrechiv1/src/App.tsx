@@ -14,6 +14,7 @@ import SettingsPage from './pages/SettingsPage';
 import StatsPage from './pages/StatsPage';
 import CreateMeetingPage from './pages/CreateMeetingPage';
 import MessagesPage from './pages/MessagesPage';
+import ShopPage from './pages/ShopPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -47,6 +48,7 @@ function App() {
       <Route path="/meeting/info_reged/:meeting_id" element={<OneMeetingPage />} />
       <Route path="/meeting/info_history/:meeting_id" element={<OneMeetingPageHistory />} />
       <Route path="/meeting/create" element={<CreateMeetingPage />} />
+      <Route path="/shop" element={<ShopPage />} />
     </Routes>
   );
 }   

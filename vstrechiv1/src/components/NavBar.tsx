@@ -25,7 +25,8 @@ const NavBar: React.FC<NavBarProps> = ({ onChange }) => {
     if (key === 'profile') navigate(`/user/${user_id}`);
     if (key === 'settings') navigate(`/settings`);
     if (key === 'stats') navigate(`/stats`);
-    if (key === 'messages') navigate (`/messages`);
+    if (key === 'messages') navigate(`/messages`);
+    if (key === 'shop') navigate(`/shop`);
     onChange?.(key);
   };
 

@@ -55,9 +55,9 @@ BEGIN
             in_trial_period := TRUE;
         ELSE
             in_trial_period := FALSE;
-            -- создаём новый период на 1 день
+            -- создаём новый период на 5 день
             INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-            VALUES (NOW(), NOW() + INTERVAL '1 day');
+            VALUES (NOW(), NOW() + INTERVAL '5 day');
         END IF;
 
         -- увеличиваем счётчики у всех, кто был `attended` на этой встрече
@@ -131,7 +131,7 @@ BEGIN
             in_trial_period := FALSE;
             -- создаём новый период на 1 день
             INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-            VALUES (NOW(), NOW() + INTERVAL '1 day');
+            VALUES (NOW(), NOW() + INTERVAL '5 day');
         END IF;
 
         -- считаем, сколько user_id связано с этой встречей
@@ -249,7 +249,20 @@ DECLARE
     in_trial_period  boolean;
     v_start          TIMESTAMP;
     v_end            TIMESTAMP;
+    v_user_action    VARCHAR(20);
 BEGIN
+    -- Проверяем статус оцениваемого пользователя на встрече.
+    -- Если он в статусе missedbyorg — оценка сохраняется, но рейтинг НЕ пересчитывается.
+    -- Рейтинг будет применён позже триггером #15 при разрешении конфликта в пользу пользователя.
+    SELECT user_action INTO v_user_action
+    FROM meeting_rating_table_8
+    WHERE meeting_id = NEW.meeting_id
+      AND user_id = NEW.rated_user_id;
+
+    IF v_user_action = 'missedbyorg' THEN
+        RETURN NEW;
+    END IF;
+
     -- берём последний trial-период
     SELECT p.start_trial_period, p.end_trial_period
     INTO v_start, v_end
@@ -263,7 +276,7 @@ BEGIN
         in_trial_period := FALSE;
         -- создаём новый период на 1 день
         INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-        VALUES (NOW(), NOW() + INTERVAL '1 day');
+        VALUES (NOW(), NOW() + INTERVAL '5 day');
     END IF;
 
     -- обновляем ТОЛЬКО последнюю запись по пользователю (по date_of_stats / record_id)
@@ -396,7 +409,7 @@ BEGIN
         -- Создаём новый период на 1 день от текущего момента, 
         -- а intermediate_rating_as_organizer обновлен не будет (см. логику CASE ниже)
         INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-        VALUES (NOW(), NOW() + INTERVAL '1 day');
+        VALUES (NOW(), NOW() + INTERVAL '5 day');
     END IF;
 
     -- Пересчёт rating_as_organizer / intermediate_rating_as_organizer
@@ -727,7 +740,8 @@ CREATE OR REPLACE FUNCTION update_conflict_status_on_vote()
 RETURNS trigger AS $$
 BEGIN
     -- Срабатываем только если конфликт еще в статусе 'in_progress'
-    IF NEW.status = 'in_progress' THEN
+    -- и пользователь (missedbyorg) сказал что был (isconflict = 2)
+    IF NEW.isconflict = 2 AND NEW.status = 'in_progress' THEN
         -- Условие 1: "за" набрало больше 50% от total_allowed_to_vote
         IF NEW.voted_for_count > 0.5 * NEW.total_allowed_to_vote THEN
             NEW.status := 'yes';
@@ -758,13 +772,97 @@ EXECUTE FUNCTION update_conflict_status_on_vote();
 
 CREATE OR REPLACE FUNCTION update_user_action_on_conflict_yes()
 RETURNS trigger AS $$
+DECLARE
+    v_meeting_status VARCHAR(20);
+    in_trial_period  boolean;
+    v_start          TIMESTAMP;
+    v_end            TIMESTAMP;
+    v_record_id      BIGINT;
+    v_sum_ratings    NUMERIC;
+    v_count_ratings  INTEGER;
 BEGIN
     IF NEW.status = 'yes' AND OLD.status = 'in_progress' THEN
+        -- Переводим пользователя из missedbyorg в attended
         UPDATE meeting_rating_table_8
         SET user_action = 'attended'
         WHERE meeting_id = NEW.meeting_id
           AND user_id = NEW.user_id
           AND user_action = 'missedbyorg';
+        
+        -- Увеличиваем total_allowed_to_vote для остальных активных конфликтов этой встречи
+        -- (новый attended пользователь теперь тоже может голосовать)
+        UPDATE conflict_table_7
+        SET total_allowed_to_vote = total_allowed_to_vote + 1
+        WHERE meeting_id = NEW.meeting_id
+          AND status = 'in_progress';
+        
+        -- Получаем trial period (нужен и для stats, и для оценок)
+        SELECT p.start_trial_period, p.end_trial_period
+        INTO v_start, v_end
+        FROM start_end_trial_period_table_25 p
+        ORDER BY p.period_id DESC
+        LIMIT 1;
+        
+        IF FOUND AND NOW() BETWEEN v_start AND v_end THEN
+            in_trial_period := TRUE;
+        ELSE
+            in_trial_period := FALSE;
+        END IF;
+        
+        -- Находим последнюю запись пользователя в user_extra_info_table_3
+        SELECT record_id INTO v_record_id
+        FROM user_extra_info_table_3
+        WHERE user_id = NEW.user_id
+        ORDER BY date_of_stats DESC, record_id DESC
+        LIMIT 1;
+        
+        -- Если встреча уже finished, начисляем встречу пользователю
+        -- (он был оправдан и теперь считается attended)
+        SELECT status INTO v_meeting_status
+        FROM meeting_table_2
+        WHERE meeting_id = NEW.meeting_id;
+        
+        IF v_meeting_status = 'finished' AND v_record_id IS NOT NULL THEN
+            UPDATE user_extra_info_table_3
+            SET meetings_visited_as_guest = meetings_visited_as_guest + 1,
+                count_period_meetings_guest =
+                    CASE
+                        WHEN in_trial_period THEN count_period_meetings_guest + 1
+                        ELSE count_period_meetings_guest
+                    END
+            WHERE record_id = v_record_id;
+        END IF;
+        
+        -- ПРИМЕНЯЕМ накопленные оценки за эту встречу.
+        -- Оценки, поставленные пользователю в статусе missedbyorg, не учитывались триггером #5.
+        -- Теперь, когда статус стал attended, пересчитываем рейтинг с учётом всех таких оценок.
+        SELECT COALESCE(SUM(rating_value), 0), COALESCE(COUNT(*), 0)
+        INTO v_sum_ratings, v_count_ratings
+        FROM user_ratings_table_15
+        WHERE rated_user_id = NEW.user_id
+          AND meeting_id = NEW.meeting_id;
+        
+        IF v_count_ratings > 0 AND v_record_id IS NOT NULL THEN
+            UPDATE user_extra_info_table_3
+            SET rating_as_guest =
+                    (rating_as_guest * count_all_rating_guest + v_sum_ratings)
+                    / (count_all_rating_guest + v_count_ratings),
+                count_all_rating_guest = count_all_rating_guest + v_count_ratings,
+                intermediate_rating_as_guest =
+                    CASE
+                        WHEN in_trial_period AND count_period_rating_guest >= 0 THEN
+                            (intermediate_rating_as_guest * count_period_rating_guest + v_sum_ratings)
+                            / (count_period_rating_guest + v_count_ratings)
+                        ELSE
+                            intermediate_rating_as_guest
+                    END,
+                count_period_rating_guest =
+                    CASE
+                        WHEN in_trial_period THEN count_period_rating_guest + v_count_ratings
+                        ELSE count_period_rating_guest
+                    END
+            WHERE record_id = v_record_id;
+        END IF;
     END IF;
     
     RETURN NEW;
@@ -801,3 +899,74 @@ CREATE TRIGGER trg_update_user_action_on_conflict_no
 AFTER UPDATE ON conflict_table_7
 FOR EACH ROW
 EXECUTE FUNCTION update_user_action_on_conflict_no();
+
+--------------------------------------------------------------------------------
+-- Триггер #17: при изменении user_action с 'missedbyorg' на 'missed' или 'attended'
+-- отправляем пользователю уведомление о результате конфликта
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION notify_user_on_conflict_resolution()
+RETURNS trigger AS $$
+DECLARE
+    conflict_record RECORD;
+    meeting_info RECORD;
+    notification_text_val TEXT;
+    notification_type_val TEXT;
+    new_notification_id BIGINT;
+BEGIN
+    -- Срабатываем только если user_action сменился с missedbyorg
+    IF OLD.user_action = 'missedbyorg' AND NEW.user_action IN ('missed', 'attended') THEN
+        -- Ищем конфликт
+        SELECT * INTO conflict_record
+        FROM conflict_table_7
+        WHERE meeting_id = NEW.meeting_id
+          AND user_id = NEW.user_id
+          AND isconflict = 2;
+        
+        IF FOUND THEN
+            -- Получаем данные встречи
+            SELECT title, start_at, end_at INTO meeting_info
+            FROM meeting_table_2
+            WHERE meeting_id = NEW.meeting_id;
+            
+            IF NEW.user_action = 'missed' AND conflict_record.status = 'no' THEN
+                notification_type_val := 'вас не было';
+                notification_text_val := format(
+                    'Конфликт, связанный со встречей "%s", которая проходила с %s до %s, завершился. ' ||
+                    'Пользователи проголосовали, что вас не было. Если вы были на той встрече, то можете обжаловать решение.',
+                    meeting_info.title,
+                    meeting_info.start_at,
+                    meeting_info.end_at
+                );
+            ELSIF NEW.user_action = 'attended' AND conflict_record.status = 'yes' THEN
+                notification_type_val := 'вы были';
+                notification_text_val := format(
+                    'Конфликт, связанный со встречей "%s", которая проходила с %s до %s, завершился. ' ||
+                    'Пользователи проголосовали, что вы были. Теперь можете оценить других пользователей и саму встречу.',
+                    meeting_info.title,
+                    meeting_info.start_at,
+                    meeting_info.end_at
+                );
+            ELSE
+                RETURN NEW;
+            END IF;
+            
+            -- Создаем уведомление
+            INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+            VALUES (NEW.meeting_id, notification_type_val, notification_text_val)
+            RETURNING notification_id INTO new_notification_id;
+            
+            -- Привязываем к пользователю
+            INSERT INTO user_notifications_table_5 (notification_id, user_id, status, israted)
+            VALUES (new_notification_id, NEW.user_id, 'unread', 0);
+        END IF;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_notify_on_conflict_resolution
+AFTER UPDATE ON meeting_rating_table_8
+FOR EACH ROW
+EXECUTE FUNCTION notify_user_on_conflict_resolution();

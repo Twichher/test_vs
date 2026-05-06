@@ -195,9 +195,9 @@ def MEETINGS_save_participants_ratings(record_id: int, meeting_id: int, organize
                     WHERE meeting_id = %s
                 """, (meeting_id,))
                 
-                # Получаем данные встречи для уведомления attended пользователей
+                # Получаем данные встречи для уведомлений
                 cur.execute("""
-                    SELECT title, start_at
+                    SELECT title, start_at, end_at, address
                     FROM meeting_table_2
                     WHERE meeting_id = %s
                 """, (meeting_id,))
@@ -206,9 +206,11 @@ def MEETINGS_save_participants_ratings(record_id: int, meeting_id: int, organize
                 if meeting_info:
                     meeting_title = meeting_info["title"]
                     meeting_start = meeting_info["start_at"]
+                    meeting_end = meeting_info["end_at"]
+                    meeting_address = meeting_info["address"] or 'Адрес не указан'
                     
-                    # Создаем уведомление для attended пользователей
-                    notification_text = (
+                    # --- Уведомление для attended пользователей ---
+                    rate_notification_text = (
                         f'Встреча от {meeting_start} "{meeting_title}" закончилась! '
                         f'Мы надеемся тебе понравилось. Теперь ты можешь оценить саму встречу, '
                         f'а также всех визитеров, что там были.'
@@ -218,7 +220,7 @@ def MEETINGS_save_participants_ratings(record_id: int, meeting_id: int, organize
                         INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
                         VALUES (%s, 'оценка встречи', %s)
                         RETURNING notification_id
-                    """, (meeting_id, notification_text))
+                    """, (meeting_id, rate_notification_text))
                     
                     rate_notification_result = cur.fetchone()
                     if rate_notification_result:
@@ -240,6 +242,33 @@ def MEETINGS_save_participants_ratings(record_id: int, meeting_id: int, organize
                                 VALUES (%s, %s, 'unread')
                                 ON CONFLICT (notification_id, user_id) DO NOTHING
                             """, (rate_notification_id, attended_user_id))
+                    
+                    # --- Уведомление для missedbyorg пользователей ---
+                    missedbyorg_notification_text = (
+                        f'Организатор встречи "{meeting_title}", которая проходила '
+                        f'с {meeting_start} до {meeting_end} по адресу {meeting_address}, '
+                        f'отметил Вас как отсутствующего.'
+                    )
+                    
+                    cur.execute("""
+                        INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+                        VALUES (%s, 'конфликт', %s)
+                        RETURNING notification_id
+                    """, (meeting_id, missedbyorg_notification_text))
+                    
+                    conflict_notification_result = cur.fetchone()
+                    if conflict_notification_result:
+                        conflict_notification_id = conflict_notification_result["notification_id"]
+                        
+                        # Отправляем уведомление каждому missedbyorg пользователю
+                        for rating in ratings:
+                            if rating.get("user_action") == 'missed':
+                                missed_user_id = rating.get("user_id")
+                                cur.execute("""
+                                    INSERT INTO user_notifications_table_5 (notification_id, user_id, status, israted)
+                                    VALUES (%s, %s, 'unread', 0)
+                                    ON CONFLICT (notification_id, user_id) DO NOTHING
+                                """, (conflict_notification_id, missed_user_id))
                 
                 conn.commit()
                 
@@ -293,21 +322,21 @@ def MEETINGS_save_user_ratings(record_id: int, meeting_id: int, user_id: int, me
                             VALUES (%s, %s, %s, %s)
                         """, (rated_user_id, user_id, rating_value, meeting_id))
                         
-                        # Обновляем голоса в conflict_table_7 (если оцениваемый пользователь missedbyorg)
+                        # Обновляем голоса в conflict_table_7 (если оцениваемый пользователь missedbyorg и конфликт еще не решен)
                         cur.execute("""
                             UPDATE conflict_table_7
                             SET total_voted = total_voted + 1,
                                 voted_for_count = voted_for_count + 1
-                            WHERE meeting_id = %s AND user_id = %s
+                            WHERE meeting_id = %s AND user_id = %s AND status = 'in_progress'
                         """, (meeting_id, rated_user_id))
                 
                 # Если пользователь НЕ нажал "да" (не проголосовал "за" missedbyorg),
-                # увеличиваем total_voted для ВСЕХ записей conflict_table_7 по данной встрече
+                # увеличиваем total_voted для ВСЕХ записей conflict_table_7 по данной встрече (только активных)
                 if has_extra_people is not True:
                     cur.execute("""
                         UPDATE conflict_table_7
                         SET total_voted = total_voted + 1
-                        WHERE meeting_id = %s
+                        WHERE meeting_id = %s AND status = 'in_progress'
                     """, (meeting_id,))
                 
                 # Обновляем israted в уведомлении по record_id
@@ -745,3 +774,380 @@ def NOTIFICATION_PHOTOS_copy_by_notification(source_notification_id: int, target
                 }
     except Exception as error:
         return (False, error, "NOTIFICATION_PHOTOS_copy_by_notification")
+
+
+#------------------------------------------------------------------------------------------------------
+#roots to CONFLICTS
+#------------------------------------------------------------------------------------------------------
+
+def CONFLICTS_respond(record_id: int, user_id: int, attended: bool):
+    """
+    Обрабатывает ответ пользователя на конфликт (missedbyorg).
+    - attended=False: isconflict=1, status='no', finished_at=NOW()
+    - attended=True:  isconflict=1 (ждем голосов attended)
+    - Обновляет israted=1 в user_notifications_table_5
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Находим meeting_id через уведомление
+                cur.execute("""
+                    SELECT n.meeting_id
+                    FROM user_notifications_table_5 un
+                    JOIN notifications_table_4 n ON n.notification_id = un.notification_id
+                    WHERE un.record_id = %s AND un.user_id = %s AND n.notification_type = 'конфликт'
+                """, (record_id, user_id))
+                notification_row = cur.fetchone()
+                
+                if not notification_row:
+                    return (False, "Уведомление не найдено или не принадлежит пользователю", "CONFLICTS_respond")
+                
+                meeting_id = notification_row["meeting_id"]
+                
+                # Находим запись конфликта
+                cur.execute("""
+                    SELECT conflict_id, status
+                    FROM conflict_table_7
+                    WHERE meeting_id = %s AND user_id = %s
+                """, (meeting_id, user_id))
+                conflict_row = cur.fetchone()
+                
+                if not conflict_row:
+                    return (False, "Конфликт не найден", "CONFLICTS_respond")
+                
+                conflict_id = conflict_row["conflict_id"]
+                current_status = conflict_row["status"]
+                
+                if current_status != 'in_progress':
+                    return (False, "Конфликт уже решен", "CONFLICTS_respond")
+                
+                # Обновляем конфликт в зависимости от ответа
+                if attended:
+                    cur.execute("""
+                        UPDATE conflict_table_7
+                        SET isconflict = 2
+                        WHERE conflict_id = %s
+                    """, (conflict_id,))
+                else:
+                    cur.execute("""
+                        UPDATE conflict_table_7
+                        SET isconflict = 1, status = 'no', finished_at = NOW()
+                        WHERE conflict_id = %s
+                    """, (conflict_id,))
+                
+                # Отмечаем уведомление как "отвеченное" (israted = 1)
+                cur.execute("""
+                    UPDATE user_notifications_table_5
+                    SET israted = 1
+                    WHERE record_id = %s AND user_id = %s
+                """, (record_id, user_id))
+                
+                conn.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Ответ сохранен"
+                }
+    except Exception as error:
+        return (False, error, "CONFLICTS_respond")
+
+
+#------------------------------------------------------------------------------------------------------
+#roots to CONFLICTS (appeal / extra order)
+#------------------------------------------------------------------------------------------------------
+
+def CONFLICTS_save_appeal(record_id: int, user_id: int, proof_text: str | None, photo_urls: list[str]):
+    """
+    Сохраняет апелляцию пользователя на конфликт (extra_order).
+    - Обновляет proof_text и type_conflict в conflict_table_7
+    - Сохраняет фото в conflict_photos_table_9
+    - Отмечает уведомление как israted = 1
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Находим meeting_id через уведомление
+                cur.execute("""
+                    SELECT n.meeting_id
+                    FROM user_notifications_table_5 un
+                    JOIN notifications_table_4 n ON n.notification_id = un.notification_id
+                    WHERE un.record_id = %s AND un.user_id = %s AND n.notification_type = 'вас не было'
+                """, (record_id, user_id))
+                notification_row = cur.fetchone()
+                
+                if not notification_row:
+                    return (False, "Уведомление не найдено или не принадлежит пользователю", "CONFLICTS_save_appeal")
+                
+                meeting_id = notification_row["meeting_id"]
+                
+                # Находим конфликт
+                cur.execute("""
+                    SELECT conflict_id
+                    FROM conflict_table_7
+                    WHERE meeting_id = %s AND user_id = %s
+                """, (meeting_id, user_id))
+                conflict_row = cur.fetchone()
+                
+                if not conflict_row:
+                    return (False, "Конфликт не найден", "CONFLICTS_save_appeal")
+                
+                conflict_id = conflict_row["conflict_id"]
+                
+                # Обновляем конфликт
+                cur.execute("""
+                    UPDATE conflict_table_7
+                    SET proof_text = %s, type_conflict = 'extra_order'
+                    WHERE conflict_id = %s
+                """, (proof_text, conflict_id))
+                
+                # Сохраняем фото
+                for url in photo_urls:
+                    cur.execute("""
+                        INSERT INTO conflict_photos_table_9 (conflict_id, proof_photo_url)
+                        VALUES (%s, %s)
+                    """, (conflict_id, url))
+                
+                # Отмечаем уведомление как отвеченное
+                cur.execute("""
+                    UPDATE user_notifications_table_5
+                    SET israted = 1
+                    WHERE record_id = %s AND user_id = %s
+                """, (record_id, user_id))
+                
+                conn.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Доказательства отправлены"
+                }
+    except Exception as error:
+        return (False, error, "CONFLICTS_save_appeal")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Services (Shop)
+#------------------------------------------------------------------------------------------------------
+
+import re
+
+def SERVICES_buy_service(service_id: int, user_id: int):
+    """
+    Покупка услуги пользователем.
+    - Записывает покупку в user_services_table_20
+    - Для пакетов встреч (название содержит 'встреч'): извлекает число из названия и
+      добавляет к meetings_as_currency в последней записи user_extra_info_table_3
+    - Для 'Роль организатора': проверяет что пользователь не организатор,
+      обновляет user_table_1.is_organizer = true
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Получаем информацию об услуге
+                cur.execute("""
+                    SELECT service_name
+                    FROM services_table_19
+                    WHERE service_id = %s
+                """, (service_id,))
+                service = cur.fetchone()
+                
+                if not service:
+                    return (False, "Услуга не найдена", "SERVICES_buy_service")
+                
+                service_name = service["service_name"]
+                buy_type = "other"
+                
+                # Логика для пакетов встреч
+                if "встреч" in service_name.lower():
+                    match = re.search(r'\d+', service_name)
+                    if match:
+                        meetings_count = int(match.group())
+                        
+                        # Обновляем meetings_as_currency в последней записи пользователя
+                        cur.execute("""
+                            UPDATE user_extra_info_table_3
+                            SET meetings_as_currency = meetings_as_currency + %s
+                            WHERE record_id = (
+                                SELECT record_id
+                                FROM user_extra_info_table_3
+                                WHERE user_id = %s
+                                ORDER BY date_of_stats DESC, record_id DESC
+                                LIMIT 1
+                            )
+                        """, (meetings_count, user_id))
+                        
+                        buy_type = "currency"
+                    else:
+                        return (False, "Не удалось определить количество встреч в названии услуги", "SERVICES_buy_service")
+                
+                # Логика для роли организатора
+                elif service_name == "Роль организатора":
+                    # Проверяем, что пользователь ещё не организатор
+                    cur.execute("""
+                        SELECT is_organizer
+                        FROM user_table_1
+                        WHERE user_id = %s
+                    """, (user_id,))
+                    user = cur.fetchone()
+                    
+                    if not user:
+                        return (False, "Пользователь не найден", "SERVICES_buy_service")
+                    
+                    if user["is_organizer"]:
+                        return (False, "Вы уже являетесь организатором", "SERVICES_buy_service")
+                    
+                    # Обновляем роль
+                    cur.execute("""
+                        UPDATE user_table_1
+                        SET is_organizer = true
+                        WHERE user_id = %s
+                    """, (user_id,))
+                    
+                    buy_type = "role"
+                
+                # Записываем покупку в user_services_table_20
+                cur.execute("""
+                    INSERT INTO user_services_table_20 (service_id, user_id, count_services)
+                    VALUES (%s, %s, 1)
+                """, (service_id, user_id))
+                
+                conn.commit()
+                
+                return {
+                    "success": True,
+                    "service_name": service_name,
+                    "buy_type": buy_type,
+                    "message": "Покупка успешно завершена"
+                }
+    except psycopg.errors.RaiseException as e:
+        return (False, str(e), "SERVICES_buy_service")
+    except Exception as error:
+        return (False, error, "SERVICES_buy_service")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Support
+#------------------------------------------------------------------------------------------------------
+
+def SUPPORT_create_ticket(requester_user_id: int, category: int, message_text: str):
+    """
+    Создает новое обращение в поддержку в таблице support_table_17.
+    Возвращает ticket_id созданного обращения.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO support_table_17 (
+                    requester_user_id,
+                    closed_by_admin_user_id,
+                    category,
+                    message_text,
+                    status
+                ) VALUES (
+                    %s, NULL, %s, %s, 'created'
+                )
+                RETURNING ticket_id;
+                """, (requester_user_id, category, message_text))
+                conn.commit()
+                result = cur.fetchone()
+                return result['ticket_id'] if result else None
+    except Exception as error:
+        return (False, error, "SUPPORT_create_ticket")
+
+
+def SUPPORT_add_photo(ticket_id: int, photo_url: str):
+    """
+    Создает запись о фото обращения в поддержку в таблице support_photos_table_22.
+    Возвращает photo_id созданной записи.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                INSERT INTO support_photos_table_22 (
+                    ticket_id,
+                    photo_url
+                ) VALUES (
+                    %s, %s
+                )
+                RETURNING photo_id;
+                """, (ticket_id, photo_url))
+                conn.commit()
+                result = cur.fetchone()
+                return result['photo_id'] if result else None
+    except Exception as error:
+        return (False, error, "SUPPORT_add_photo")
+
+
+def SUPPORT_create_notification(ticket_id: int, requester_user_id: int, photo_urls: list[str]):
+    """
+    Создает уведомление об обращении в поддержку.
+    - Получает данные тикета и категории
+    - Формирует текст уведомления
+    - Создает запись в notifications_table_4
+    - Отправляет уведомление пользователю в user_notifications_table_5
+    """
+    # Защита: если передали строку вместо списка, обернём в список
+    if isinstance(photo_urls, str):
+        photo_urls = [photo_urls]
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Получаем данные тикета + название категории
+                cur.execute("""
+                    SELECT 
+                        to_char(s.created_at, 'DD.MM.YYYY HH24:MI') AS created_at_formatted,
+                        c.text_category,
+                        s.message_text
+                    FROM support_table_17 s
+                    JOIN categories_to_support_table_23 c 
+                        ON c.category_to_support_id = s.category
+                    WHERE s.ticket_id = %s
+                """, (ticket_id,))
+                ticket = cur.fetchone()
+                
+                if not ticket:
+                    return (False, "Ticket not found", "SUPPORT_create_notification")
+                
+                created_at = ticket['created_at_formatted']
+                category_name = ticket['text_category']
+                message_text = ticket['message_text']
+                
+                # Формируем текст уведомления (без финальной строки — она добавляется на фронтене)
+                notification_text = (
+                    f"Вы отправили заявку в поддержку. Дата: {created_at}. "
+                    f"Категория обращения: {category_name}.\n"
+                    f"Содержимое обращения:\n"
+                    f"{message_text}"
+                )
+                
+                # Создаем уведомление в notifications_table_4
+                cur.execute("""
+                    INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+                    VALUES (NULL, 'обращение в ЦПП', %s)
+                    RETURNING notification_id;
+                """, (notification_text,))
+                result = cur.fetchone()
+                notification_id = result['notification_id']
+                
+                # Сохраняем фото в notification_photos_table_6 (для отображения миниатюр в уведомлениях)
+                for url in photo_urls:
+                    cur.execute("""
+                        INSERT INTO notification_photos_table_6 (notification_id, photo_url)
+                        VALUES (%s, %s);
+                    """, (notification_id, url))
+                
+                # Отправляем уведомление пользователю
+                cur.execute("""
+                    INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+                    VALUES (%s, %s, 'unread')
+                    RETURNING record_id;
+                """, (notification_id, requester_user_id))
+                
+                conn.commit()
+                return {
+                    "success": True,
+                    "notification_id": notification_id
+                }
+    except Exception as error:
+        return (False, error, "SUPPORT_create_notification")

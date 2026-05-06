@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import NavbarNoLogin from '../components/NavbarNoLogin';
 import Footer from '../components/Footer';
+import SupportModalWindow from '../components/SupportModalWindow';
 import './FaqPage.css'
 import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
@@ -17,6 +18,9 @@ const FaqPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [openId, setOpenId] = useState<number | null>(null); // ← ID открытого вопроса
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
+    const [toastState, setToastState] = useState<'hidden' | 'visible' | 'exiting'>('hidden');
+    const [toastMessage, setToastMessage] = useState('');
     const { isAuth } = useSelector((state: RootState) => state.auth);
   
     useEffect(() => {
@@ -73,8 +77,41 @@ const FaqPage: React.FC = () => {
 
         <p className="faq-support">
           Не нашли ответа или столкнулись с проблемами? Обратитесь в{' '}
-          <a href="/faq/support" className="faq-support-link">поддержку</a>
+          <button
+            type="button"
+            className="faq-support-link"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsSupportModalOpen(true);
+            }}
+          >
+            поддержку
+          </button>
         </p>
+
+        <SupportModalWindow
+          isOpen={isSupportModalOpen}
+          onClose={() => setIsSupportModalOpen(false)}
+          onSuccess={() => {
+            setToastMessage('Заявка успешно отправлена. Мы ответим вам в ближайшее время.');
+            setToastState('visible');
+            setTimeout(() => {
+              setToastState('exiting');
+              setTimeout(() => {
+                setToastState('hidden');
+              }, 400);
+            }, 4000);
+          }}
+        />
+
+        {toastState !== 'hidden' && (
+          <div className={`support-toast support-toast--${toastState}`}>
+            <div className="support-toast-content">
+              <span className="support-toast-icon">✓</span>
+              <span className="support-toast-text">{toastMessage}</span>
+            </div>
+          </div>
+        )}
 
         <Footer />
       </div>

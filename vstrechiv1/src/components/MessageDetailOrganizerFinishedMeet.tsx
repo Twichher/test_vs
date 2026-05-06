@@ -286,7 +286,7 @@ export default function MessageDetailOrganizerFinishedMeet({ notification, onClo
           )}
 
           {/* Кнопка отправки результатов */}
-          {!isLoading && registeredUsers.length > 0 && (
+          {!isLoading && (
             <button
               className="message-detail__submit-btn"
               onClick={() => setShowConfirmModal(true)}

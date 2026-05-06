@@ -1,7 +1,7 @@
 #fastapi dev main.py
 #uvicorn main:app --reload
 
-from fastapi import Cookie, FastAPI, HTTPException, Response, Depends
+from fastapi import Cookie, FastAPI, HTTPException, Response, Depends, Form
 from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
@@ -11,11 +11,11 @@ from get_sql import FAQ_get_all_rows, MEETINGS_atted_get_all_info, MEETINGS_get_
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id, USERS_get_settings_info, \
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
-MEETINGS_get_basic_info, USERS_get_notifications
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read
+MEETINGS_get_basic_info, USERS_get_notifications, SERVICES_get_all, SUPPORT_get_categories
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
-UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest
-from minio_defs import upload_photo, upload_meeting_photo
+UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest, ConflictRespondRequest, Service, ServicesResponse, ServiceBuyRequest, ServiceBuyResponse, SupportCategory, SupportCategoriesResponse, CreateSupportRequest, CreateSupportResponse
+from minio_defs import upload_photo, upload_meeting_photo, upload_support_photo
 import base64
 import uuid
 from fastapi import UploadFile, File
@@ -97,6 +97,132 @@ def get_warnings():
         raise HTTPException(status_code=500, detail=str(result[1]))
     
     return {"warnings": result}
+
+
+@app.get("/services", response_model=ServicesResponse)
+def get_services():
+    """
+    Получает список всех услуг в магазине.
+    """
+    result = SERVICES_get_all()
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    
+    return {"services": result}
+
+
+@app.get("/support/categories", response_model=SupportCategoriesResponse)
+def get_support_categories():
+    """
+    Получает список категорий обращений в поддержку.
+    """
+    result = SUPPORT_get_categories()
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    
+    return {"categories": result}
+
+
+@app.post("/support", response_model=CreateSupportResponse)
+def create_support_ticket(
+    request: CreateSupportRequest,
+    current_user_id: int = Depends(get_current_user)
+):
+    """
+    Создает новое обращение в поддержку.
+    Загружает фото в MinIO и сохраняет URL в support_photos_table_22.
+    """
+    try:
+        # 1. Создаем тикет в БД
+        ticket_id = SUPPORT_create_ticket(
+            requester_user_id=current_user_id,
+            category=request.category_id,
+            message_text=request.message_text
+        )
+        
+        if isinstance(ticket_id, tuple):
+            raise HTTPException(status_code=500, detail=f"Failed to create ticket: {ticket_id[1]}")
+        
+        if not ticket_id:
+            raise HTTPException(status_code=500, detail="Failed to create ticket: no ID returned")
+        
+        # 2. Загружаем фото в MinIO и сохраняем в БД
+        photo_urls = []
+        for i, photo_base64 in enumerate(request.photos):
+            try:
+                # Парсим Base64 data URL
+                if ',' in photo_base64:
+                    header, encoded = photo_base64.split(',', 1)
+                else:
+                    encoded = photo_base64
+                
+                # Определяем content-type из header
+                content_type = 'image/jpeg'  # default
+                if 'data:' in photo_base64:
+                    content_type = photo_base64.split(';')[0].replace('data:', '')
+                
+                # Декодируем Base64
+                file_data = base64.b64decode(encoded)
+                
+                # Генерируем имя файла
+                extension = content_type.split('/')[-1] if '/' in content_type else 'jpg'
+                filename = f"support_{ticket_id}_photo_{i}.{extension}"
+                
+                # Загружаем в MinIO
+                upload_result = upload_support_photo(file_data, filename, content_type)
+                
+                if upload_result.get('success'):
+                    photo_url = upload_result['url']
+                    photo_urls.append(photo_url)
+                    
+                    # Сохраняем URL в БД
+                    photo_record = SUPPORT_add_photo(ticket_id, photo_url)
+                    if isinstance(photo_record, tuple):
+                        print(f"Warning: Failed to save photo record: {photo_record[1]}")
+                else:
+                    print(f"Warning: Failed to upload photo {i}: {upload_result.get('error')}")
+                    
+            except Exception as e:
+                print(f"Warning: Error processing photo {i}: {str(e)}")
+        
+        # 3. Создаем уведомление об обращении в поддержку
+        notification_result = SUPPORT_create_notification(
+            ticket_id=ticket_id,
+            requester_user_id=current_user_id,
+            photo_urls=photo_urls
+        )
+        
+        if isinstance(notification_result, tuple):
+            print(f"Warning: Failed to create notification: {notification_result[1]}")
+        
+        return CreateSupportResponse(
+            success=True,
+            ticket_id=ticket_id,
+            message="Ticket created successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/services/buy", response_model=ServiceBuyResponse)
+def buy_service(
+    request: ServiceBuyRequest,
+    current_user_id: int = Depends(get_current_user)
+):
+    """
+    Покупка услуги пользователем.
+    """
+    result = SERVICES_buy_service(request.service_id, current_user_id)
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
+    return result
 
 
 @app.post("/meetings/create", response_model=CreateMeetingResponse)
@@ -645,6 +771,17 @@ def get_user_notifications(_user_id: int, user_id: int = Depends(get_current_use
     if isinstance(result, tuple):
         raise HTTPException(status_code=500, detail=str(result[1]))
 
+    # Защита: psycopg иногда возвращает PostgreSQL массив как строку-литерал
+    for item in result:
+        photo_urls = item.get('photo_urls')
+        if isinstance(photo_urls, str):
+            # PostgreSQL array literal: {elem1,elem2} или просто строка
+            cleaned = photo_urls.strip('{}')
+            if cleaned:
+                item['photo_urls'] = [u.strip().strip('"') for u in cleaned.split(',') if u.strip()]
+            else:
+                item['photo_urls'] = []
+
     return result
 
 
@@ -656,6 +793,51 @@ def mark_notification_as_read(record_id: int, user_id: int = Depends(get_current
     if isinstance(result, tuple):
         raise HTTPException(status_code=400, detail=str(result[1]))
 
+    return result
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to CONFLICTS (обработка missedbyorg + апелляции)
+#------------------------------------------------------------------------------------------------------
+
+@app.put("/notifications/{record_id}/conflict-respond")
+def respond_to_conflict(record_id: int, body: ConflictRespondRequest, user_id: int = Depends(get_current_user)):
+    """Обрабатывает ответ пользователя на конфликт (missedbyorg)"""
+    result = CONFLICTS_respond(record_id, user_id, body.attended)
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
+    return result
+
+
+@app.post("/conflicts/appeal")
+async def create_conflict_appeal(
+    record_id: int = Form(...),
+    proof_text: str | None = Form(None),
+    files: list[UploadFile] = File(default=[]),
+    user_id: int = Depends(get_current_user)
+):
+    """Отправляет апелляцию на конфликт (доказательства присутствия)"""
+    photo_urls = []
+    
+    for file in files:
+        if not file.content_type or not file.content_type.startswith('image/'):
+            raise HTTPException(status_code=400, detail="Все файлы должны быть изображениями")
+        
+        file_data = await file.read()
+        upload_result = upload_meeting_photo(file_data, file.filename, file.content_type)
+        
+        if not upload_result.get("success"):
+            raise HTTPException(status_code=500, detail=upload_result.get("error", "Ошибка загрузки фото"))
+        
+        photo_urls.append(upload_result["url"])
+    
+    result = CONFLICTS_save_appeal(record_id, user_id, proof_text, photo_urls)
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
     return result
 
 

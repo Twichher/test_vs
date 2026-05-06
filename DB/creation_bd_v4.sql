@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS meeting_table_2 (
 
   max_people   INTEGER NOT NULL CHECK (max_people > 0),
 
-	  address      VARCHAR(255),-- как это not null?
+  address      VARCHAR(255),-- как это not null?
   city         VARCHAR(120),-- как это not null?
   district     VARCHAR(120),-- как это not null?
 
@@ -147,9 +147,9 @@ update user_extra_info_table_3
 set meetings_as_currency = 3
 where user_id = 2 
 
-select * from user_extra_info_table_3 
-where user_id = 2
-order by date_of_stats DESC
+select * from user_extra_info_table_3
+where user_id = 11
+order by record_id DESC
 limit 1
 -------------------------------------------------------------------------------
 
@@ -273,14 +273,33 @@ CREATE INDEX IF NOT EXISTS idx_conflict_user_id
   ON conflict_table_7 (user_id);
 
  -- 1. Добавляем колонку type_conflict с дефолтным значением
-  ALTER TABLE conflict_table_7
-  ADD COLUMN IF NOT EXISTS type_conflict VARCHAR(20) NOT NULL DEFAULT 'normal_order';
+ALTER TABLE conflict_table_7
+ADD COLUMN IF NOT EXISTS type_conflict VARCHAR(20) NOT NULL DEFAULT 'normal_order';
 
   -- 2. Добавляем CHECK constraint (только 2 допустимых значения)
-  ALTER TABLE conflict_table_7
-  ADD CONSTRAINT chk_conflict_type CHECK (type_conflict IN ('normal_order', 'extra_order'));
+ALTER TABLE conflict_table_7
+ADD CONSTRAINT chk_conflict_type CHECK (type_conflict IN ('normal_order', 'extra_order'));
 
-select * from conflict_table_7;
+-- поле отвечающее за осведомленность пользователя о конфликте
+-- 0 - пользователь не в курсе конфликта
+-- 1 - пользователь сказал что его не было
+-- 2 - пользователь сказал что он был
+alter table conflict_table_7
+add column if not exists isconflict INTEGER NOT NULL DEFAULT 0;
+
+ALTER TABLE conflict_table_7
+ADD CONSTRAINT chk_is_conflict CHECK (isconflict IN (0, 1));
+
+  ALTER TABLE conflict_table_7
+  DROP CONSTRAINT IF EXISTS chk_is_conflict;
+
+  ALTER TABLE conflict_table_7
+  ADD CONSTRAINT chk_is_conflict CHECK (isconflict IN (0, 1, 2));
+
+ALTER TABLE conflict_table_7
+ADD COLUMN IF NOT EXISTS proof_text TEXT;
+  
+select * from conflict_table_7 where meeting_id = 34;
 -------------------------------------------------------------------------------
 
 -- Table: meeting_rating_table_8
@@ -348,6 +367,16 @@ ALTER COLUMN proof_photo_url DROP NOT NULL;
 -- 2. Добавляем новую колонку proof_text
 ALTER TABLE conflict_photos_table_9
 ADD COLUMN IF NOT EXISTS proof_text TEXT;
+
+  ALTER TABLE conflict_photos_table_9
+  DROP COLUMN IF EXISTS proof_text;
+
+  SELECT column_name, data_type, is_nullable
+  FROM information_schema.columns
+  WHERE table_name = 'conflict_photos_table_9'
+  ORDER BY ordinal_position;
+
+ select * from conflict_photos_table_9 where conflict_id = 10
 -------------------------------------------------------------------------------
 
 -- categories_table_10
@@ -545,6 +574,16 @@ CREATE INDEX IF NOT EXISTS idx_support_requester_user_id
 CREATE INDEX IF NOT EXISTS idx_support_status
   ON support_table_17 (status);
 
+select * from support_table_17
+
+DELETE FROM support_table_17;
+
+ALTER TABLE support_table_17
+DROP COLUMN category;
+
+ALTER TABLE support_table_17
+ADD COLUMN category BIGINT NOT NULL
+REFERENCES categories_to_support_table_23(category_to_support_id);
 -------------------------------------------------------------------------------
 
 -- Table: faq_table_18
@@ -554,6 +593,8 @@ CREATE TABLE IF NOT EXISTS faq_table_18(
 	question_text TEXT,
 	question_answer TEXT
 );
+
+select * from faq_table_18
 
 -------------------------------------------------------------------------------
 
@@ -567,6 +608,7 @@ CREATE TABLE IF NOT EXISTS services_table_19 (
   service_price NUMERIC(12,2) NOT NULL CHECK (service_price >= 0)
 );
 
+select * from services_table_19
 -------------------------------------------------------------------------------
 
 -- Table: user_services_table_20
@@ -634,6 +676,7 @@ CREATE TABLE IF NOT EXISTS support_photos_table_22 (
 CREATE INDEX IF NOT EXISTS idx_support_photos_ticket_id
   ON support_photos_table_22 (ticket_id);
 
+select * from support_photos_table_22 where ticket_id = 10
 -------------------------------------------------------------------------------
 
 -- Table: categories_to_support_table_23
@@ -643,6 +686,7 @@ CREATE TABLE IF NOT EXISTS categories_to_support_table_23(
 	text_category VARCHAR(255) NOT NULL
 )
 
+select * from categories_to_support_table_23
 -------------------------------------------------------------------------------
 
 -- Table: start_end_trial_period_table_25
@@ -658,6 +702,7 @@ CREATE TABLE IF NOT EXISTS start_end_trial_period_table_25(
 	  )
 );
 
+select * from start_end_trial_period_table_25
 -------------------------------------------------------------------------------
 
 -- Table: meeting_rating_info_table_26

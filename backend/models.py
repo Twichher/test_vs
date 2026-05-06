@@ -314,3 +314,70 @@ class SaveUserRatingsRequest(BaseModel):
     meeting_rating: int | None = None  # 1-10 (оценка самой встречи)
     user_ratings: List[UserToUserRating] = []  # оценки других пользователей
     has_extra_people: bool | None = None  # True = проголосовал "за" missedbyorg, False/None = проголосовал "против" или не голосовал
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для конфликтов (missedbyorg)
+#------------------------------------------------------------------------------------------------------
+
+class ConflictRespondRequest(BaseModel):
+    attended: bool
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для магазина услуг
+#------------------------------------------------------------------------------------------------------
+
+class Service(BaseModel):
+    """Модель услуги в магазине"""
+    service_id: int
+    service_name: str
+    service_description: str | None = None
+    service_price: float
+
+
+class ServicesResponse(BaseModel):
+    """Ответ со списком услуг"""
+    services: list[Service]
+
+
+class ServiceBuyRequest(BaseModel):
+    """Запрос на покупку услуги"""
+    service_id: int
+
+
+class ServiceBuyResponse(BaseModel):
+    """Ответ при покупке услуги"""
+    success: bool
+    service_name: str
+    buy_type: str  # 'currency' | 'role'
+    message: str | None = None
+
+
+#------------------------------------------------------------------------------------------------------
+# Модели для поддержки
+#------------------------------------------------------------------------------------------------------
+
+class SupportCategory(BaseModel):
+    """Категория обращения в поддержку"""
+    category_to_support_id: int
+    text_category: str
+
+
+class SupportCategoriesResponse(BaseModel):
+    """Ответ со списком категорий поддержки"""
+    categories: list[SupportCategory]
+
+
+class CreateSupportRequest(BaseModel):
+    """Запрос на создание обращения в поддержку"""
+    category_id: int
+    message_text: str
+    photos: list[str] = []  # Base64 data URLs
+
+
+class CreateSupportResponse(BaseModel):
+    """Ответ при создании обращения в поддержку"""
+    success: bool
+    ticket_id: int | None = None
+    message: str | None = None

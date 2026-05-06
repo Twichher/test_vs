@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import LoginModal from '../pages/LoginModal';
+import './NavbarNoLogin.css';
 
 
 const NavbarNoLogin: React.FC = () => {

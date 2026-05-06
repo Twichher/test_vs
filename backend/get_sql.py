@@ -1111,6 +1111,56 @@ def WARNINGS_get_all():
 
 
 #------------------------------------------------------------------------------------------------------
+# roots to Support Categories
+#------------------------------------------------------------------------------------------------------
+
+def SUPPORT_get_categories():
+    """
+    Получает список категорий обращений в поддержку из таблицы categories_to_support_table_23.
+    Возвращает: category_to_support_id, text_category
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    category_to_support_id,
+                    text_category
+                FROM categories_to_support_table_23
+                ORDER BY category_to_support_id;
+                """)
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "SUPPORT_get_categories")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Services (Shop)
+#------------------------------------------------------------------------------------------------------
+
+def SERVICES_get_all():
+    """
+    Получает список всех услуг из таблицы services_table_19.
+    Возвращает: service_id, service_name, service_description, service_price
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    service_id,
+                    service_name,
+                    service_description,
+                    service_price
+                FROM services_table_19
+                ORDER BY service_id;
+                """)
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "SERVICES_get_all")
+
+
+#------------------------------------------------------------------------------------------------------
 # roots to Meeting Creation
 #------------------------------------------------------------------------------------------------------
 

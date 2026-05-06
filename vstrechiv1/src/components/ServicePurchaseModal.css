@@ -1,0 +1,200 @@
+.service-purchase-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: servicePurchaseOverlayFadeIn 0.3s ease forwards;
+}
+
+.service-purchase-overlay--closing {
+  animation: servicePurchaseOverlayFadeOut 0.3s ease forwards;
+}
+
+@keyframes servicePurchaseOverlayFadeIn {
+  from {
+    background: rgba(0, 0, 0, 0);
+  }
+  to {
+    background: rgba(0, 0, 0, 0.5);
+  }
+}
+
+@keyframes servicePurchaseOverlayFadeOut {
+  from {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  to {
+    background: rgba(0, 0, 0, 0);
+  }
+}
+
+.service-purchase-modal {
+  background: #FFFCF1;
+  border-radius: 20px;
+  padding: 40px 48px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  opacity: 0;
+  transform: scale(0.9);
+  animation: servicePurchaseModalFadeIn 0.3s ease 0.1s forwards;
+}
+
+.service-purchase-modal--closing {
+  animation: servicePurchaseModalFadeOut 0.3s ease forwards;
+}
+
+@keyframes servicePurchaseModalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes servicePurchaseModalFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.service-purchase-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 8px;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.service-purchase-close:hover {
+  color: #222;
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.service-purchase-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.service-purchase-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.service-purchase-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-purchase-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.service-purchase-value {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.service-purchase-value--price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a8a62;
+}
+
+.service-purchase-hint {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+  text-align: center;
+  font-style: italic;
+}
+
+.service-purchase-error {
+  margin: 0;
+  font-size: 14px;
+  color: #e53935;
+  text-align: center;
+  background: #fff0f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.service-purchase-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.service-purchase-btn {
+  flex: 1;
+  padding: 14px 24px;
+  border: 2px solid #000;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.service-purchase-btn--confirm {
+  background: #000;
+  color: #FFFCF1;
+}
+
+.service-purchase-btn--confirm:hover {
+  background: #333;
+}
+
+.service-purchase-btn--cancel {
+  background: transparent;
+  color: #000;
+}
+
+.service-purchase-btn--cancel:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.service-purchase-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.service-purchase-close:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

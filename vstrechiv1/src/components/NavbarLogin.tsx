@@ -1,18 +1,33 @@
+import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import type { AppDispatch, RootState } from '../slices/store';
 import { BsLightningChargeFill } from 'react-icons/bs';
 import { MdOutlineExitToApp } from 'react-icons/md';
-import { clearUser } from '../slices/authSlice';
+import { clearUser, refreshUser } from '../slices/authSlice';
 import './NavbarLogin.css'
 
 const NavbarLogin: React.FC = () => {
-  const { first_name, last_name, meetings_as_currency } = useSelector(
+  const { first_name, last_name, meetings_as_currency, isAuth } = useSelector(
     (state: RootState) => state.auth
   );
 
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+
+  // Polling: обновляем данные пользователя каждые 30 секунд
+  useEffect(() => {
+    if (!isAuth) return;
+
+    // Первый запрос сразу при монтировании
+    dispatch(refreshUser());
+
+    const intervalId = setInterval(() => {
+      dispatch(refreshUser());
+    }, 30000); // 30 секунд
+
+    return () => clearInterval(intervalId);
+  }, [isAuth, dispatch]);
 
   const handleLogout = (): void => {
     // Удалить куку на бэкенде

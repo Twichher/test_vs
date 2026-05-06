@@ -93,8 +93,14 @@
     color: #5dbea3;
     font-weight: 600;
     text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
   }
-  
+
   .faq-support-link:hover {
     text-decoration: underline;
   }
