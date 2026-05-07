@@ -381,3 +381,33 @@ class CreateSupportResponse(BaseModel):
     success: bool
     ticket_id: int | None = None
     message: str | None = None
+
+
+class SupportTicketItem(BaseModel):
+    """Элемент списка обращений в поддержку (для админ-панели)"""
+    ticket_id: int
+    requester_user_id: int
+    message_text: str
+    status: str
+    created_at_formatted: str
+    text_category: str
+    has_photos: bool
+
+
+class SupportTicketsResponse(BaseModel):
+    """Ответ со списком обращений в поддержку"""
+    tickets: list[SupportTicketItem]
+
+
+class SupportTicketDetailResponse(BaseModel):
+    """Детальная информация об обращении в поддержку"""
+    ticket_id: int
+    requester_user_id: int
+    message_text: str
+    status: str
+    closed_by_admin_user_id: int | None = None
+    created_at_formatted: str
+    text_category: str
+    has_photos: bool
+    requester_email: str
+    photo_urls: list[str]

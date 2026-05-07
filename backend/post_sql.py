@@ -1079,6 +1079,82 @@ def SUPPORT_add_photo(ticket_id: int, photo_url: str):
         return (False, error, "SUPPORT_add_photo")
 
 
+def SUPPORT_accept_ticket(ticket_id: int, admin_user_id: int):
+    """
+    Принимает обращение в поддержку администратором.
+    Устанавливает status='in_progress' и closed_by_admin_user_id.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE support_table_17
+                    SET status = 'in_progress',
+                        closed_by_admin_user_id = %s
+                    WHERE ticket_id = %s
+                      AND status = 'created'
+                      AND closed_by_admin_user_id IS NULL
+                    RETURNING ticket_id;
+                """, (admin_user_id, ticket_id))
+                result = cur.fetchone()
+                conn.commit()
+                if not result:
+                    return (False, "Ticket not found or already assigned", "SUPPORT_accept_ticket")
+                return {"success": True, "ticket_id": result['ticket_id']}
+    except Exception as error:
+        return (False, error, "SUPPORT_accept_ticket")
+
+
+def SUPPORT_reject_ticket(ticket_id: int):
+    """
+    Отказаться от обращения в поддержку.
+    Сбрасывает status='created' и closed_by_admin_user_id=NULL.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE support_table_17
+                    SET status = 'created',
+                        closed_by_admin_user_id = NULL
+                    WHERE ticket_id = %s
+                      AND status = 'in_progress'
+                    RETURNING ticket_id;
+                """, (ticket_id,))
+                result = cur.fetchone()
+                conn.commit()
+                if not result:
+                    return (False, "Ticket not found or not in progress", "SUPPORT_reject_ticket")
+                return {"success": True, "ticket_id": result['ticket_id']}
+    except Exception as error:
+        return (False, error, "SUPPORT_reject_ticket")
+
+
+def SUPPORT_resolve_ticket(ticket_id: int, admin_user_id: int):
+    """
+    Завершить обращение в поддержку.
+    Устанавливает status='resolved'.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE support_table_17
+                    SET status = 'resolved'
+                    WHERE ticket_id = %s
+                      AND status = 'in_progress'
+                      AND closed_by_admin_user_id = %s
+                    RETURNING ticket_id;
+                """, (ticket_id, admin_user_id))
+                result = cur.fetchone()
+                conn.commit()
+                if not result:
+                    return (False, "Ticket not found or not assigned to you", "SUPPORT_resolve_ticket")
+                return {"success": True, "ticket_id": result['ticket_id']}
+    except Exception as error:
+        return (False, error, "SUPPORT_resolve_ticket")
+
+
 def SUPPORT_create_notification(ticket_id: int, requester_user_id: int, photo_urls: list[str]):
     """
     Создает уведомление об обращении в поддержку.

@@ -1,0 +1,132 @@
+.support-admin-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.support-admin-page__body {
+  flex: 1;
+  display: flex;
+}
+
+.support-admin-page__main {
+  flex: 1;
+  padding: 32px 40px;
+  margin-left: 120px;
+}
+
+.support-admin-page__forbidden {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  font-size: 24px;
+  font-weight: 600;
+  color: #e74c3c;
+}
+
+.support-admin-page__title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 24px 0;
+}
+
+.support-admin-page__loading,
+.support-admin-page__error,
+.support-admin-page__empty {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 16px;
+  color: #666;
+}
+
+.support-admin-page__error {
+  color: #e74c3c;
+}
+
+.support-admin-page__tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.support-tab-btn {
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  background: #fff;
+  border: 2px solid;
+}
+
+/* Новые — красная */
+.support-tab-btn--new {
+  border-color: #e74c3c;
+  color: #e74c3c;
+}
+.support-tab-btn--new:hover {
+  background: #fdf2f2;
+}
+.support-tab-btn--new.support-tab-btn--active {
+  background: #e74c3c;
+  color: #fff;
+}
+.support-tab-btn--new.support-tab-btn--active:hover {
+  background: #ff6b6b;
+  border-color: #ff6b6b;
+}
+
+/* Принятые — жёлтая */
+.support-tab-btn--in-progress {
+  border-color: #f1c40f;
+  color: #b38f00;
+}
+.support-tab-btn--in-progress:hover {
+  background: #fffbf0;
+}
+.support-tab-btn--in-progress.support-tab-btn--active {
+  background: #f1c40f;
+  color: #333;
+}
+.support-tab-btn--in-progress.support-tab-btn--active:hover {
+  background: #f9ca24;
+  border-color: #f9ca24;
+}
+
+/* Завершённые — зелёная */
+.support-tab-btn--resolved {
+  border-color: #2ecc71;
+  color: #27ae60;
+}
+.support-tab-btn--resolved:hover {
+  background: #f0faf6;
+}
+.support-tab-btn--resolved.support-tab-btn--active {
+  background: #2ecc71;
+  color: #fff;
+}
+.support-tab-btn--resolved.support-tab-btn--active:hover {
+  background: #55efc4;
+  border-color: #55efc4;
+}
+
+.support-admin-page__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .support-admin-page__main {
+    margin-left: 0;
+    padding: 24px 20px;
+  }
+
+  .support-admin-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

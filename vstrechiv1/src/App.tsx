@@ -15,6 +15,8 @@ import StatsPage from './pages/StatsPage';
 import CreateMeetingPage from './pages/CreateMeetingPage';
 import MessagesPage from './pages/MessagesPage';
 import ShopPage from './pages/ShopPage';
+import SupportAdminPage from './pages/SupportAdminPage';
+import MoreOrderSupportPage from './pages/MoreOrderSupportPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,6 +51,8 @@ function App() {
       <Route path="/meeting/info_history/:meeting_id" element={<OneMeetingPageHistory />} />
       <Route path="/meeting/create" element={<CreateMeetingPage />} />
       <Route path="/shop" element={<ShopPage />} />
+      <Route path="/support" element={<SupportAdminPage />} />
+      <Route path="/support/:ticket_id" element={<MoreOrderSupportPage />} />
     </Routes>
   );
 }   

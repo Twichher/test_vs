@@ -1134,6 +1134,156 @@ def SUPPORT_get_categories():
         return (False, error, "SUPPORT_get_categories")
 
 
+def SUPPORT_get_new_tickets():
+    """
+    Получает новые обращения в поддержку (status='created' и closed_by_admin_user_id IS NULL),
+    отсортированные по ticket_id по возрастанию.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    s.ticket_id,
+                    s.requester_user_id,
+                    s.message_text,
+                    s.status,
+                    to_char(s.created_at, 'DD.MM.YYYY HH24:MI') AS created_at_formatted,
+                    c.text_category,
+                    EXISTS (
+                        SELECT 1
+                        FROM support_photos_table_22 sp
+                        WHERE sp.ticket_id = s.ticket_id
+                    ) AS has_photos
+                FROM support_table_17 s
+                JOIN categories_to_support_table_23 c
+                    ON c.category_to_support_id = s.category
+                WHERE s.status = 'created'
+                  AND s.closed_by_admin_user_id IS NULL
+                ORDER BY s.ticket_id ASC;
+                """)
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "SUPPORT_get_new_tickets")
+
+
+def SUPPORT_get_in_progress_tickets(admin_user_id: int):
+    """
+    Получает принятые обращения в поддержку (status='in_progress')
+    для конкретного администратора.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    s.ticket_id,
+                    s.requester_user_id,
+                    s.message_text,
+                    s.status,
+                    to_char(s.created_at, 'DD.MM.YYYY HH24:MI') AS created_at_formatted,
+                    c.text_category,
+                    EXISTS (
+                        SELECT 1
+                        FROM support_photos_table_22 sp
+                        WHERE sp.ticket_id = s.ticket_id
+                    ) AS has_photos
+                FROM support_table_17 s
+                JOIN categories_to_support_table_23 c
+                    ON c.category_to_support_id = s.category
+                WHERE s.status = 'in_progress'
+                  AND s.closed_by_admin_user_id = %s
+                ORDER BY s.ticket_id ASC;
+                """, (admin_user_id,))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "SUPPORT_get_in_progress_tickets")
+
+
+def SUPPORT_get_resolved_tickets(admin_user_id: int):
+    """
+    Получает завершённые обращения в поддержку (status='resolved')
+    для конкретного администратора.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                SELECT
+                    s.ticket_id,
+                    s.requester_user_id,
+                    s.message_text,
+                    s.status,
+                    to_char(s.created_at, 'DD.MM.YYYY HH24:MI') AS created_at_formatted,
+                    c.text_category,
+                    EXISTS (
+                        SELECT 1
+                        FROM support_photos_table_22 sp
+                        WHERE sp.ticket_id = s.ticket_id
+                    ) AS has_photos
+                FROM support_table_17 s
+                JOIN categories_to_support_table_23 c
+                    ON c.category_to_support_id = s.category
+                WHERE s.status = 'resolved'
+                  AND s.closed_by_admin_user_id = %s
+                ORDER BY s.ticket_id ASC;
+                """, (admin_user_id,))
+                return cur.fetchall()
+    except Exception as error:
+        return (False, error, "SUPPORT_get_resolved_tickets")
+
+
+def SUPPORT_get_ticket_detail(ticket_id: int):
+    """
+    Получает детальную информацию об обращении в поддержку по ticket_id.
+    Возвращает: данные тикета + список URL фото из support_photos_table_22.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Основные данные тикета
+                cur.execute("""
+                SELECT
+                    s.ticket_id,
+                    s.requester_user_id,
+                    s.message_text,
+                    s.status,
+                    s.closed_by_admin_user_id,
+                    to_char(s.created_at, 'DD.MM.YYYY HH24:MI') AS created_at_formatted,
+                    c.text_category,
+                    u.email AS requester_email,
+                    EXISTS (
+                        SELECT 1
+                        FROM support_photos_table_22 sp
+                        WHERE sp.ticket_id = s.ticket_id
+                    ) AS has_photos
+                FROM support_table_17 s
+                JOIN categories_to_support_table_23 c
+                    ON c.category_to_support_id = s.category
+                JOIN user_table_1 u
+                    ON u.user_id = s.requester_user_id
+                WHERE s.ticket_id = %s;
+                """, (ticket_id,))
+                ticket = cur.fetchone()
+
+                if not ticket:
+                    return (False, "Ticket not found", "SUPPORT_get_ticket_detail")
+
+                # Фото тикета
+                cur.execute("""
+                SELECT photo_url
+                FROM support_photos_table_22
+                WHERE ticket_id = %s
+                ORDER BY photo_id ASC;
+                """, (ticket_id,))
+                photo_rows = cur.fetchall()
+                ticket['photo_urls'] = [row['photo_url'] for row in photo_rows]
+
+                return ticket
+    except Exception as error:
+        return (False, error, "SUPPORT_get_ticket_detail")
+
+
 #------------------------------------------------------------------------------------------------------
 # roots to Services (Shop)
 #------------------------------------------------------------------------------------------------------

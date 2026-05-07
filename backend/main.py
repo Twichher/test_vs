@@ -11,10 +11,10 @@ from get_sql import FAQ_get_all_rows, MEETINGS_atted_get_all_info, MEETINGS_get_
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id, USERS_get_settings_info, \
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
-MEETINGS_get_basic_info, USERS_get_notifications, SERVICES_get_all, SUPPORT_get_categories
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification
+MEETINGS_get_basic_info, USERS_get_notifications, SERVICES_get_all, SUPPORT_get_categories, SUPPORT_get_new_tickets, SUPPORT_get_in_progress_tickets, SUPPORT_get_resolved_tickets, SUPPORT_get_ticket_detail
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification, SUPPORT_accept_ticket, SUPPORT_reject_ticket, SUPPORT_resolve_ticket
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
-UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest, ConflictRespondRequest, Service, ServicesResponse, ServiceBuyRequest, ServiceBuyResponse, SupportCategory, SupportCategoriesResponse, CreateSupportRequest, CreateSupportResponse
+UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest, ConflictRespondRequest, Service, ServicesResponse, ServiceBuyRequest, ServiceBuyResponse, SupportCategory, SupportCategoriesResponse, CreateSupportRequest, CreateSupportResponse, SupportTicketItem, SupportTicketsResponse, SupportTicketDetailResponse
 from minio_defs import upload_photo, upload_meeting_photo, upload_support_photo
 import base64
 import uuid
@@ -48,6 +48,16 @@ def get_current_user(access_token: str = Cookie(default=None)):
         return user_id
     except Exception:
         raise HTTPException(status_code=401, detail="Токен невалиден")
+
+
+def get_current_admin_user(access_token: str = Cookie(default=None)):
+    user_id = get_current_user(access_token)
+    user_info = USERS_get_info_by_id(user_id)
+    if isinstance(user_info, tuple):
+        raise HTTPException(status_code=500, detail="Ошибка проверки прав администратора")
+    if not user_info or not user_info.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Доступ запрещен: требуются права администратора")
+    return user_id
 
 
 def create_jwt_token(user_id: int) -> str:
@@ -207,6 +217,77 @@ def create_support_ticket(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/support/tickets/new", response_model=SupportTicketsResponse)
+def get_support_tickets_new(admin_user_id: int = Depends(get_current_admin_user)):
+    """Новые обращения (status='created', не назначены админу). Только для администраторов."""
+    result = SUPPORT_get_new_tickets()
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return SupportTicketsResponse(tickets=[SupportTicketItem(**row) for row in result])
+
+
+@app.get("/support/tickets/in-progress", response_model=SupportTicketsResponse)
+def get_support_tickets_in_progress(admin_user_id: int = Depends(get_current_admin_user)):
+    """Принятые обращения (status='in_progress', назначены текущему админу)."""
+    result = SUPPORT_get_in_progress_tickets(admin_user_id)
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return SupportTicketsResponse(tickets=[SupportTicketItem(**row) for row in result])
+
+
+@app.get("/support/tickets/resolved", response_model=SupportTicketsResponse)
+def get_support_tickets_resolved(admin_user_id: int = Depends(get_current_admin_user)):
+    """Завершённые обращения (status='resolved', закрыты текущим админом)."""
+    result = SUPPORT_get_resolved_tickets(admin_user_id)
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return SupportTicketsResponse(tickets=[SupportTicketItem(**row) for row in result])
+
+
+@app.get("/support/tickets/{ticket_id}", response_model=SupportTicketDetailResponse)
+def get_support_ticket_detail(ticket_id: int, admin_user_id: int = Depends(get_current_admin_user)):
+    """Детальная информация об обращении в поддержку. Только для администраторов."""
+    result = SUPPORT_get_ticket_detail(ticket_id)
+    if isinstance(result, tuple):
+        if result[1] == "Ticket not found":
+            raise HTTPException(status_code=404, detail="Данной заявки нет")
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return SupportTicketDetailResponse(**result)
+
+
+@app.put("/support/tickets/{ticket_id}/accept")
+def accept_support_ticket(ticket_id: int, admin_user_id: int = Depends(get_current_admin_user)):
+    """Принять обращение в поддержку (назначить на себя). Только для администраторов."""
+    result = SUPPORT_accept_ticket(ticket_id, admin_user_id)
+    if isinstance(result, tuple):
+        if result[1] == "Ticket not found or already assigned":
+            raise HTTPException(status_code=409, detail="Заявка не найдена или уже назначена")
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return {"success": True, "ticket_id": result["ticket_id"]}
+
+
+@app.put("/support/tickets/{ticket_id}/reject")
+def reject_support_ticket(ticket_id: int, admin_user_id: int = Depends(get_current_admin_user)):
+    """Отказаться от обращения в поддержку (вернуть в 'created'). Только для администраторов."""
+    result = SUPPORT_reject_ticket(ticket_id)
+    if isinstance(result, tuple):
+        if result[1] == "Ticket not found or not in progress":
+            raise HTTPException(status_code=409, detail="Заявка не найдена или не в статусе 'Принята'")
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return {"success": True, "ticket_id": result["ticket_id"]}
+
+
+@app.put("/support/tickets/{ticket_id}/resolve")
+def resolve_support_ticket(ticket_id: int, admin_user_id: int = Depends(get_current_admin_user)):
+    """Завершить обращение в поддержку. Только для администраторов."""
+    result = SUPPORT_resolve_ticket(ticket_id, admin_user_id)
+    if isinstance(result, tuple):
+        if result[1] == "Ticket not found or not assigned to you":
+            raise HTTPException(status_code=409, detail="Заявка не найдена или не назначена на вас")
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return {"success": True, "ticket_id": result["ticket_id"]}
 
 
 @app.post("/services/buy", response_model=ServiceBuyResponse)

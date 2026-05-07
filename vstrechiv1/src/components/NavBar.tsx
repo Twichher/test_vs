@@ -1,4 +1,4 @@
-import { FiUser, FiSettings, FiBarChart2, FiMessageSquare, FiShoppingCart } from 'react-icons/fi';
+import { FiUser, FiSettings, FiBarChart2, FiMessageSquare, FiShoppingCart, FiShield } from 'react-icons/fi';
 import './NavBar.css';
 import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
@@ -17,7 +17,7 @@ const NavBar: React.FC<NavBarProps> = ({ onChange }) => {
     { key: 'shop',     icon: <FiShoppingCart size={24} />, path: '/shop' },
   ] as const;
 
-  const { user_id } = useSelector((state: RootState) => state.auth);
+  const { user_id, is_admin } = useSelector((state: RootState) => state.auth);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -28,6 +28,10 @@ const NavBar: React.FC<NavBarProps> = ({ onChange }) => {
     if (key === 'messages') navigate(`/messages`);
     if (key === 'shop') navigate(`/shop`);
     onChange?.(key);
+  };
+
+  const handleAdminClick = () => {
+    navigate('/support');
   };
 
   return (
@@ -44,6 +48,15 @@ const NavBar: React.FC<NavBarProps> = ({ onChange }) => {
           </button>
         );
       })}
+      {is_admin && (
+        <button
+          className={`settings-icon settings-icon--admin ${location.pathname.startsWith('/support') ? 'settings-icon--admin-active' : ''}`}
+          onClick={handleAdminClick}
+          title="Обращения в поддержку"
+        >
+          <FiShield size={24} />
+        </button>
+      )}
     </div>
   );
 };

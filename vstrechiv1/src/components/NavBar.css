@@ -36,3 +36,22 @@
 .settings-icon--active {
   color: #3ecfaa;
 }
+
+.settings-icon--admin {
+  color: #e74c3c;
+}
+
+.settings-icon--admin:hover {
+  color: #c0392b;
+  background: #fdf2f2;
+}
+
+.settings-icon--admin-active {
+  color: #fff;
+  background: #e74c3c;
+}
+
+.settings-icon--admin-active:hover {
+  color: #fff;
+  background: #c0392b;
+}
