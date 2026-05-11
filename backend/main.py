@@ -12,8 +12,8 @@ CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_a
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
 MEETINGS_get_basic_info, USERS_get_notifications, SERVICES_get_all, SUPPORT_get_categories, SUPPORT_get_new_tickets, SUPPORT_get_in_progress_tickets, SUPPORT_get_resolved_tickets, SUPPORT_get_ticket_detail
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification, SUPPORT_accept_ticket, SUPPORT_reject_ticket, SUPPORT_resolve_ticket
-from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification, SUPPORT_accept_ticket, SUPPORT_reject_ticket, SUPPORT_resolve_ticket, USERS_create_user
+from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, RegisterRequest, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
 UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest, ConflictRespondRequest, Service, ServicesResponse, ServiceBuyRequest, ServiceBuyResponse, SupportCategory, SupportCategoriesResponse, CreateSupportRequest, CreateSupportResponse, SupportTicketItem, SupportTicketsResponse, SupportTicketDetailResponse
 from minio_defs import upload_photo, upload_meeting_photo, upload_support_photo
 import base64
@@ -690,6 +690,53 @@ def get_atted_missed_users(meeting_id : int):
 #------------------------------------------------------------------------------------------------------
 #roots to USERS
 #------------------------------------------------------------------------------------------------------
+
+
+@app.post("/register", response_model=UserResp)
+def register_user(request: RegisterRequest, response: Response):
+    """
+    Регистрация нового пользователя (Шаг 1).
+    Создаёт аккаунт, выдаёт JWT токен в httpOnly cookie.
+    """
+    # Валидация паролей
+    if request.password != request.confirm_password:
+        raise HTTPException(status_code=400, detail="Пароли не совпадают")
+    
+    if len(request.password) < 6:
+        raise HTTPException(status_code=400, detail="Пароль должен содержать минимум 6 символов")
+    
+    # Валидация пола
+    if request.gender not in ['M', 'F']:
+        raise HTTPException(status_code=400, detail="Неверное значение пола")
+    
+    # Валидация email (простая)
+    if '@' not in request.email or '.' not in request.email.split('@')[-1]:
+        raise HTTPException(status_code=400, detail="Неверный формат email")
+    
+    result = USERS_create_user(
+        first_name=request.first_name,
+        last_name=request.last_name,
+        middle_name=request.middle_name,
+        email=request.email,
+        password=request.password,
+        birth_date=request.birth_date,
+        gender=request.gender
+    )
+    
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=400, detail=str(result[1]))
+    
+    # Создаём JWT токен
+    token = create_jwt_token(result["user_id"])
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        max_age=604800,
+        samesite="lax"
+    )
+    
+    return result
 
 
 @app.post("/login", response_model=UserResp)

@@ -1,0 +1,153 @@
+.step-personal {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 20px 30px;
+}
+
+.step-personal__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.3;
+}
+
+.step-personal__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.step-personal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.step-personal__label {
+  font-size: 16px;
+  color: #333;
+}
+
+.step-personal__input,
+.step-personal__select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #000;
+  border-radius: 12px;
+  font-size: 16px;
+  color: #333;
+  background: white;
+  outline: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+}
+
+.step-personal__input:focus,
+.step-personal__select:focus {
+  border-color: #3ecfaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.step-personal__input.error,
+.step-personal__select.error {
+  border-color: #e53935;
+}
+
+.step-personal__input.error:focus,
+.step-personal__select.error:focus {
+  box-shadow: 0 0 0 2px rgba(229, 57, 53, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.step-personal__select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+  padding-right: 40px;
+}
+
+.step-personal__select--full {
+  width: 100%;
+}
+
+.step-personal__birth-row {
+  display: flex;
+  gap: 10px;
+}
+
+.step-personal__birth-row .step-personal__select {
+  flex: 1;
+  min-width: 0;
+}
+
+.step-personal__error {
+  font-size: 12px;
+  color: #e53935;
+  margin-top: 1px;
+}
+
+.step-personal__submit-error {
+  font-size: 14px;
+  color: #e53935;
+  text-align: center;
+  padding: 10px;
+  background: #ffebee;
+  border-radius: 8px;
+}
+
+.step-personal__button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 12px;
+  background: #3ecfaa;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.3);
+}
+
+.step-personal__button:hover:not(:disabled) {
+  background: #2db894;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(62, 207, 170, 0.4);
+}
+
+.step-personal__button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.step-personal__button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.step-personal__login-text {
+  text-align: center;
+  font-size: 16px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.step-personal__login-link {
+  background: none;
+  border: none;
+  color: #3ecfaa;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.step-personal__login-link:hover {
+  color: #2db894;
+}

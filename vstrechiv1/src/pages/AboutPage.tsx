@@ -4,9 +4,11 @@ import './AboutPage.css'
 import { useSelector } from 'react-redux';
 import type { RootState } from '../slices/store';
 import NavbarLogin from '../components/NavbarLogin';
+import { useNavigate } from 'react-router-dom';
 
 const AboutPage: React.FC = () => {
   const { isAuth } = useSelector((state: RootState) => state.auth);
+  const navigate = useNavigate();
   return (
     <div className="about-page">
       {isAuth ? <NavbarLogin /> : <NavbarNoLogin />}
@@ -39,7 +41,9 @@ const AboutPage: React.FC = () => {
           Приходя на встречу, вы можете быть уверены, что <b>все вам рады</b> и пришли{' '}
           <b>выслушать</b> именно <b>ваше мнение</b>!
         </p>
-        <button className="cta-button">Начать общаться!</button>
+        <button className="cta-button" onClick={() => navigate('/registration')}>
+          Начать общаться!
+        </button>
       </main>
       <Footer />
     </div>

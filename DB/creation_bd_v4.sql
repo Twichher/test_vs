@@ -214,11 +214,13 @@ ADD COLUMN israted BIGINT NOT NULL DEFAULT 0
 	-- 1 - пользователь оценил 
 
 select * from user_notifications_table_5
-where record_id = 35
+where user_id = 8
 
 update user_notifications_table_5
 set status = 'unread'
 where record_id = 35;
+
+
 -------------------------------------------------------------------------------
 
 -- Table: notification_photos_table_6
@@ -237,6 +239,10 @@ CREATE TABLE IF NOT EXISTS notification_photos_table_6 (
 CREATE INDEX IF NOT EXISTS idx_notification_photos_notification_id
   ON notification_photos_table_6 (notification_id);
 
+select * from notification_photos_table_6
+order by uploaded_at DESC
+
+DELETE FROM notification_photos_table_6 WHERE LENGTH(photo_url) = 1;
 -------------------------------------------------------------------------------
 
 -- Table: conflict_table_7
@@ -445,6 +451,7 @@ CREATE INDEX IF NOT EXISTS idx_user_categories_user_id
 CREATE INDEX IF NOT EXISTS idx_user_categories_category_id
   ON user_categories_table_12 (category_id);
 
+select * from user_categories_table_12
 -------------------------------------------------------------------------------
 
 -- warnings_table_13
@@ -539,6 +546,20 @@ CREATE TABLE IF NOT EXISTS verification_table_16 (
 CREATE INDEX IF NOT EXISTS idx_verification_user_id
   ON verification_table_16 (user_id);
 
+  ALTER TABLE verification_table_16
+  ADD COLUMN IF NOT EXISTS answer_ai TEXT;
+
+  ALTER TABLE verification_table_16
+  DROP CONSTRAINT IF EXISTS verification_table_16_status_check;
+
+    ALTER TABLE verification_table_16
+  ADD CONSTRAINT verification_table_16_status_check
+  CHECK (status IN ('created', 'in_progress', 'rejected', 'approved'));
+
+    ALTER TABLE verification_table_16
+  ALTER COLUMN status SET DEFAULT 'created';
+  
+select * from verification_table_16
 -------------------------------------------------------------------------------
 
 -- Table: support_table_17

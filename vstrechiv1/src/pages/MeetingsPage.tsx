@@ -280,8 +280,7 @@ const MeetingsPage: React.FC = () => {
                 <div
                   key={meeting.meeting_id}
                   className="meeting-wrapper meeting-item-appear"
-                  style={{ animationDelay: `${index * 0.03}s` }}
-                  style={getExpandedStyle(index)}
+                  style={{ animationDelay: `${index * 0.03}s`, ...getExpandedStyle(index) }}
                   onClick={() => handleCardClick(meeting.meeting_id)}
                 >
                 {expandedId === meeting.meeting_id ? (

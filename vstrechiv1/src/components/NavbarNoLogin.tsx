@@ -31,7 +31,7 @@ const NavbarNoLogin: React.FC = () => {
       </div>
       <div className="auth-buttons">
           <button className="login" onClick={() => setIsLoginOpen(true)}>Войти</button>
-          <a href="/register" className="register">Регистрация</a>
+          <a href="/registration" className="register">Регистрация</a>
       </div>
     </nav>
 

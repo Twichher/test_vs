@@ -17,6 +17,7 @@ import MessagesPage from './pages/MessagesPage';
 import ShopPage from './pages/ShopPage';
 import SupportAdminPage from './pages/SupportAdminPage';
 import MoreOrderSupportPage from './pages/MoreOrderSupportPage';
+import RegistrationPage from './pages/RegistrationPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -53,6 +54,7 @@ function App() {
       <Route path="/shop" element={<ShopPage />} />
       <Route path="/support" element={<SupportAdminPage />} />
       <Route path="/support/:ticket_id" element={<MoreOrderSupportPage />} />
+      <Route path="/registration" element={<RegistrationPage />} />
     </Routes>
   );
 }   

@@ -23,10 +23,35 @@ mvp_vstrechi/
 ├── vstrechiv1/           # React + TypeScript Frontend
 │   ├── src/
 │   │   ├── components/   # React-компоненты
+│   │   │   ├── NavBar.tsx
+│   │   │   ├── NavbarLogin.tsx
+│   │   │   ├── NavbarNoLogin.tsx
+│   │   │   ├── FilterPanel.tsx
+│   │   │   ├── MeetingAsItem.tsx
+│   │   │   ├── MeetingExpandedInfo.tsx
+│   │   │   ├── ProfileCard.tsx
+│   │   │   ├── SupportModalWindow.tsx    # Модалка обращения в поддержку
+│   │   │   ├── SupportOrderComponent.tsx  # Карточка заявки в админке
+│   │   │   ├── MessageDetailSupportTicket.tsx  # Деталка уведомления ЦПП
+│   │   │   └── ...
 │   │   ├── pages/        # Страницы приложения
-│   │   ├── slices/       # Redux slices (authSlice, store)
+│   │   │   ├── HomePage.tsx
+│   │   │   ├── MeetingsPage.tsx
+│   │   │   ├── ProfilePage.tsx
+│   │   │   ├── FaqPage.tsx              # FAQ + модалка поддержки
+│   │   │   ├── MessagesPage.tsx         # Уведомления пользователя
+│   │   │   ├── SupportAdminPage.tsx     # Админ-панель заявок поддержки
+│   │   │   ├── MoreOrderSupportPage.tsx # Детальная страница заявки (админ)
+│   │   │   └── ...
+│   │   ├── slices/       # Redux state management
+│   │   │   ├── authSlice.ts
+│   │   │   └── store.ts
 │   │   └── assets/       # Статические ресурсы
 │   └── package.json
+├── DB/                   # SQL-скрипты базы данных
+│   ├── creation_bd_v4.sql
+│   ├── inserting_bd_v4.sql
+│   └── triggers_bd_v4.sql
 ├── requirements.txt      # Python-зависимости
 └── AGENTS.md            # Этот файл
 ```
@@ -118,6 +143,7 @@ docker-compose up -d
 - Используется JWT-токены с хранением в httpOnly cookie
 - Токен действителен 7 дней
 - Защищённые роуты используют `Depends(get_current_user)`
+- Админ-роуты используют `Depends(get_current_admin_user)` — проверяет `is_admin` в БД
 - CORS настроен для `http://localhost:5173`
 
 ### API Endpoints
@@ -145,6 +171,24 @@ docker-compose up -d
 - `GET /users/{user_id}/stats` — статистика пользователя
 - `GET /users/{user_id}/info_reged_meetings` — инфо о предстоящих встречах
 - `GET /users/{user_id}/info_atted_meetings` — инфо о прошедших встречах
+- `GET /users/{user_id}/notifications` — уведомления пользователя (с `photo_urls`)
+
+#### Поддержка (Support) — публичные
+- `GET /support/categories` — категории обращений в поддержку
+- `POST /support` — создать обращение (требуется авторизация)
+  - Принимает `category_id`, `message_text`, `photos[]` (base64)
+  - Загружает фото в MinIO, сохраняет в `support_photos_table_22`
+  - Создаёт уведомление `notification_type = 'обращение в ЦПП'`
+  - Копирует фото в `notification_photos_table_6`
+
+#### Админ-панель поддержки (Support Admin) — только `is_admin = true`
+- `GET /support/tickets/new` — новые заявки (`status='created'`, `closed_by_admin_user_id IS NULL`)
+- `GET /support/tickets/in-progress` — принятые заявки (`status='in_progress'`, назначены текущему админу)
+- `GET /support/tickets/resolved` — завершённые заявки (`status='resolved'`, закрыты текущим админом)
+- `GET /support/tickets/{ticket_id}` — детали заявки (включая `photo_urls` и `requester_email`)
+- `PUT /support/tickets/{ticket_id}/accept` — принять заявку (`status='in_progress'`)
+- `PUT /support/tickets/{ticket_id}/reject` — отказаться от заявки (`status='created'`, `closed_by_admin_user_id=NULL`)
+- `PUT /support/tickets/{ticket_id}/resolve` — завершить заявку (`status='resolved'`)
 
 ---
 
@@ -155,20 +199,22 @@ docker-compose up -d
 ```
 src/
 ├── components/          # Переиспользуемые компоненты
-│   ├── NavBar.tsx       # Навигационная панель
-│   ├── FilterPanel.tsx  # Панель фильтров
-│   ├── MeetingAsItem.tsx # Карточка встречи
-│   ├── MeetingExpandedInfo.tsx # Расширенная информация
-│   ├── ProfileCard.tsx  # Карточка профиля
+│   ├── NavBar.tsx       # Навигационная панель (включая админ-кнопку)
+│   ├── NavbarLogin.tsx
+│   ├── NavbarNoLogin.tsx
+│   ├── SupportModalWindow.tsx    # Модалка создания обращения в поддержку
+│   ├── SupportOrderComponent.tsx  # Карточка заявки в админ-списке
+│   ├── MessageDetailSupportTicket.tsx  # Детали уведомления ЦПП
 │   └── ...
 ├── pages/               # Страницы приложения
-│   ├── HomePage.tsx     # Главная страница
-│   ├── MeetingsPage.tsx # Страница списка встреч
-│   ├── ProfilePage.tsx  # Страница профиля
-│   ├── OneMeetingPage.tsx # Страница встречи
-│   ├── FaqPage.tsx      # Страница FAQ
-│   ├── AboutPage.tsx    # О проекте
-│   └── LoginModal.tsx   # Модальное окно входа
+│   ├── HomePage.tsx
+│   ├── MeetingsPage.tsx
+│   ├── ProfilePage.tsx
+│   ├── FaqPage.tsx              # FAQ + модалка поддержки + toast
+│   ├── MessagesPage.tsx         # Лента уведомлений
+│   ├── SupportAdminPage.tsx     # Админ-панель: список заявок с табами
+│   ├── MoreOrderSupportPage.tsx # Детали заявки (админ)
+│   └── ...
 ├── slices/              # Redux state management
 │   ├── authSlice.ts     # Управление аутентификацией
 │   └── store.ts         # Конфигурация Redux store
@@ -181,11 +227,14 @@ src/
 |------|----------|
 | `/` | HomePage (главная) |
 | `/about` | AboutPage (о проекте) |
-| `/faq` | FaqPage (частые вопросы) |
+| `/faq` | FaqPage (частые вопросы + модалка поддержки) |
 | `/meetings` | MeetingsPage (список встреч) |
 | `/user/:user_id` | ProfilePage (профиль пользователя) |
+| `/messages` | MessagesPage (уведомления) |
 | `/meetings/info_reged/:meeting_id` | OneMeetingPage (детали встречи) |
 | `/meetings/info_history/:meeting_id` | OneMeetingPageHistory (история) |
+| `/support` | SupportAdminPage (админ-панель заявок) |
+| `/support/:ticket_id` | MoreOrderSupportPage (детали заявки для админа) |
 
 ### State Management (Redux)
 
@@ -193,6 +242,76 @@ src/
   - `setUser` — установка данных пользователя
   - `clearUser` — очистка данных (выход)
   - Проверка сессии при загрузке приложения через `/me`
+  - Поле `is_admin` используется для условного рендера админ-кнопки в `NavBar.tsx`
+
+---
+
+## Поток обращения в поддержку (Support Ticket Flow)
+
+### 1. Создание обращения (пользователь)
+```
+Пользователь
+  → Открывает FaqPage → нажимает "Написать в поддержку"
+  → SupportModalWindow открывается (проверка isAuth)
+  → Заполняет категорию, текст, прикрепляет фото (до 5, base64)
+  → POST /support
+```
+
+### 2. Backend при создании
+```
+main.py create_support_ticket()
+  → SUPPORT_create_ticket() → support_table_17
+  → Загружает фото в MinIO (photossupport/)
+  → SUPPORT_add_photo() → support_photos_table_22
+  → SUPPORT_create_notification():
+      - Создаёт запись в notifications_table_4 (тип: 'обращение в ЦПП')
+      - Копирует фото в notification_photos_table_6
+      - Связывает с пользователем в user_notifications_table_5
+```
+
+### 3. Просмотр уведомления (пользователь)
+```
+MessagesPage.tsx
+  → GET /users/{user_id}/notifications
+  → При клике на 'обращение в ЦПП' → MessageDetailSupportTicket.tsx
+  → Показывает текст + миниатюры фото + модалка просмотра
+```
+
+### 4. Админ-панель (админ)
+```
+NavBar.tsx → красная кнопка щита (видна только при is_admin)
+  → /support → SupportAdminPage.tsx
+    
+SupportAdminPage:
+  → Табы: "Новые" / "Принятые" / "Завершенные"
+  → Умный polling (60 сек) только для таба "Новые"
+  → Карточки: SupportOrderComponent.tsx
+    
+SupportOrderComponent:
+  → Показывает ticket_id, категорию, дату, наличие фото
+  → Кнопка "Подробнее" → /support/{ticket_id}
+```
+
+### 5. Детали заявки (админ)
+```
+MoreOrderSupportPage.tsx (/support/:ticket_id)
+  → GET /support/tickets/{ticket_id}
+  → Показывает:
+      - Шапку (как в карточке)
+      - Текст обращения (message_text)
+      - Миниатюры фото → модалка просмотра (как в ProfilePage)
+      - "Почта для связи" (показывается после принятия)
+  → Кнопки:
+      - "Принять" (жёлтая) — если status='created'
+      - "Отказаться" (белая с красной рамкой) — если status='in_progress'
+      - "Завершить" (зелёная) — если status='in_progress'
+```
+
+### 6. Жизненный цикл статусов заявки
+```
+[created] --(Принять)--> [in_progress] --(Завершить)--> [resolved]
+     ↑_____________________(Отказаться)_____________________|
+```
 
 ---
 
@@ -237,6 +356,35 @@ src/
 }
 ```
 
+### SupportTicketItem (админ-список)
+```typescript
+{
+  ticket_id: number
+  requester_user_id: number
+  message_text: string
+  status: string
+  created_at_formatted: string
+  text_category: string
+  has_photos: boolean
+}
+```
+
+### SupportTicketDetailResponse (детали заявки)
+```typescript
+{
+  ticket_id: number
+  requester_user_id: number
+  message_text: string
+  status: string
+  closed_by_admin_user_id: number | null
+  created_at_formatted: string
+  text_category: string
+  has_photos: boolean
+  requester_email: string
+  photo_urls: string[]
+}
+```
+
 ---
 
 ## Стиль кода и соглашения
@@ -259,8 +407,9 @@ src/
 
 - JWT-токены в httpOnly cookies
 - CORS настроен только для `localhost:5173`
-- Пароли хранятся в БД (предполагается хеширование)
+- Пароли хранятся в БД (хеширование через `crypt`)
 - Проверка авторизации через `get_current_user`
+- Админ-эндпоинты защищены `get_current_admin_user` — проверяет `is_admin` в БД
 
 ---
 
@@ -305,12 +454,12 @@ src/
 
 | Таблица | Назначение |
 |---------|------------|
-| **notifications_table_4** | Уведомления (`notification_type`: встреча/правила/новости/верификация, `notification_text`) |
+| **notifications_table_4** | Уведомления (`notification_type`: встреча/правила/новости/верификация/обращение в ЦПП, `notification_text`) |
 | **user_notifications_table_5** | Связь пользователь-уведомление (`notification_id`, `user_id`, `status`: read/unread) |
 | **notification_photos_table_6** | Фото для уведомлений |
-| **support_table_17** | Тикеты поддержки (`requester_user_id`, `closed_by_admin_user_id`, `category`, `message_text`, `status`) |
-| **support_photos_table_22** | Фото для тикетов |
-| **categories_to_support_table_23** | Категории обращений в поддержку |
+| **support_table_17** | Тикеты поддержки (`requester_user_id`, `closed_by_admin_user_id`, `category` → FK categories_to_support_table_23, `message_text`, `status`: created/in_progress/resolved) |
+| **support_photos_table_22** | Фото для тикетов поддержки |
+| **categories_to_support_table_23** | Категории обращений в поддержку (`category_to_support_id`, `text_category`) |
 
 #### Дополнительные таблицы
 
@@ -366,6 +515,16 @@ src/
 3. **Рейтинги:** Автоматически пересчитываются через триггеры при новых оценках
 4. **Валюта:** `meetings_as_currency` — внутренняя валюта для участия в встречах, списывается при их завершении
 5. **Статусы встреч:** `created` → `in_progress` → `finished`/`canceled`
+6. **Статусы заявок поддержки:** `created` → `in_progress` → `resolved`
+7. **Фото обращений:** Хранятся дважды — в `support_photos_table_22` (для админки) и в `notification_photos_table_6` (для уведомлений пользователя)
+
+---
+
+## Известные особенности и баги
+
+### Исправленные баги
+- **photo_urls character-split:** `psycopg` возвращал PostgreSQL `TEXT[]` как строку. Исправлено парсингом в `main.py` GET `/users/{_user_id}/notifications`
+- **Support photo list bug:** В `create_support_ticket` передавалась строка `photo_url` вместо списка `photo_urls`. Исправлено накоплением списка и передачей в `SUPPORT_create_notification`
 
 ---
 

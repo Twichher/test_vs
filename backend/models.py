@@ -77,11 +77,21 @@ class UserLogin(BaseModel):
     email_user : str
     password : str
 
+class RegisterRequest(BaseModel):
+    first_name: str
+    last_name: str
+    middle_name: str | None = None
+    email: str
+    password: str
+    confirm_password: str
+    birth_date: str  # YYYY-MM-DD
+    gender: str  # 'M' или 'F'
+
 class UserResp(BaseModel):
     user_id : int
     first_name : str
     last_name : str
-    district : str
+    district : str | None = None
     is_blocked : bool
     is_organizer : bool
     is_admin : bool

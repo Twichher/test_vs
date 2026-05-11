@@ -361,6 +361,48 @@ def MEETINGS_save_user_ratings(record_id: int, meeting_id: int, user_id: int, me
 #------------------------------------------------------------------------------------------------------
 
 
+def USERS_create_user(first_name: str, last_name: str, middle_name: str | None, email: str, password: str, birth_date: str, gender: str):
+    """
+    Создаёт нового пользователя.
+    - Хеширует пароль через crypt/bcrypt
+    - Создаёт запись в user_extra_info_table_3 с 3 встречами в подарок
+    - Возвращает данные пользователя (как UserResp)
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Вставляем пользователя
+                cur.execute("""
+                    INSERT INTO user_table_1 
+                    (first_name, last_name, middle_name, email, password_hash, birth_date, gender, city, 
+                     is_organizer, is_admin, is_blocked, is_registration_completed)
+                    VALUES (%s, %s, %s, %s, crypt(%s, gen_salt('bf', 12)), %s, %s, 'Москва', 
+                            FALSE, FALSE, FALSE, FALSE)
+                    RETURNING user_id, first_name, last_name, district, 
+                              is_blocked, is_organizer, is_admin, is_registration_completed
+                """, (first_name, last_name, middle_name, email, password, birth_date, gender))
+                
+                user = cur.fetchone()
+                user_id = user["user_id"]
+                
+                # Создаём начальную запись статистики с 3 встречами в подарок
+                cur.execute("""
+                    INSERT INTO user_extra_info_table_3 
+                    (user_id, meetings_as_currency, date_of_stats)
+                    VALUES (%s, 3, NOW())
+                """, (user_id,))
+                
+                conn.commit()
+                
+                # Добавляем meetings_as_currency к результату
+                user["meetings_as_currency"] = 3
+                return user
+    except psycopg.errors.UniqueViolation:
+        return (False, "Пользователь с таким email уже существует", "USERS_create_user")
+    except Exception as error:
+        return (False, error, "USERS_create_user")
+
+
 # функция записывает запись пользователя на встречу
 def USERS_post_reg_to_meet(meeting_id: int, user_id: int, user_action: str):
     try:

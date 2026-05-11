@@ -74,7 +74,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
 
         <p className="modal-register">
           Нет аккаунта?{' '}
-          <a href="/register" className="modal-register-link">Создайте!</a>
+          <a href="/registration" className="modal-register-link">Создайте!</a>
         </p>
 
       </div>
