@@ -1,0 +1,176 @@
+.step-district {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 20px 30px;
+}
+
+.step-district__title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a2e;
+  text-align: center;
+  margin-bottom: 24px;
+  line-height: 1.3;
+}
+
+/* Selected district display */
+.step-district__selected {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding: 12px 20px;
+  background: #e0f7fa;
+  border-radius: 12px;
+  border: 1px solid #3ecfaa;
+}
+
+.step-district__selected-label {
+  font-size: 14px;
+  color: #555;
+}
+
+.step-district__selected-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: #00838f;
+}
+
+.step-district__selected-clear {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: #ffebee;
+  color: #e53935;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  transition: background 0.2s ease;
+}
+
+.step-district__selected-clear:hover {
+  background: #ffcdd2;
+}
+
+/* Districts grid */
+.step-district__grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.step-district__grid.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.step-district__item {
+  padding: 16px 8px;
+  border: 1px solid #000;
+  border-radius: 12px;
+  background: white;
+  font-size: 15px;
+  font-weight: 500;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.step-district__item:hover:not(:disabled):not(.selected) {
+  border-color: #3ecfaa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.step-district__item.selected {
+  background: #3ecfaa;
+  color: white;
+  border-color: #3ecfaa;
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.3);
+}
+
+.step-district__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Skip checkbox */
+.step-district__skip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 15px;
+  color: #555;
+  cursor: pointer;
+}
+
+.step-district__skip input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #3ecfaa;
+  cursor: pointer;
+}
+
+/* Error */
+.step-district__error {
+  font-size: 14px;
+  color: #e53935;
+  text-align: center;
+  padding: 10px;
+  background: #ffebee;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+/* Next button */
+.step-district__button {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  background: #3ecfaa;
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(62, 207, 170, 0.3);
+}
+
+.step-district__button:hover:not(:disabled) {
+  background: #2db894;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(62, 207, 170, 0.4);
+}
+
+.step-district__button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.step-district__button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .step-district__grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .step-district__item {
+    padding: 14px 6px;
+    font-size: 14px;
+  }
+}

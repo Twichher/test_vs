@@ -11,6 +11,7 @@ interface MeetingAsItemProps {
   end_at: string;
   isReged?: boolean;
   status?: string;
+  isUnverified?: boolean;
 }
 
 const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
@@ -23,6 +24,7 @@ const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
   end_at,
   isReged = false,
   status,
+  isUnverified = false,
 }) => {
   const startDate = new Date(start_at);
   const endDate = new Date(end_at);
@@ -45,7 +47,7 @@ const MeetingAsItem: React.FC<MeetingAsItemProps> = ({
   const isInProgress = status === 'in_progress';
 
   return (
-    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''} ${isCanceled ? 'meeting-card--canceled' : ''} ${isInProgress ? 'meeting-card--in-progress' : ''}`}>
+    <div className={`meeting-card ${isReged ? 'meeting-card--reged' : ''} ${isCanceled ? 'meeting-card--canceled' : ''} ${isInProgress ? 'meeting-card--in-progress' : ''} ${isUnverified ? 'meeting-card--unverified' : ''}`}>
       {adults_only_18plus && <span className="meeting-badge">18+</span>}
       <h3 className="meeting-title">{meeting_title}</h3>
 

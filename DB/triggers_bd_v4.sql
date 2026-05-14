@@ -970,3 +970,35 @@ CREATE TRIGGER trg_notify_on_conflict_resolution
 AFTER UPDATE ON meeting_rating_table_8
 FOR EACH ROW
 EXECUTE FUNCTION notify_user_on_conflict_resolution();
+
+--------------------------------------------------------------------------------
+-- Триггер #18: при создании нового пользователя (INSERT в user_table_1)
+-- создает уведомление о необходимости прохождения верификации
+--------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION create_verification_notification_on_user_insert()
+RETURNS trigger AS $$
+DECLARE
+    v_notification_id BIGINT;
+BEGIN
+    -- Создаем уведомление в notifications_table_4
+    INSERT INTO notifications_table_4 (meeting_id, notification_type, notification_text)
+    VALUES (
+        NULL,
+        'верификация',
+        'Для завершения регистрации необходимо пройти верификацию личности. Загрузите две фотографии: анфас и профиль.'
+    )
+    RETURNING notification_id INTO v_notification_id;
+
+    -- Связываем уведомление с новым пользователем
+    INSERT INTO user_notifications_table_5 (notification_id, user_id, status)
+    VALUES (v_notification_id, NEW.user_id, 'unread');
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_create_verification_notification
+AFTER INSERT ON user_table_1
+FOR EACH ROW
+EXECUTE FUNCTION create_verification_notification_on_user_insert();

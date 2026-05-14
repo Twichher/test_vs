@@ -1,15 +1,20 @@
 /* MessagesPage.css */
 
+@keyframes fadeInBlock {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .messages-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  opacity: 0;
-  transition: opacity 0.4s ease-out;
-}
-
-.messages-page--visible {
-  opacity: 1;
 }
 
 .messages-page__content {
@@ -17,7 +22,9 @@
   display: flex;
   padding: 20px 20px 20px 140px; /* отступ слева для NavBar */
   gap: 20px;
-  min-height: calc(100vh - 140px);
+  height: 75vh;
+  max-height: 75vh;
+  align-items: flex-start;
 }
 
 /* Сайдбар со списком уведомлений - 30% ширины */
@@ -31,10 +38,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: sticky;
-  top: 20px;
-  align-self: flex-start;
-  max-height: calc(100vh - 40px);
+  opacity: 0;
+  animation: fadeInBlock 0.3s ease-out 0.1s forwards;
+  height: 75vh;
+  max-height: 75vh;
 }
 
 /* Уменьшенный header */
@@ -135,6 +142,8 @@
   flex-direction: column;
   gap: 6px;
   overflow: hidden;
+  opacity: 0;
+  animation: fadeInBlock 0.3s ease-out forwards;
 }
 
 .notification-button:hover {
@@ -159,6 +168,7 @@
   color: white;
   animation: gradient-shift 3s ease infinite;
   box-shadow: 0 2px 8px rgba(62, 207, 170, 0.3);
+  opacity: 1;
 }
 
 /* Специальный стиль для уведомлений типа "Встреча" - более яркий зеленый и динамичный */
@@ -336,6 +346,20 @@
   }
 }
 
+/* Специальный стиль для уведомлений о верификации — фиолетовый переливающийся */
+.notification-button--verification.notification-button--unread {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 25%, #9b59b6 50%, #8e44ad 75%, #9b59b6 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-purple 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(155, 89, 182, 0.4);
+}
+
+/* Эффект свечения для фиолетовых уведомлений верификации */
+.notification-button--verification .notification-button__glow {
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+  animation: glow-pulse-purple 1.5s ease-in-out infinite;
+}
+
 /* Эффект свечения для оранжевых уведомлений */
 .notification-button--orange .notification-button__glow {
   background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
@@ -496,7 +520,12 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overflow-y: auto;
   position: relative;
+  opacity: 0;
+  animation: fadeInBlock 0.3s ease-out 0.2s forwards;
+  height: 75vh;
+  max-height: 75vh;
 }
 
 /* Пустое состояние */

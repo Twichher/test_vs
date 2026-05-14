@@ -41,6 +41,9 @@
 	  )
 	);
 
+select * from user_table_1
+order by user_id desc 
+limit 10
 -------------------------------------------------------------------------------
 
 -- Table: meeting_table_2
@@ -148,9 +151,9 @@ set meetings_as_currency = 3
 where user_id = 2 
 
 select * from user_extra_info_table_3
-where user_id = 11
-order by record_id DESC
-limit 1
+where user_id = 32
+
+select * from user_extra_info_table_3 where record_id = 3359
 -------------------------------------------------------------------------------
 
 -- Table: notifications_table_4
@@ -214,11 +217,11 @@ ADD COLUMN israted BIGINT NOT NULL DEFAULT 0
 	-- 1 - пользователь оценил 
 
 select * from user_notifications_table_5
-where user_id = 8
+where user_id = 34
 
 update user_notifications_table_5
 set status = 'unread'
-where record_id = 35;
+where user_id = 34;
 
 
 -------------------------------------------------------------------------------
@@ -394,8 +397,7 @@ CREATE TABLE IF NOT EXISTS categories_table_10 (
   photo_url TEXT NOT NULL DEFAULT 'http://127.0.0.1:9000/allphotos/no.jpg'
 );
 
-
-
+select * from categories_table_10
 -------------------------------------------------------------------------------
 
 -- meeting_categories_table_11
@@ -451,7 +453,7 @@ CREATE INDEX IF NOT EXISTS idx_user_categories_user_id
 CREATE INDEX IF NOT EXISTS idx_user_categories_category_id
   ON user_categories_table_12 (category_id);
 
-select * from user_categories_table_12
+select * from user_categories_table_12 where user_id = 33
 -------------------------------------------------------------------------------
 
 -- warnings_table_13
@@ -546,7 +548,7 @@ CREATE TABLE IF NOT EXISTS verification_table_16 (
 CREATE INDEX IF NOT EXISTS idx_verification_user_id
   ON verification_table_16 (user_id);
 
-  ALTER TABLE verification_table_16
+	  ALTER TABLE verification_table_16
   ADD COLUMN IF NOT EXISTS answer_ai TEXT;
 
   ALTER TABLE verification_table_16
@@ -558,8 +560,12 @@ CREATE INDEX IF NOT EXISTS idx_verification_user_id
 
     ALTER TABLE verification_table_16
   ALTER COLUMN status SET DEFAULT 'created';
+
+  ALTER TABLE verification_table_16
+  ADD COLUMN IF NOT EXISTS embedding JSONB;
   
-select * from verification_table_16
+select * from verification_table_16 where status='approved'
+UPDATE verification_table_16 SET embedding = NULL WHERE status = 'approved';
 -------------------------------------------------------------------------------
 
 -- Table: support_table_17

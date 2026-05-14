@@ -12,10 +12,10 @@ CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_a
 STATS_get_guests_overall, STATS_get_guests_intermediate, STATS_get_organizers_overall, STATS_get_organizers_intermediate, \
 PROFILE_get_user_is_organizer, ORGANIZER_get_active_meetings, ORGANIZER_get_history_meetings, USERS_get_earned_currency, \
 MEETINGS_get_basic_info, USERS_get_notifications, SERVICES_get_all, SUPPORT_get_categories, SUPPORT_get_new_tickets, SUPPORT_get_in_progress_tickets, SUPPORT_get_resolved_tickets, SUPPORT_get_ticket_detail
-from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification, SUPPORT_accept_ticket, SUPPORT_reject_ticket, SUPPORT_resolve_ticket, USERS_create_user
+from post_sql import USERS_post_reg_to_meet, USERS_update_miss_meeting, USERS_update_last_name, USERS_update_first_name, USERS_update_birth_date, USERS_update_gender, USERS_update_district, USERS_update_settings, USERS_add_photo, USERS_reset_earned_currency, MEETINGS_cancel_by_organizer, MEETINGS_finish_by_organizer, MEETINGS_save_participants_ratings, MEETINGS_save_user_ratings, NOTIFICATIONS_send_to_user, NOTIFICATION_PHOTOS_copy_by_notification, USERS_mark_notification_as_read, CONFLICTS_respond, CONFLICTS_save_appeal, SERVICES_buy_service, SUPPORT_create_ticket, SUPPORT_add_photo, SUPPORT_create_notification, SUPPORT_accept_ticket, SUPPORT_reject_ticket, SUPPORT_resolve_ticket, USERS_create_user, USERS_save_categories, VERIFICATION_create, VERIFICATION_get_latest, VERIFICATION_mark_notification_uploaded
 from models import FAQ, MeetingInfoRequestV2, MeetingRegedMissedUser, UserResp, UserLogin, RegisterRequest, MeetingsListGet, MeetingTypeOne, MeetingsRequest, Category, MeetingInfoRequest, CategoriesResponse, WarningsResponse, CreateMeetingRequest, CreateMeetingResponse, \
-UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest, ConflictRespondRequest, Service, ServicesResponse, ServiceBuyRequest, ServiceBuyResponse, SupportCategory, SupportCategoriesResponse, CreateSupportRequest, CreateSupportResponse, SupportTicketItem, SupportTicketsResponse, SupportTicketDetailResponse
-from minio_defs import upload_photo, upload_meeting_photo, upload_support_photo
+UsersStatsReq, RegUserToMeetingRequest, UpdateLastNameRequest, UpdateFirstNameRequest, UpdateBirthDateRequest, UpdateGenderRequest, UpdateDistrictRequest, UpdateFieldResponse, UserSettingsInfo, UpdateSettingsRequest, UpdateSettingsResponse, UploadPhotoResponse, StatsUser, StatsRequest, StatsResponse, NotificationItem, SaveRatingsRequest, SaveUserRatingsRequest, ConflictRespondRequest, Service, ServicesResponse, ServiceBuyRequest, ServiceBuyResponse, SupportCategory, SupportCategoriesResponse, CreateSupportRequest, CreateSupportResponse, SupportTicketItem, SupportTicketsResponse, SupportTicketDetailResponse, SaveUserCategoriesRequest, SaveUserCategoriesResponse
+from minio_defs import upload_photo, upload_meeting_photo, upload_support_photo, upload_verification_photo
 import base64
 import uuid
 from fastapi import UploadFile, File
@@ -692,6 +692,22 @@ def get_atted_missed_users(meeting_id : int):
 #------------------------------------------------------------------------------------------------------
 
 
+@app.post("/users/me/categories", response_model=SaveUserCategoriesResponse)
+def save_user_categories(
+    request: SaveUserCategoriesRequest,
+    current_user_id: int = Depends(get_current_user)
+):
+    """
+    Сохраняет категории интересов пользователя (Шаг 3 регистрации).
+    Для выбранных категорий: category_value = 5
+    Для остальных: category_value = 0
+    """
+    result = USERS_save_categories(current_user_id, request.category_ids)
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=str(result[1]))
+    return result
+
+
 @app.post("/register", response_model=UserResp)
 def register_user(request: RegisterRequest, response: Response):
     """
@@ -1347,6 +1363,85 @@ def get_stats_guests_overall(
         "top_users": [StatsUser(**user) for user in top_users],
         "current_user": StatsUser(**current_user) if current_user else None,
         "last_place": last_place
+    }
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Verification
+#------------------------------------------------------------------------------------------------------
+
+@app.post("/verification/upload")
+def upload_verification_photos(
+    photo_1: UploadFile = File(...),
+    photo_2: UploadFile = File(...),
+    record_id: int = Form(...),
+    user_id: int = Depends(get_current_user)
+):
+    """
+    Загружает 2 фотографии для верификации пользователя.
+    Сохраняет фото в MinIO, создает запись в verification_table_16 со статусом 'created',
+    и отмечает уведомление как 'фото загружено' (israted = 1).
+    """
+    # Валидация типов файлов
+    if not photo_1.content_type or not photo_1.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Первый файл должен быть изображением")
+    if not photo_2.content_type or not photo_2.content_type.startswith('image/'):
+        raise HTTPException(status_code=400, detail="Второй файл должен быть изображением")
+
+    # Загружаем первое фото
+    photo_1_data = photo_1.file.read()
+    result_1 = upload_verification_photo(photo_1_data, photo_1.filename, photo_1.content_type)
+    if not result_1.get("success"):
+        raise HTTPException(status_code=500, detail=result_1.get("error", "Ошибка загрузки первого фото"))
+
+    # Загружаем второе фото
+    photo_2_data = photo_2.file.read()
+    result_2 = upload_verification_photo(photo_2_data, photo_2.filename, photo_2.content_type)
+    if not result_2.get("success"):
+        raise HTTPException(status_code=500, detail=result_2.get("error", "Ошибка загрузки второго фото"))
+
+    # Создаем запись в verification_table_16
+    result = VERIFICATION_create(user_id, result_1["url"], result_2["url"])
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=f"Ошибка создания верификации: {result[1]}")
+
+    # Отмечаем уведомление как 'фото загружено'
+    mark_result = VERIFICATION_mark_notification_uploaded(record_id)
+    if isinstance(mark_result, tuple):
+        print(f"Warning: Failed to mark notification as uploaded: {mark_result[1]}")
+
+    return {
+        "success": True,
+        "verification_id": result["verification_id"],
+        "photo_1_url": result["photo_1_url"],
+        "photo_2_url": result["photo_2_url"],
+        "status": result["status"]
+    }
+
+
+@app.get("/verification/latest")
+def get_latest_verification(user_id: int = Depends(get_current_user)):
+    """
+    Получает последнюю запись верификации текущего пользователя.
+    """
+    result = VERIFICATION_get_latest(user_id)
+    if isinstance(result, tuple):
+        raise HTTPException(status_code=500, detail=f"Ошибка получения верификации: {result[1]}")
+
+    if not result:
+        return {"verification": None}
+
+    return {
+        "verification": {
+            "verification_id": result["verification_id"],
+            "user_id": result["user_id"],
+            "photo_1_url": result["photo_1_url"],
+            "photo_2_url": result["photo_2_url"],
+            "status": result["status"],
+            "photos_uploaded_at": result["photos_uploaded_at"],
+            "status_changed_at": result["status_changed_at"],
+            "answer_ai": result["answer_ai"]
+        }
     }
 
 

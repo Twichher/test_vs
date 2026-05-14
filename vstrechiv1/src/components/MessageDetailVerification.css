@@ -1,0 +1,245 @@
+/* MessageDetailVerification.css */
+
+/* Хедер верификации — фиолетовый градиент */
+.message-detail__header--verification {
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 50%, #9b59b6 100%);
+  background-size: 400% 400%;
+  animation: gradient-shift-purple 2s ease infinite;
+  box-shadow: 0 3px 12px rgba(155, 89, 182, 0.4);
+}
+
+/* Контент верификации */
+.verification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Приветствие */
+.verification-welcome {
+  text-align: center;
+}
+
+.verification-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.verification-subtitle {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #1a1a1a;
+  margin: 0 0 8px 0;
+}
+
+.verification-text {
+  font-size: 17px;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+/* Пример фото */
+.verification-example {
+  text-align: center;
+}
+
+.verification-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.verification-example-photo {
+  max-width: 400px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.verification-example-photo img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Статусные уведомления */
+.verification-status-notice {
+  padding: 16px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.verification-status-notice--pending {
+  background: #fff9c4;
+  color: #856404;
+  border: 1px solid #ffe066;
+}
+
+.verification-status-notice--approved {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.verification-rejected-notice {
+  padding: 16px;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 12px;
+}
+
+.verification-rejected-text {
+  font-size: 15px;
+  color: #721c24;
+  margin: 0 0 8px 0;
+}
+
+.verification-retry-text {
+  font-size: 14px;
+  color: #856404;
+  margin: 0;
+}
+
+/* Блоки загрузки */
+.verification-uploads {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.verification-upload-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.verification-upload-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.verification-upload-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.verification-file-input {
+  display: none;
+}
+
+.verification-upload-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 160px;
+  height: 160px;
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.verification-upload-btn:hover {
+  border-color: #9b59b6;
+  background: #f3e5f5;
+  color: #9b59b6;
+}
+
+.verification-preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Ошибка и успех */
+.verification-error {
+  color: #e74c3c;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
+.verification-success {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #3ecfaa;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Кнопка отправки */
+.verification-submit-btn {
+  width: 100%;
+  padding: 14px 24px;
+  background: #9b59b6;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+  margin-top: 8px;
+}
+
+.verification-submit-btn:hover:not(:disabled) {
+  background: #8e44ad;
+  transform: translateY(-2px);
+}
+
+.verification-submit-btn:disabled {
+  background: #ccc !important;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.verification-submit-btn--disabled {
+  opacity: 0.6;
+}
+
+/* Финальный текст */
+.verification-footer-text {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #1a1a1a;
+  margin: 0;
+  text-align: center;
+}
+
+.verification-apology {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  text-align: center;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .verification-upload-btn {
+    width: 120px;
+    height: 120px;
+  }
+
+  .verification-example-photo {
+    max-width: 100%;
+  }
+}

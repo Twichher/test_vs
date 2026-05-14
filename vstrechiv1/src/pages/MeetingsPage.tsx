@@ -52,7 +52,7 @@ const LoadingSpinner: React.FC = () => (
 );
 
 const MeetingsPage: React.FC = () => {
-  const { isAuth, district , user_id} = useSelector((state: RootState) => state.auth);
+  const { isAuth, district , user_id, is_registration_completed } = useSelector((state: RootState) => state.auth);
 
   const [_regedMeetingIds, setRegedMeetingIds] = useState<number[]>([]);
   const [meetings, setMeetings] = useState<MeetingTypeOne[]>([]);
@@ -284,7 +284,7 @@ const MeetingsPage: React.FC = () => {
                   onClick={() => handleCardClick(meeting.meeting_id)}
                 >
                 {expandedId === meeting.meeting_id ? (
-                <div className={`meeting-expanded-card ${isClosing ? 'closing' : ''} ${newlyRegisteredIds.includes(expandedInfo?.meeting_id ?? -1) ? 'meeting-expanded-card--reged' : ''}`}>
+                <div className={`meeting-expanded-card ${isClosing ? 'closing' : ''} ${newlyRegisteredIds.includes(expandedInfo?.meeting_id ?? -1) ? 'meeting-expanded-card--reged' : ''} ${!is_registration_completed ? 'meeting-expanded-card--unverified' : ''}`}>
                 {expandedInfo ? (
                   <>
                     <div className="meeting-expanded-header">
@@ -350,7 +350,9 @@ const MeetingsPage: React.FC = () => {
                         </p>
                       )}
 
-                    {newlyRegisteredIds.includes(expandedInfo.meeting_id) ? (
+                    {!is_registration_completed ? (
+                      <p className="meeting-expanded-unverified-text">Чтобы участвовать — пройдите верификацию</p>
+                    ) : newlyRegisteredIds.includes(expandedInfo.meeting_id) ? (
                       <p className="meeting-expanded-reged-text">Мы Вас уже ждём! 🎉</p>
                     ) : (
                       <button
@@ -381,6 +383,7 @@ const MeetingsPage: React.FC = () => {
                         end_at = {meeting.end_at}
                         isReged={newlyRegisteredIds.includes(meeting.meeting_id)}
                         status={meeting.status}
+                        isUnverified={!is_registration_completed}
                       />
                     )}
                   </div>

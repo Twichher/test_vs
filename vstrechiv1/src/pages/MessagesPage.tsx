@@ -15,6 +15,9 @@ import MessageDetailUserIsMissedByOrg from '../components/MessageDetailUserIsMis
 import MessageDetailConflictSolution from '../components/MessageDetailConflictSolution';
 import MessageDetailConflictRate from '../components/MessageDetailConflictRate';
 import MessageDetailSupportTicket from '../components/MessageDetailSupportTicket';
+import MessageDetailVerification from '../components/MessageDetailVerification';
+import MessageVerificationAnswer from '../components/MessageVerificationAnswer';
+import MessageDetailVerificationSuccess from '../components/MessageDetailVerificationSuccess';
 import './MessagesPage.css';
 
 interface NotificationItem {
@@ -43,9 +46,10 @@ interface NotificationButtonProps {
   notification: NotificationItem;
   isSelected: boolean;
   onClick: () => void;
+  index: number;
 }
 
-function NotificationButton({ notification, isSelected, onClick }: NotificationButtonProps) {
+function NotificationButton({ notification, isSelected, onClick, index }: NotificationButtonProps) {
   const formattedDate = new Date(notification.sent_at).toLocaleString('ru-RU', {
     day: 'numeric',
     month: 'short',
@@ -63,11 +67,15 @@ function NotificationButton({ notification, isSelected, onClick }: NotificationB
   const isNotThereType = notification.notification_type === 'вас не было';
   const isWasThereType = notification.notification_type === 'вы были';
   const isSupportTicketType = notification.notification_type === 'обращение в ЦПП';
+  const isVerificationType = notification.notification_type === 'верификация';
+  const isVerificationAnswerType = notification.notification_type === 'результат верификации';
+  const isVerificationSuccessType = notification.notification_type === 'верификация пройдена';
 
   return (
     <button
-      className={`notification-button ${notification.status === 'unread' ? 'notification-button--unread' : 'notification-button--read'} ${isMeetingType ? 'notification-button--meeting' : ''} ${isCanceledType ? 'notification-button--canceled' : ''} ${isOrganizerCanceledType || isMeetingCanceledByOrganizerType ? 'notification-button--black' : ''} ${isMeetingFinishedType ? 'notification-button--blue' : ''} ${isRateMeetingType ? 'notification-button--purple' : ''} ${isConflictType ? 'notification-button--orange' : ''} ${isNotThereType || isWasThereType ? 'notification-button--orange' : ''} ${isSupportTicketType ? 'notification-button--canceled' : ''} ${isSelected ? 'notification-button--selected' : ''}`}
+      className={`notification-button ${notification.status === 'unread' ? 'notification-button--unread' : 'notification-button--read'} ${isMeetingType ? 'notification-button--meeting' : ''} ${isCanceledType ? 'notification-button--canceled' : ''} ${isOrganizerCanceledType || isMeetingCanceledByOrganizerType ? 'notification-button--black' : ''} ${isMeetingFinishedType ? 'notification-button--blue' : ''} ${isRateMeetingType ? 'notification-button--purple' : ''} ${isConflictType ? 'notification-button--orange' : ''} ${isNotThereType || isWasThereType ? 'notification-button--orange' : ''} ${isSupportTicketType ? 'notification-button--canceled' : ''} ${isVerificationType || isVerificationAnswerType ? 'notification-button--verification' : ''} ${isVerificationSuccessType ? 'notification-button--meeting' : ''} ${isSelected ? 'notification-button--selected' : ''}`}
       onClick={onClick}
+      style={{ animationDelay: `${index * 0.05}s` }}
     >
       <div className="notification-button__type">{notification.notification_type}</div>
       {notification.meeting_title && (
@@ -113,6 +121,12 @@ function MessageDetailFactory({
       return <MessageDetailConflictRate notification={notification} onClose={onClose} onRateSuccess={onRateSuccess} />;
     case 'обращение в ЦПП':
       return <MessageDetailSupportTicket notification={notification} onClose={onClose} />;
+    case 'верификация':
+      return <MessageDetailVerification notification={notification} onClose={onClose} />;
+    case 'результат верификации':
+      return <MessageVerificationAnswer notification={notification} onClose={onClose} />;
+    case 'верификация пройдена':
+      return <MessageDetailVerificationSuccess notification={notification} onClose={onClose} />;
     default:
       // Для остальных типов используем базовый компонент регистрации
       return <MessageDetailUserRegMeetings notification={notification} onClose={onClose} />;
@@ -124,7 +138,6 @@ export default function MessagesPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [selectedNotification, setSelectedNotification] = useState<NotificationItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [pageVisible, setPageVisible] = useState(false);
 
   // Обновляем israted в уведомлении после успешной оценки участников
   const handleRateSuccess = (record_id: number) => {
@@ -137,12 +150,6 @@ export default function MessagesPage() {
       prev && prev.record_id === record_id ? { ...prev, israted: 1 } : prev
     );
   };
-
-  // Плавное появление страницы
-  useEffect(() => {
-    const timer = setTimeout(() => setPageVisible(true), 50);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Загрузка уведомлений
   useEffect(() => {
@@ -179,7 +186,7 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className={`messages-page ${pageVisible ? 'messages-page--visible' : ''}`}>
+    <div className="messages-page">
       <NavbarLogin />
       <NavBar onChange={() => {}} />
 
@@ -206,11 +213,12 @@ export default function MessagesPage() {
                 <p>Нет сообщений</p>
               </div>
             ) : (
-              notifications.map((notification) => (
+              notifications.map((notification, index) => (
                 <NotificationButton
                   key={notification.record_id}
                   notification={notification}
                   isSelected={selectedNotification?.record_id === notification.record_id}
+                  index={index}
                   onClick={() => {
                     // Если уведомление непрочитанное, отмечаем его как прочитанное
                     if (notification.status === 'unread') {

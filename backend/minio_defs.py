@@ -83,6 +83,50 @@ def upload_photo(file_data: bytes, filename: str, content_type: str = None) -> d
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+
+def upload_verification_photo(file_data: bytes, filename: str, content_type: str = None) -> dict:
+    """
+    Загружает фотографию верификации в MinIO S3 в папку verification
+    """
+    if content_type:
+        if not content_type.startswith('image/'):
+            return {"success": False, "error": "Файл должен быть изображением (JPEG, PNG, GIF, etc.)"}
+    else:
+        guessed_type = mimetypes.guess_type(filename)[0]
+        if not guessed_type or not guessed_type.startswith('image/'):
+            return {"success": False, "error": "Файл должен быть изображением (JPEG, PNG, GIF, etc.)"}
+        content_type = guessed_type
+
+    file_extension = filename.split('.')[-1].lower() if '.' in filename else 'jpg'
+    object_name = f"verification/{uuid.uuid4()}.{file_extension}"
+
+    try:
+        s3_client = get_minio_client()
+        try:
+            s3_client.head_bucket(Bucket=MINIO_BUCKET_NAME)
+        except ClientError:
+            s3_client.create_bucket(Bucket=MINIO_BUCKET_NAME)
+
+        s3_client.put_object(
+            Bucket=MINIO_BUCKET_NAME,
+            Key=object_name,
+            Body=file_data,
+            ContentType=content_type,
+            Metadata={'Content-Type': content_type}
+        )
+
+        protocol = 'https' if MINIO_SECURE else 'http'
+        file_url = f"{protocol}://{MINIO_ENDPOINT}/{MINIO_BUCKET_NAME}/{object_name}"
+
+        return {
+            "success": True,
+            "url": file_url,
+            "object_name": object_name,
+            "bucket": MINIO_BUCKET_NAME
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 def delete_photo(object_name: str) -> dict:
     """
     Удаляет фотографию из MinIO S3

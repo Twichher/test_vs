@@ -15,11 +15,26 @@ interface Service {
   service_price: number;
 }
 
+const getColumns = () => {
+  const w = window.innerWidth;
+  if (w <= 480) return 1;
+  if (w <= 768) return 2;
+  if (w <= 1024) return 3;
+  return 4;
+};
+
 const ShopPage: React.FC = () => {
   const { isAuth } = useSelector((state: RootState) => state.auth);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [columns, setColumns] = useState<number>(getColumns());
+
+  useEffect(() => {
+    const handleResize = () => setColumns(getColumns());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     fetch('http://localhost:8000/services')
@@ -61,7 +76,7 @@ const ShopPage: React.FC = () => {
                   service_name={service.service_name}
                   service_description={service.service_description}
                   service_price={service.service_price}
-                  style={{ animationDelay: `${index * 0.15}s` }}
+                  style={{ animationDelay: `${Math.floor(index / columns) * 0.05}s` }}
                 />
               ))}
             </div>

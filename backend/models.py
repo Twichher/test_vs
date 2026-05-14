@@ -421,3 +421,14 @@ class SupportTicketDetailResponse(BaseModel):
     has_photos: bool
     requester_email: str
     photo_urls: list[str]
+
+
+class SaveUserCategoriesRequest(BaseModel):
+    """Запрос на сохранение категорий пользователя"""
+    category_ids: list[int]
+
+
+class SaveUserCategoriesResponse(BaseModel):
+    """Ответ при сохранении категорий пользователя"""
+    success: bool
+    message: str

@@ -2,6 +2,9 @@ import { useState } from 'react';
 import RegistrationNavbar from '../components/RegistrationNavbar';
 import Footer from '../components/Footer';
 import StepPersonal from './registration/StepPersonal';
+import StepDistrict from './registration/StepDistrict';
+import StepCategories from './registration/StepCategories';
+import StepSuccess from './registration/StepSuccess';
 import './RegistrationPage.css';
 
 const RegistrationPage: React.FC = () => {
@@ -9,6 +12,14 @@ const RegistrationPage: React.FC = () => {
 
   const handleStep1Complete = () => {
     setStep(2);
+  };
+
+  const handleStep2Complete = () => {
+    setStep(3);
+  };
+
+  const handleStep3Complete = () => {
+    setStep(4);
   };
 
   return (
@@ -45,23 +56,12 @@ const RegistrationPage: React.FC = () => {
             <StepPersonal onComplete={handleStep1Complete} />
           )}
           {step === 2 && (
-            <div className="registration-page__placeholder">
-              <h2>Шаг 2: Выбор района</h2>
-              <p>Здесь будет выбор района Москвы</p>
-            </div>
+            <StepDistrict onComplete={handleStep2Complete} />
           )}
           {step === 3 && (
-            <div className="registration-page__placeholder">
-              <h2>Шаг 3: Увлечения</h2>
-              <p>Здесь будет выбор категорий интересов</p>
-            </div>
+            <StepCategories onComplete={handleStep3Complete} />
           )}
-          {step === 4 && (
-            <div className="registration-page__placeholder">
-              <h2>Шаг 4: Готово!</h2>
-              <p>Здесь будет экран успешной регистрации</p>
-            </div>
-          )}
+          {step === 4 && <StepSuccess />}
         </div>
       </main>
 

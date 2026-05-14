@@ -819,6 +819,42 @@ def NOTIFICATION_PHOTOS_copy_by_notification(source_notification_id: int, target
 
 
 #------------------------------------------------------------------------------------------------------
+#roots to USERS (categories)
+#------------------------------------------------------------------------------------------------------
+
+def USERS_save_categories(user_id: int, selected_category_ids: list[int]):
+    """
+    Сохраняет категории интересов пользователя.
+    - Для ВСЕХ категорий создаёт/обновляет запись в user_categories_table_12
+    - Для выбранных: category_value = 5
+    - Для остальных: category_value = 0
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                # Получаем все категории
+                cur.execute("SELECT category_id FROM categories_table_10")
+                all_categories = cur.fetchall()
+                
+                selected_set = set(selected_category_ids)
+                
+                for cat in all_categories:
+                    cat_id = cat["category_id"]
+                    value = 5 if cat_id in selected_set else 0
+                    cur.execute("""
+                        INSERT INTO user_categories_table_12 (user_id, category_id, category_value)
+                        VALUES (%s, %s, %s)
+                        ON CONFLICT (user_id, category_id) 
+                        DO UPDATE SET category_value = EXCLUDED.category_value
+                    """, (user_id, cat_id, value))
+                
+                conn.commit()
+                return {"success": True, "message": "Категории успешно сохранены"}
+    except Exception as error:
+        return (False, error, "USERS_save_categories")
+
+
+#------------------------------------------------------------------------------------------------------
 #roots to CONFLICTS
 #------------------------------------------------------------------------------------------------------
 
@@ -1269,3 +1305,66 @@ def SUPPORT_create_notification(ticket_id: int, requester_user_id: int, photo_ur
                 }
     except Exception as error:
         return (False, error, "SUPPORT_create_notification")
+
+
+#------------------------------------------------------------------------------------------------------
+# roots to Verification
+#------------------------------------------------------------------------------------------------------
+
+def VERIFICATION_mark_notification_uploaded(record_id: int):
+    """
+    Отмечает уведомление верификации как 'фото загружено' (israted = 1).
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    UPDATE user_notifications_table_5
+                    SET israted = 1
+                    WHERE record_id = %s
+                    RETURNING record_id, israted
+                """, (record_id,))
+                result = cur.fetchone()
+                conn.commit()
+                return {"record_id": result["record_id"], "israted": result["israted"], "success": True}
+    except Exception as error:
+        return (False, error, "VERIFICATION_mark_notification_uploaded")
+
+
+def VERIFICATION_create(user_id: int, photo_1_url: str, photo_2_url: str):
+    """
+    Создает запись верификации пользователя.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO verification_table_16 (user_id, photo_1_url, photo_2_url, status)
+                    VALUES (%s, %s, %s, 'created')
+                    RETURNING verification_id, user_id, photo_1_url, photo_2_url, status, photos_uploaded_at
+                """, (user_id, photo_1_url, photo_2_url))
+                result = cur.fetchone()
+                conn.commit()
+                return result
+    except Exception as error:
+        return (False, error, "VERIFICATION_create")
+
+
+def VERIFICATION_get_latest(user_id: int):
+    """
+    Получает последнюю запись верификации пользователя.
+    """
+    try:
+        with psycopg.connect(DSN, row_factory=dict_row) as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT verification_id, user_id, photo_1_url, photo_2_url, status, photos_uploaded_at, status_changed_at, answer_ai
+                    FROM verification_table_16
+                    WHERE user_id = %s
+                    ORDER BY photos_uploaded_at DESC
+                    LIMIT 1
+                """, (user_id,))
+                result = cur.fetchone()
+                return result
+    except Exception as error:
+        return (False, error, "VERIFICATION_get_latest")
