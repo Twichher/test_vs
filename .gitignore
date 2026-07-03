@@ -1,3 +1,6 @@
 /backend/__pycache__
 /mvp_env
 /vstrechiv1/node_modules
+/scripts
+.DS_Store
+/scripts

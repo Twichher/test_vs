@@ -55,9 +55,9 @@ BEGIN
             in_trial_period := TRUE;
         ELSE
             in_trial_period := FALSE;
-            -- создаём новый период на 5 день
+            -- создаём новый период на 7 дней
             INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-            VALUES (NOW(), NOW() + INTERVAL '5 day');
+            VALUES (NOW(), NOW() + INTERVAL '7 day');
         END IF;
 
         -- увеличиваем счётчики у всех, кто был `attended` на этой встрече
@@ -129,9 +129,9 @@ BEGIN
             in_trial_period := TRUE;
         ELSE
             in_trial_period := FALSE;
-            -- создаём новый период на 1 день
+            -- создаём новый период на 7 дней
             INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-            VALUES (NOW(), NOW() + INTERVAL '5 day');
+            VALUES (NOW(), NOW() + INTERVAL '7 day');
         END IF;
 
         -- считаем, сколько user_id связано с этой встречей
@@ -274,9 +274,9 @@ BEGIN
         in_trial_period := TRUE;
     ELSE
         in_trial_period := FALSE;
-        -- создаём новый период на 1 день
+        -- создаём новый период на 7 дней
         INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-        VALUES (NOW(), NOW() + INTERVAL '5 day');
+        VALUES (NOW(), NOW() + INTERVAL '7 day');
     END IF;
 
     -- обновляем ТОЛЬКО последнюю запись по пользователю (по date_of_stats / record_id)
@@ -329,49 +329,51 @@ EXECUTE FUNCTION update_guest_ratings_after_insert();
 -- 3 user_extra_info_table_3 для каждого пользователя
 -- обнуляется
 
-CREATE OR REPLACE FUNCTION copy_user_stats_with_reset_period_fields()
-RETURNS trigger AS $$
-BEGIN
-    INSERT INTO user_extra_info_table_3 (
-        user_id,
-		meetings_visited_as_guest,
-		count_period_meetings_guest,
-		count_all_rating_guest,
-		rating_as_guest,
-		count_period_rating_guest,
-		intermediate_rating_as_guest,
-		meetings_created_as_organizer,
-		rating_as_organizer,
-		count_period_meetings_as_organizer,
-		intermediate_rating_as_organizer,
-		count_all_rating_organizer,
-		count_period_rating_organizer,
-		meetings_as_currency,
-		earned_currency,
-		date_of_stats
-    )
-    SELECT
-        user_id,
-        meetings_visited_as_guest,
-        0,							  -- count_period_meetings_guest
-        count_all_rating_guest,                          
-        rating_as_guest,
-        0, -- count_period_rating_guest
-        0,                           -- intermediate_rating_as_guest
-        meetings_created_as_organizer,
-        rating_as_organizer,
-        0, -- count_period_meetings_as_organizer
-        0,                           -- intermediate_rating_as_organizer
-        count_all_rating_organizer,  -- сохраняем общий счетчик
-        0,                           -- count_period_rating_organizer (сбрасываем)
-        meetings_as_currency,                          
-		earned_currency,							  
-        NOW()
-    FROM user_extra_info_table_3;
+  CREATE OR REPLACE FUNCTION copy_user_stats_with_reset_period_fields()
+  RETURNS trigger AS $$
+  BEGIN
+      INSERT INTO user_extra_info_table_3 (
+          user_id,
+          meetings_visited_as_guest,
+          count_period_meetings_guest,
+          count_all_rating_guest,
+          rating_as_guest,
+          count_period_rating_guest,
+          intermediate_rating_as_guest,
+          meetings_created_as_organizer,
+          rating_as_organizer,
+          count_period_meetings_as_organizer,
+          intermediate_rating_as_organizer,
+          count_all_rating_organizer,
+          count_period_rating_organizer,
+          meetings_as_currency,
+          earned_currency,
+          date_of_stats
+      )
+      -- Берём ТОЛЬКО последнюю запись каждого пользователя
+      SELECT DISTINCT ON (user_id)
+          user_id,
+          meetings_visited_as_guest,
+          0,                              -- count_period_meetings_guest (сброс)
+          count_all_rating_guest,
+          rating_as_guest,
+          0,                              -- count_period_rating_guest (сброс)
+          0,                              -- intermediate_rating_as_guest (сброс)
+          meetings_created_as_organizer,
+          rating_as_organizer,
+          0,                              -- count_period_meetings_as_organizer (сброс)
+          0,                              -- intermediate_rating_as_organizer (сброс)
+          count_all_rating_organizer,
+          0,                              -- count_period_rating_organizer (сброс)
+          meetings_as_currency,
+          earned_currency,
+          NOW()
+      FROM user_extra_info_table_3
+      ORDER BY user_id, date_of_stats DESC, record_id DESC;
 
-    RETURN NULL;  -- statement-триггер
-END;
-$$ LANGUAGE plpgsql;
+      RETURN NULL;  -- statement-триггер
+  END;
+  $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_copy_user_stats_on_new_trial
 AFTER INSERT
@@ -406,10 +408,10 @@ BEGIN
         in_trial_period := TRUE;
     ELSE
         in_trial_period := FALSE;
-        -- Создаём новый период на 1 день от текущего момента, 
+        -- Создаём новый период на 7 дней от текущего момента,
         -- а intermediate_rating_as_organizer обновлен не будет (см. логику CASE ниже)
         INSERT INTO start_end_trial_period_table_25 (start_trial_period, end_trial_period)
-        VALUES (NOW(), NOW() + INTERVAL '5 day');
+        VALUES (NOW(), NOW() + INTERVAL '7 day');
     END IF;
 
     -- Пересчёт rating_as_organizer / intermediate_rating_as_organizer

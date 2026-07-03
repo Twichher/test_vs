@@ -153,7 +153,8 @@ where user_id = 2
 select * from user_extra_info_table_3
 where user_id = 32
 
-select * from user_extra_info_table_3 where record_id = 3359
+select * from user_extra_info_table_3 
+
 -------------------------------------------------------------------------------
 
 -- Table: notifications_table_4
@@ -756,12 +757,3 @@ CREATE INDEX IF NOT EXISTS idx_meeting_rating_meeting_id_26
 CREATE INDEX IF NOT EXISTS idx_meeting_rating_user_id_26
   ON meeting_rating_info_table_26 (user_id);
 
-
-
-select * from meeting_rating_info_table_26 where meeting_id = 24;
-
-select * from meeting_rating_table_8 where meeting_id = 24;
-
-select * from user_ratings_table_15 where meeting_id = 24;
-
-select * from conflict_table_7 where meeting_id = 24;

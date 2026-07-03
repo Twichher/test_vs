@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { FiX } from 'react-icons/fi';
 import './MessageDetail.css';
+import type { NotificationItem } from '../types/notification';
 
-interface NotificationItem {
-  record_id: number;
-  notification_id: number;
-  user_id: number;
-  notification_type: string;
-  sent_at: string;
-  status: 'read' | 'unread';
-  notification_text: string;
-  photo_urls: string[];
-}
 
 interface MessageDetailSupportTicketProps {
   notification: NotificationItem;

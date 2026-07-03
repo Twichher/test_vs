@@ -1,19 +1,7 @@
 import { FiX } from 'react-icons/fi';
 import './MessageDetail.css';
+import type { NotificationItem } from '../types/notification';
 
-interface NotificationItem {
-  record_id: number;
-  notification_id: number;
-  user_id: number;
-  notification_type: string;
-  sent_at: string;
-  status: 'read' | 'unread';
-  meeting_title: string | null;
-  meeting_start_at: string | null;
-  meeting_end_at: string | null;
-  notification_text: string;
-  photo_urls: string[];
-}
 
 interface MessageDetailMeetinCanceledByOrganizerProps {
   notification: NotificationItem;

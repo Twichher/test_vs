@@ -1,4 +1,4 @@
-# AGENTS.md — Документация для AI-агентов
+# AGENTS.md — Документация
 
 ## Общая информация о проекте
 
@@ -475,7 +475,7 @@ MoreOrderSupportPage.tsx (/support/:ticket_id)
 
 ---
 
-### Триггеры PostgreSQL (9 штук)
+### Триггеры PostgreSQL (18 штук, указаны не все)
 
 | Триггер | Таблица | Действие |
 |---------|---------|----------|
@@ -520,14 +520,6 @@ MoreOrderSupportPage.tsx (/support/:ticket_id)
 
 ---
 
-## Известные особенности и баги
-
-### Исправленные баги
-- **photo_urls character-split:** `psycopg` возвращал PostgreSQL `TEXT[]` как строку. Исправлено парсингом в `main.py` GET `/users/{_user_id}/notifications`
-- **Support photo list bug:** В `create_support_ticket` передавалась строка `photo_url` вместо списка `photo_urls`. Исправлено накоплением списка и передачей в `SUPPORT_create_notification`
-
----
-
 ## Разработка и отладка
 
 ### Backend
@@ -540,10 +532,3 @@ MoreOrderSupportPage.tsx (/support/:ticket_id)
 - `npm run build` — сборка для продакшена
 
 ---
-
-## Полезные ссылки
-
-- [FastAPI документация](https://fastapi.tiangolo.com/)
-- [React документация](https://react.dev/)
-- [Redux Toolkit](https://redux-toolkit.js.org/)
-- [Vite документация](https://vitejs.dev/)

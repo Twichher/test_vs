@@ -1,9 +1,6 @@
 """
 Verification Worker — фоновый процесс проверки фото через DeepFace.
 
-Запуск:
-    python verification_worker.py
-
 Улучшенная версия:
     - Модель: ArcFace (512-мерный embedding, точнее Facenet)
     - Детекторы: retinaface → mtcnn → opencv (fallback)
@@ -47,7 +44,7 @@ def download_photo(url: str, local_path: str) -> None:
             return
         except Exception as e:
             last_err = e
-            print(f"     ⚠️  Скачивание {url} — попытка {attempt}/{DOWNLOAD_RETRIES} неудача: {e}")
+            print(f"Скачивание {url} — попытка {attempt}/{DOWNLOAD_RETRIES} неудача: {e}")
             time.sleep(1)
     raise last_err
 
@@ -92,7 +89,7 @@ def get_embedding(img_path: str) -> list[float]:
             return result[0]["embedding"]
         except Exception as e:
             last_err = e
-            print(f"     ⚠️  Embedding с {backend} не удался: {e}")
+            print(f"Embedding с {backend} не удался: {e}")
             continue
     raise last_err
 
@@ -125,7 +122,7 @@ def cosine_distance(emb1: list[float], emb2: list[float]) -> float:
     a = np.array(emb1, dtype=np.float32)
     b = np.array(emb2, dtype=np.float32)
     if a.shape != b.shape:
-        print(f"     ⚠️  Размерности embedding не совпадают: {a.shape} vs {b.shape} — пропускаем")
+        print(f"Размерности embedding не совпадают: {a.shape} vs {b.shape} — пропускаем")
         return 1.0  # максимальная дистанция = "не дубликат"
     dot = np.dot(a, b)
     norm_a = np.linalg.norm(a)
@@ -182,7 +179,7 @@ def reject_verification(conn, cur, verification_id: int, user_id: int, answer_ai
         conn, cur, "результат верификации", answer_ai, user_id
     )
     conn.commit()
-    print(f"  ❌ REJECTED: verification_id={verification_id}")
+    print(f" REJECTED: verification_id={verification_id}")
     print(f"     Причина: {answer_ai}")
 
 
@@ -217,7 +214,7 @@ def approve_verification(
         conn, cur, "верификация пройдена", success_text, user_id
     )
     conn.commit()
-    print(f"  ✅ APPROVED: verification_id={verification_id}")
+    print(f"APPROVED: verification_id={verification_id}")
 
 
 # ── Основная обработка ────────────────────────────────────────────────────
@@ -228,7 +225,7 @@ def process_one_record(conn, cur, record: dict) -> None:
     photo_2_url = record["photo_2_url"]
 
     print(f"\n{'='*60}")
-    print(f"🆕 НАЙДЕНА НОВАЯ ВЕРИФИКАЦИЯ")
+    print(f"НАЙДЕНА НОВАЯ ВЕРИФИКАЦИЯ")
     print(f"   verification_id : {verification_id}")
     print(f"   user_id         : {user_id}")
     print(f"   model           : {MODEL_NAME}")
@@ -252,21 +249,21 @@ def process_one_record(conn, cur, record: dict) -> None:
 
     try:
         # ── ШАГ 1: Скачивание ──────────────────────────────────────────
-        pbar.set_description("📥 Скачивание фото")
+        pbar.set_description("Скачивание фото")
         download_photo(photo_1_url, photo1_path)
         download_photo(photo_2_url, photo2_path)
-        print(f"  ✅ Фото скачаны")
+        print(f"Фото скачаны")
         pbar.update(1)
 
         # ── ШАГ 2: Детекция лица ───────────────────────────────────────
-        pbar.set_description("👤 Проверка: есть ли лицо")
+        pbar.set_description("Проверка: есть ли лицо")
         try:
             _, used_backend_1 = detect_face(photo1_path)
             _, used_backend_2 = detect_face(photo2_path)
-            print(f"  ✅ Лица обнаружены (детектор: {used_backend_1} / {used_backend_2})")
+            print(f"Лица обнаружены (детектор: {used_backend_1} / {used_backend_2})")
         except Exception as e:
             pbar.close()
-            print(f"  ❌ Лицо не обнаружено ни одним детектором: {e}")
+            print(f"Лицо не обнаружено ни одним детектором: {e}")
             reject_verification(
                 conn, cur, verification_id, user_id,
                 "На фотографиях не обнаружен человек"
@@ -275,27 +272,27 @@ def process_one_record(conn, cur, record: dict) -> None:
         pbar.update(1)
 
         # ── ШАГ 3: Verify ──────────────────────────────────────────────
-        pbar.set_description("🔄 Проверка: один и тот же человек")
+        pbar.set_description("Проверка: один и тот же человек")
         try:
             verified, distance = verify_same_person(photo1_path, photo2_path)
-            print(f"  📊 Расстояние между фото: {distance:.4f}  (порог: {SAME_PERSON_THRESHOLD})")
+            print(f"  Расстояние между фото: {distance:.4f}  (порог: {SAME_PERSON_THRESHOLD})")
             # Используем distance напрямую — более мягкий порог, чтобы не отклонять
             # реальных пользователей из-за плохого освещения/ракурса
             if distance >= SAME_PERSON_THRESHOLD:
                 pbar.close()
-                print(f"  ❌ Разные люди (distance >= {SAME_PERSON_THRESHOLD})")
+                print(f"Разные люди (distance >= {SAME_PERSON_THRESHOLD})")
                 reject_verification(
                     conn, cur, verification_id, user_id,
                     "На фотографиях изображены разные люди"
                 )
                 return
             if not verified:
-                print(f"  ⚠️  DeepFace считает разными, но distance={distance:.4f} < {SAME_PERSON_THRESHOLD} — одобряем")
+                print(f"DeepFace считает разными, но distance={distance:.4f} < {SAME_PERSON_THRESHOLD} — одобряем")
             else:
-                print(f"  ✅ Один и тот же человек")
+                print(f"Один и тот же человек")
         except Exception as e:
             pbar.close()
-            print(f"  ❌ Ошибка сравнения: {e}")
+            print(f"Ошибка сравнения: {e}")
             reject_verification(
                 conn, cur, verification_id, user_id,
                 "На фотографиях изображены разные люди"
@@ -304,13 +301,13 @@ def process_one_record(conn, cur, record: dict) -> None:
         pbar.update(1)
 
         # ── ШАГ 4: Embedding ───────────────────────────────────────────
-        pbar.set_description("🧠 Вычисление embedding")
+        pbar.set_description("Вычисление embedding")
         try:
             embedding = get_embedding(photo1_path)
-            print(f"  ✅ Embedding вычислен (размер: {len(embedding)})")
+            print(f"Embedding вычислен (размер: {len(embedding)})")
         except Exception as e:
             pbar.close()
-            print(f"  ❌ Ошибка embedding: {e}")
+            print(f"Ошибка embedding: {e}")
             reject_verification(
                 conn, cur, verification_id, user_id,
                 "Ошибка при анализе фотографий"
@@ -319,7 +316,7 @@ def process_one_record(conn, cur, record: dict) -> None:
         pbar.update(1)
 
         # ── ШАГ 5: Поиск в БД ──────────────────────────────────────────
-        pbar.set_description("🔍 Проверка: есть ли в БД")
+        pbar.set_description("Проверка: есть ли в БД")
         cur.execute(
             """
             SELECT verification_id, user_id, embedding
@@ -331,7 +328,7 @@ def process_one_record(conn, cur, record: dict) -> None:
             (verification_id,),
         )
         approved_records = cur.fetchall()
-        print(f"  📋 Найдено approved записей в БД: {len(approved_records)}")
+        print(f"Найдено approved записей в БД: {len(approved_records)}")
 
         is_duplicate = False
         if approved_records:
@@ -340,7 +337,7 @@ def process_one_record(conn, cur, record: dict) -> None:
                 if isinstance(db_emb, str):
                     db_emb = json.loads(db_emb)
                 dist = cosine_distance(embedding, db_emb)
-                match = "🔴 ДУБЛИКАТ" if dist < DUPLICATE_THRESHOLD else "🟢 Ок"
+                match = "ДУБЛИКАТ" if dist < DUPLICATE_THRESHOLD else "Ок"
                 print(f"     vs user_id={approved['user_id']:>4} | dist={dist:.4f} | {match}")
                 if dist < DUPLICATE_THRESHOLD:
                     is_duplicate = True
@@ -375,26 +372,26 @@ def process_one_record(conn, cur, record: dict) -> None:
                 conn, cur, verification_id, user_id,
                 "Техническая ошибка при проверке. Попробуйте загрузить фото ещё раз."
             )
-            print(f"  🔄 Запись reject'нута, чтобы избежать бесконечного цикла")
+            print(f"  Запись reject'нута, чтобы избежать бесконечного цикла")
         except Exception as reject_err:
-            print(f"  💥 Не удалось reject'нуть запись: {reject_err}")
+            print(f"  Не удалось reject'нуть запись: {reject_err}")
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)
-        print(f"  🧹 Временные файлы удалены")
+        print(f"  Временные файлы удалены")
         clear_tf_memory()
-        print(f"  🧹 Память TensorFlow очищена")
+        print(f"  Память TensorFlow очищена")
 
 
 # ── Главный цикл ──────────────────────────────────────────────────────────
 def main() -> None:
     print("\n" + "="*60)
-    print("🚀 VERIFICATION WORKER ЗАПУЩЕН")
+    print("VERIFICATION WORKER ЗАПУЩЕН")
     print("="*60)
-    print(f"📌 Модель        : {MODEL_NAME} (512d)")
-    print(f"📌 Детекторы     : {' → '.join(DETECTOR_BACKENDS)} (fallback)")
-    print(f"📌 Same-person   : {SAME_PERSON_THRESHOLD}")
-    print(f"📌 Duplicate     : {DUPLICATE_THRESHOLD}")
-    print(f"📌 Интервал      : {CHECK_INTERVAL} сек")
+    print(f"Модель        : {MODEL_NAME} (512d)")
+    print(f"Детекторы     : {' -> '.join(DETECTOR_BACKENDS)} (fallback)")
+    print(f"Same-person   : {SAME_PERSON_THRESHOLD}")
+    print(f"Duplicate     : {DUPLICATE_THRESHOLD}")
+    print(f"Интервал      : {CHECK_INTERVAL} сек")
     print("="*60 + "\n")
 
     while True:
@@ -414,14 +411,14 @@ def main() -> None:
                     record = cur.fetchone()
 
                     if not record:
-                        print(f"⏳ Нет записей в статусе 'created'. Ждём {CHECK_INTERVAL} сек...")
+                        print(f"Нет записей в статусе 'created'. Ждём {CHECK_INTERVAL} сек...")
                         time.sleep(CHECK_INTERVAL)
                         continue
 
                     process_one_record(conn, cur, record)
 
         except Exception as e:
-            print(f"\n💥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
+            print(f"\nКРИТИЧЕСКАЯ ОШИБКА: {e}")
             print(f"   Перезапуск через {CHECK_INTERVAL} сек...")
             time.sleep(CHECK_INTERVAL)
 

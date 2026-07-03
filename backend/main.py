@@ -6,6 +6,7 @@ from typing import List
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta, timezone
 from jose import jwt
+from email_validator import validate_email, EmailNotValidError
 
 from get_sql import FAQ_get_all_rows, MEETINGS_atted_get_all_info, MEETINGS_get_atted_missed_users, MEETINGS_get_reged_missed_users, MEETINGS_get_registered_users_only, MEETINGS_reged_get_all_info, USERS_check_login, USERS_get_MEETINGS_info_finished, USERS_get_MEETINGS_info_reged, USERS_get_info_by_id,MEETINGS_get_created_lsit, MEETINGS_no_sql_sort_by_params, CATEGORIES_get_all, WARNINGS_get_all, MEETINGS_create, NOTIFICATIONS_create, NOTIFICATION_PHOTOS_create, MEETINGS_add_category, MEETINGS_add_warning, \
 CATEGORIES_get_all, MEETINGS_get_all_info, USERS_get_reged_meetings, USERS_get_all_stats_by_id, USERS_get_settings_info, \
@@ -71,6 +72,18 @@ def create_jwt_token(user_id: int) -> str:
 #------------------------------------------------------------------------------------------------------
 #roots to FAQ
 #------------------------------------------------------------------------------------------------------
+
+
+@app.get("/check-email")
+def check_email(email: str):
+    """
+    Проверяет email на корректность и существование домена (MX-записи).
+    """
+    try:
+        validate_email(email, check_deliverability=True)
+        return {"valid": True}
+    except EmailNotValidError as e:
+        return {"valid": False, "detail": str(e)}
 
 
 @app.get("/faq", response_model=List[FAQ])

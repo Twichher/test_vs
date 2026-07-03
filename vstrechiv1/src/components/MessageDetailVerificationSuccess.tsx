@@ -1,16 +1,7 @@
 import { FiX, FiCheck } from 'react-icons/fi';
 import './MessageDetailVerificationSuccess.css';
+import type { NotificationItem } from '../types/notification';
 
-interface NotificationItem {
-  record_id: number;
-  notification_id: number;
-  user_id: number;
-  notification_type: string;
-  sent_at: string;
-  status: 'read' | 'unread';
-  notification_text: string;
-  photo_urls: string[];
-}
 
 interface MessageDetailVerificationSuccessProps {
   notification: NotificationItem;

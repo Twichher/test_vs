@@ -117,7 +117,26 @@ const StepPersonal: React.FC<StepPersonalProps> = ({ onComplete }) => {
     if (!validate()) return;
 
     setIsSubmitting(true);
+    setErrors((prev) => {
+      const updated = { ...prev };
+      delete updated.submit;
+      return updated;
+    });
+
     try {
+      // Проверяем существование домена email перед регистрацией
+      const checkResponse = await fetch(
+        `http://localhost:8000/check-email?email=${encodeURIComponent(form.email.trim())}`,
+        { credentials: 'include' }
+      );
+      const checkData = await checkResponse.json();
+
+      if (!checkData.valid) {
+        setErrors({ submit: 'Данной почты не существует' });
+        setIsSubmitting(false);
+        return;
+      }
+
       const birthDate = `${form.year}-${form.month}-${form.day}`;
       const response = await fetch('http://localhost:8000/register', {
         method: 'POST',
@@ -288,10 +307,6 @@ const StepPersonal: React.FC<StepPersonalProps> = ({ onComplete }) => {
           )}
         </div>
 
-        {errors.submit && (
-          <div className="step-personal__submit-error">{errors.submit}</div>
-        )}
-
         <button
           type="submit"
           className="step-personal__button"
@@ -299,6 +314,10 @@ const StepPersonal: React.FC<StepPersonalProps> = ({ onComplete }) => {
         >
           {isSubmitting ? 'Создаем аккаунт...' : 'Далее'}
         </button>
+
+        {errors.submit && (
+          <div className="step-personal__submit-error">{errors.submit}</div>
+        )}
 
         <p className="step-personal__login-text">
           Есть аккаунт?{' '}
